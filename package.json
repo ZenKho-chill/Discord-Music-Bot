@@ -3,6 +3,14 @@
   "version": "1.0.0",
   "description": "Discord music bot sử dụng lệnh / với giao diện dễ dàng sử dụng",
   "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ZenKho-chill/Discord-Music-Bot.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ZenKho-chill/Discord-Music-Bot/issues"
+  },
+  "homepage": "https://github.com/ZenKho-chill/Discord-Music-Bot#readme",
   "dependencies": {
     "@discordjs/builders": "^1.6.5",
     "@discordjs/opus": "^0.9.0",

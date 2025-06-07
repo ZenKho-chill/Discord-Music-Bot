@@ -130,7 +130,7 @@ Tải Discord Music Bot và cài đặt:
 1. **Tải dự án về:**
 
     ```sh
-    git clone ../Discord Music Bot
+    git clone https://github.com/ZenKho-chill/Discord-Music-Bot.git
     ```
 
 2. **Đi đến nơi lưu dự án:**
