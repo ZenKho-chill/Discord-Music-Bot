@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  mongo:
+    image: mongo:7
+    container_name: mongo
+    restart: unless-stopped
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - bot-discord-music
+
+  bot:
+    build: .
+    container_name: discord-groq-music
+    restart: unless-stopped
+    env_file: .env
+    depends_on:
+      - mongo
+    networks:
+      - bot-discord-music
+
+networks:
+  bot-discord-music:
+
+volumes:
+  mongo_data:
