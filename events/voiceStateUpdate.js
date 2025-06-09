@@ -34,7 +34,7 @@ module.exports = async (client, oldState, newState) => {
             }
           }
         }
-      }, client?.config?.opt?.voiceConfig?.leaveOnEmpty?.cooldown || 60000);
+      }, (client?.config?.opt?.voiceConfig?.leaveOnEmpty?.cooldown || 60) * 1000);
     }
     if (newState.id === client.user.id) {
       if (oldState.serverMute === false && newState.serverMute === true) {
