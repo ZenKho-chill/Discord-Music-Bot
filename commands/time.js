@@ -35,7 +35,7 @@ module.exports = {
         .setColor(client.config.embedColor)
         .setTitle(queue.songs[0].name)
         .setThumbnail(queue.songs[0].thumbnail)
-        .setDesctiption(`**${queue.formattedCurrentTime} / ${queue.formattedDuration} (${music_percent3}%)**`);
+        .setDescription(`**${queue.formattedCurrentTime} / ${queue.formattedDuration} (${music_percent3}%)**`);
 
       interaction.reply({ embeds: [embed] }).catch(e => { });
     } catch (e) {

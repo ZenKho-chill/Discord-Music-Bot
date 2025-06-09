@@ -15,7 +15,6 @@
  * along with Discord Music Bot.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-const db = require('../mongoDB');
 const { EmbedBuilder } = require('discord.js');
 
 module.exports = {

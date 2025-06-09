@@ -58,7 +58,7 @@ function getSeconds(str) {
     return 0;
   }
 
-  var parts = startTransition.split(':');
+  var parts = str.split(':');
   var seconds = 0;
   var factor = 1;
 

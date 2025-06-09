@@ -1,6 +1,9 @@
 # Chọn image base
 FROM node:20
 
+# Cài ffmpeg
+RUN apt-get update && apt-get install -y ffmpeg
+
 # Tạo thư mục trong container
 WORKDIR /app
 

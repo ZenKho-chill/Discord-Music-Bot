@@ -15,31 +15,32 @@
  * along with Discord Music Bot.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-const db = require('../mongoDB');
+const db = require("../mongoDB");
 const { EmbedBuilder } = require('discord.js');
 
 module.exports = {
-    name: 'autoplay',
-    description: 'Bật/tắt chế độ tự động phát nhạc khi hết hàng chờ',
-    options: [],
-    permissions: '0x0000000000000800',
-    run: async (client, interaction) => {
-        try {
-            const queue = client?.player?.getQueue(interaction?.guild?.id);
-            if (!queue || !queue?.playing) {
-                return interaction?.reply({ content: '⚠️ Hiện không có bài nhạc nào đang phát!', ephemeral: true });
-            }
-
-            queue?.toggleAutoplay();
-
-            const embed = new EmbedBuilder()
-                .setColor('#2f58fe')
-                .setTitle('🎶 Phát nhạc theo ý bạn!')
-                .setDescription(queue?.autoplay ? '**✅ Tự động phát: BẬT**' : '**❌ Tự động phát: TẮT**')
-
-            interaction?.reply({ embeds: [embed] });
-        } catch (e) {
-            console.error(e);
-        }
-    },
+  name: "autoplay",
+  description: "Bật/tắt chế độ tự phát nhạc trong hàng chờ.",
+  options: [],
+  permissions: "0x0000000000000800",
+  run: async (client, interaction) => {
+    try {
+      const queue = client?.player?.getQueue(interaction?.guild?.id);
+      if (!queue || !queue?.playing) {
+        return interaction?.reply({ content: '⚠️ Hiện không có bài nhạc nào đang phát!', ephemeral: true });
+      }
+      
+      queue?.toggleAutoplay();
+      
+      const embed = new EmbedBuilder()
+        .setColor('#2f58fe')
+        .setTitle('🎶 Nhạc theo ý bạn!')
+        .setDescription(queue?.autoplay ? '**✅ Tự phát: BẬT**' : '**❌ Tự phát: TẮT**')
+        
+      
+      interaction?.reply({ embeds: [embed] });
+    } catch (e) {
+      console.error(e);
+    }
+  },
 };

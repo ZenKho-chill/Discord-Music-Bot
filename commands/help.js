@@ -15,12 +15,7 @@
  * along with Discord Music Bot.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-const {
-  ApplicationCommandOptionType,
-  EmbedBuilder,
-  ActionRowBuilder,
-  ButtonStyle,
-} = require("discord.js");
+const { EmbedBuilder } = require("discord.js");
 const db = require("../mongoDB");
 
 module.exports = {
@@ -70,7 +65,7 @@ module.exports = {
         .reply({
           embeds: [musicCommandsEmbed, basicCommandsEmbed],
         })
-        .catch((e) => {});
+        .catch((e) => {console.error(e)});
     } catch (e) {
       console.error(e);
     }

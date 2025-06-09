@@ -15,12 +15,14 @@
  * along with Discord Music Bot.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+require('dotenv').config();
+
 module.exports = {
-     TOKEN: "",
-     ownerID: ["", ""],
-     botInvite: "",
-     supportServer: "",
-     mongodbURL: "mongodb://mongo:27017/database_name_here",
+     TOKEN: process.env.TOKEN,
+     ownerID: process.env.AUTHOR,
+     botInvite: process.env.BOT_INVITE,
+     supportServer: process.env.SUPPORT_SERVER,
+     mongodbURL: process.env.MONGO_URL,
      status: 'ZenKho',
      commandsdir: './commands',
      language: "vi",
@@ -83,11 +85,11 @@ module.exports = {
             ]
         },
         voiceConfig: {
-            leaveOnFinish: true,
+            leaveOnFinish: false,
             leaveOnStop: true,
             leaveOnEmpty: {
                 status: true,
-                cooldown: 180,
+                cooldown: 60000,
             },
         },
         maxVol: 150,

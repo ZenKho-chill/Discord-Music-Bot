@@ -26,7 +26,7 @@ module.exports = {
     {
       name: 'normal',
       description: 'Mở nhạc từ các nền tàng khác',
-      type: ApplicationCommandOptionType.SubCommand,
+      type: ApplicationCommandOptionType.Subcommand,
       options: [
         {
           name: 'name',
@@ -39,7 +39,7 @@ module.exports = {
     {
       name: 'playlist',
       description: 'Nhập tên playlist bạn muốn phát',
-      type: ApplicationCommandOptionType.SubCommand,
+      type: ApplicationCommandOptionType.Subcommand,
       options: [
         {
           name: 'name',
@@ -48,8 +48,9 @@ module.exports = {
           required: true
         }
       ]
-    },
+    }
   ],
+
   voiceChannel: true,
   run: async (client, interaction) => {
     try {
@@ -61,7 +62,7 @@ module.exports = {
         if (!playlist?.length > 0) return interaction.reply({ content: '❌ Không tìm thấy playlist', ephemeral: true }).catch(e => { });
 
         let arr = 0;
-        for (let i = 0; i< playlist.length; i++) {
+        for (let i = 0; i < playlist.length; i++) {
           if (playlist[i]?.playlist?.filter(p => p.name === playlisttw)?.length > 0) {
             let playlist_owner_filter = playlist[i].playlist.filter(p => p.name === playlisttw)[0].author;
             let playlist_public_filter = playlist[i].playlist.filter(p => p.name === playlisttw)[0].public;
@@ -72,7 +73,7 @@ module.exports = {
             }
             const music_filter = playlist[i]?.musics?.filter(m => m.playlist_name === playlisttw);
             if (!music_filter?.length > 0) return interaction.reply({ content: '❌ Playlist không có bài hát', ephemeral: true }).catch(e => { });
-            interaction.reply({ content: '✅ Đang phát playlist...'}).catch(e => { });
+            interaction.reply({ content: '✅ Đang phát playlist...' }).catch(e => { });
 
             let songs = [];
             music_filter.map(m => songs.push(m.music_url));
@@ -122,6 +123,7 @@ module.exports = {
             arr++;
             if (arr === playlist.length) {
               return interaction.reply({ content: '❌ Playlist không tồn tại', ephemeral: true }).catch(e => { });
+              break;
             }
           }
         }
@@ -136,10 +138,10 @@ module.exports = {
           .setColor('#3498db')
           .setDescription('**🎸 Hãy chuẩn bị cho một hành trình âm nhạc!**');
 
-        await interaction.reply({ embeds: [embed] }).catch(e => {});
+        await interaction.reply({ embeds: [embed] }).catch(e => { });
 
         try {
-          await client.player.play(interaction.member.voice.channel, name,  {
+          await client.player.play(interaction.member.voice.channel, name, {
             member: interaction.member,
             textChannel: interaction.channel,
             interaction
@@ -149,7 +151,7 @@ module.exports = {
             .setColor('#e74c3c')
             .setDescription('❌ Không tìm thấy kết quả!!');
 
-          await interaction.reply({ embeds: [errorEmbed], ephemeral: true }).catch(e => {});
+          await interaction.reply({ embeds: [errorEmbed], ephemeral: true }).catch(e => { });
         }
       }
     } catch (e) {

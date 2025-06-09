@@ -43,7 +43,7 @@ module.exports = {
                 .setColor('#3498db')
                 .setAuthor({
                     name: '🔄 Đã xóa hàng chờ',
-                    iconUR: 'https://cdn.discordapp.com/attachments/1378363930573017140/1380045187580956682/logo.png?ex=684515bc&is=6843c43c&hm=7e8e52f327579353602c5a89fe2f8fb3e7b4950c5231e4c2b72889e3328fba65&',
+                    iconURL: 'https://cdn.discordapp.com/attachments/1378363930573017140/1380045187580956682/logo.png?ex=684515bc&is=6843c43c&hm=7e8e52f327579353602c5a89fe2f8fb3e7b4950c5231e4c2b72889e3328fba65&',
                     url: 'https://zenkho.top'
                 })
                 .setDescription('**✅ Hàng chờ đã được xóa! Sẵn sàng cho hành trình âm nhạc mới.**')

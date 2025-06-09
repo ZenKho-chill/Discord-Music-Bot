@@ -23,7 +23,7 @@ module.exports = {
   name: 'shuffle',
   description: 'Xáo trộn dang sách nhạc trong hàng chờ',
   options: [],
-  premissions: '0x0000000000000800',
+  permissions: '0x0000000000000800',
   run: async (client, interaction) => {
     try {
       const queue = client.player.getQueue(interaction.guild.id);

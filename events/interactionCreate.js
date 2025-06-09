@@ -29,10 +29,10 @@ module.exports = async (client, interaction) => {
 
       function cmd_loader() {
         if (interaction?.type === InteractionType.ApplicationCommand) {
-          fs.readdir(config.commandsDir, (err, files) => {
+          fs.readdir(config.commandsdir, (err, files) => {
             if (err) throw err;
             files.forEach(async (f) => {
-              let props = require(`.${config.commandsDir}/${f}`);
+              let props = require(`.${config.commandsdir}/${f}`);
               if (interaction.commandName === props.name) {
                 try {
                   let data = await db?.musicbot?.findOne({ guildID: interaction?.guild?.id });

@@ -16,11 +16,11 @@
  */
 
 const config = require('../config');
-const { ACtivityType } = require('discord.js');
+const { ActivityType } = require('discord.js');
 module.exports = async (client) => {
   if (config.mongodbURL || process.env.MONGO) {
-    const { REST } = require('@discord.js/rest');
-    const { Routes } = require('discord-api-types/v10');
+    const { REST } = require("@discordjs/rest");
+    const { Routes } = require("discord-api-types/v10");
     const rest = new REST({ version: '10' }).setToken(config.TOKEN || process.env.TOKEN);
     (async () => {
       try {
@@ -30,12 +30,13 @@ module.exports = async (client) => {
         console.log('\x1b[36m%s\x1b[0m', '|    🚀 Đã tải lệnh ')
       } catch (err) {
         console.log('\x1b[36m%s\x1b[0m', '|     🚀 Ngưng tải lệnh');
+        console.error(err);
       }
     })();
     console.log('\x1b[32m%s\x1b[0m', `|     🌼 Đăng nhập với ${client.user.username}`);
     setInterval(() => client.user.setActivity({
       name: `Nghe nhạc chill chill... Dùng '/help' nhé!`,
-      type: ACtivityType.Watching
+      type: ActivityType.Watching
     }), 10000);
   } else {
     console.log('\x1b[36m%s\x1b[0m', '|     🍔 Lỗi mongoDB')
@@ -45,6 +46,6 @@ module.exports = async (client) => {
   if (client.config.voteManager.status === true && client.config.voteManager.api_key) {
     const { AutoPoster } = require('toggle-autoposter')
     const ap = AutoPoster(client.config.voteManager.api_key, client)
-    ap.on('posted', () => {})
+    ap.on('posted', () => { })
   }
 }

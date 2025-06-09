@@ -16,7 +16,6 @@
  */
 
 const db = require('../mongoDB');
-const { description } = require('./help');
 module.exports = {
     name: 'loop',
     description: 'Bật hoặc tắt chế độ lặp lại nhạc',
@@ -100,9 +99,9 @@ module.exports = {
                   .setTitle('▶️ Đã tắt chế độ lặp!')
                   .setTimestamp()
 
-                await interaction?.editReply({ content: '', embeds: [embed], components: [timeoutButotn] }).catch(e => { });
+                await interaction?.editReply({ content: '', embeds: [embed], components: [timeoutButton] }).catch(e => { });
               })
-            }).catch(e => { })
+            }).catch(e => {console.error(e)})
         } catch (e) {
           console.error(e);
         }

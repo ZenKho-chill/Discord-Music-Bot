@@ -26,17 +26,17 @@ module.exports = {
   run: async (client, interaction) => {
     try {
       const queue = client.player.getQueue(interaction.guild.id);
-      if (!queue || !queue.playing) return interaction.reply({ content: '⚠️ Không có bài hát nào đang phát', ephemeral: true }). catch(e => {});
+      if (!queue || !queue.playing) return interaction.reply({ content: '⚠️ Không có bài hát nào đang phát', ephemeral: true }).catch(e => { });
       if (!queue.songs[0]) return interaction.reply({ content: '⚠️ Hàng đợi trống', ephemeral: true }).catch(e => { });
 
       const trackl = [];
-      queue.songs.map(async (trackl, i) => {
+      queue.songs.map(async (track, i) => {
         trackl.push({
-          title: trackl.name,
-          author: trackl.uploader.name,
-          user: trackl.user,
-          url: trackl.url,
-          duration: trackl.duration
+          title: track.name,
+          author: track.uploader.name,
+          user: track.user,
+          url: track.url,
+          duration: track.duration
         });
       });
 
@@ -65,20 +65,20 @@ module.exports = {
       let a = trackl.length / kactane;
 
       const generateEmbed = async (start) => {
-        let say1 = page === 1 ? 1 : page * package - package + 1;
+        let say1 = page === 1 ? 1 : page * kactane - package + 1;
         const current = trackl.slice(start, start + kactane);
         if (!current || !current?.length > 0) return interaction.reply({ content: '⚠️ Hàng đợi trống', ephemeral: true }).catch(e => { });
         return new EmbedBuilder()
           .setTitle(`${interaction.guild.name} Hàng đợi`)
           .setThumbnail(interaction.guild.iconURL({ size: 2048, dynamic: true }))
           .setColor(client.config.embedColor)
-          .setDescription(`▶️ Đang phát: \`${queue.songs[0].name}\`\n${current.map(data => 
+          .setDescription(`▶️ Đang phát: \`${queue.songs[0].name}\`\n${current.map(data =>
             `\n\`${say1++}\` | [${data.title}](${data.url}) | (Thực hiện bởi <@${data.user.id}>)`
           ).join('')}`)
           .setFooter({ text: `Trang ${page}/${Math.floor(a + 1)}` });
       };
 
-      const canFirOnOnePage = trackl.length <= kactane;
+      const canFitOnOnePage = trackl.length <= kactane;
 
       await interaction.reply({
         embeds: [await generateEmbed(0)],

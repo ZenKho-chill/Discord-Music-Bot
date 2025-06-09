@@ -19,6 +19,8 @@ services:
       - mongo
     networks:
       - bot-discord-music
+    ports:
+      - "3000:3000"
 
 networks:
   bot-discord-music:

@@ -28,7 +28,7 @@ module.exports = {
       if (!queue || !queue.playing) return interaction.reply({ content: '⚠️ Hiện không có bài nào đang phát!', ephemeral: true }).catch(e => { })
 
       const track = queue.songs[0];
-      if (!track) return interaction.reply({ conte: '⚠️ Hiện không có bài nào đang phát!', ephemeral: true }).catch(e => { })
+      if (!track) return interaction.reply({ content: '⚠️ Hiện không có bài nào đang phát!', ephemeral: true }).catch(e => { })
 
       const embed = new EmbedBuilder();
       embed.setColor(client.config.embedColor);
@@ -43,7 +43,7 @@ module.exports = {
         > **Người yêu cầu:** <@${track.user.id}>
         `);
 
-      interaction.reply({ embeds: [embed] }).catch(e => { })
+      interaction.reply({ embeds: [embed] }).catch(e => {console.error(e)})
     } catch (E) {
       console.error(e);
     }

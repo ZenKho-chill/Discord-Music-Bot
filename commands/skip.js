@@ -25,7 +25,7 @@ module.exports = {
   options: [{
     name: 'number',
     description: 'Nhập số lượng bài hát bạn muốn bỏ qua',
-    type: ApplicationCommandOptionType.Number,
+    type: ApplicationCommandOptionType.Integer,
     required: false
   }],
   voiceChannel: true,
@@ -43,7 +43,7 @@ module.exports = {
           return interaction.reply({ content: '⚠️ Số không hợp lệ. Vui lòng nhập số lượng bài hát hợp lệ để bỏ qua', ephemeral: true }).catch(e => { });
         }
 
-        if (queue.songs.length <= number) {
+        if (queue.songs.length - 1 < number) {
           return interaction.reply({ content: '⚠️ Số lượng bài hát bạn yêu cầu vượt số bài hát hiện có trong hàng chờ', ephemeral: true }).catch(e => { });
         }
 
@@ -51,7 +51,7 @@ module.exports = {
         await client.player.jump(interaction, number).then(() => {
           return interaction.reply({ content: `⏯️ Đã bỏ qua **${number}** bài hát: **${oldSong.name}**`  }).catch(e => { });
         }).catch(err => {
-          return interaction.reply({ content: `❌ Đã xảy ra lỗi: ${err.mesage}`, ephemeral: true }).catch(e => { });
+          return interaction.reply({ content: `❌ Đã xảy ra lỗi: ${err.message}`, ephemeral: true }).catch(e => { });
         });
       } else {
         let oldSong = queue.songs[0];

@@ -15,8 +15,6 @@
  * along with Discord Music Bot.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-const { ApplicationCommandOptionType } = rquire('discord.js');
-const db = require('../mongoDB');
 
 module.exports = {
   name: 'owner',

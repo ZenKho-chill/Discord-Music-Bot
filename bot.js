@@ -15,10 +15,10 @@
  * along with Discord Music Bot.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-const { CLient, GatewatIntentBits, Partials } = require('discord.js');
+const { Client, GatewayIntentBits, Partials } = require('discord.js');
 const { DisTube } = require('distube');
 const { SpotifyPlugin } = require('@distube/spotify');
-const { SoundCloundPlugin } = require('@distube/soundcloud');
+const { SoundCloudPlugin } = require("@distube/soundcloud");
 const { DeezerPlugin } = require('@distube/deezer');
 const { YtDlpPlugin } = require('@distube/yt-dlp');
 const { printWatermark } = require('./util/pw');
@@ -27,22 +27,22 @@ const fs = require('fs');
 const path = require('path');
 
 const client = new Client({
-    intents: Object.keys(GatewatIntentBits).map((a) => {
-        return GatewatIntentBits[a];
+    intents: Object.keys(GatewayIntentBits).map((a) => {
+        return GatewayIntentBits[a];
     }),
 });
 
 client.config = config;
 client.player = new DisTube(client, {
     leaveOnStop: config.opt.voiceConfig.leaveOnStop,
-    leaveOnFinish: config.opt.voiceConfig.leaveOnFinish,
+    leaveOnFinish: config.opt.voiceConfig.leaveOnFinish.status,
     leaveOnEmpty: config.opt.voiceConfig.leaveOnEmpty.status,
     emitNewSongOnly: true,
-    emitAddSongWenCreatingQueue: false,
-    emitAdListWhenCreatingQueue: false,
+    emitAddSongWhenCreatingQueue: false,
+    emitAddListWhenCreatingQueue: false,
     plugins: [
         new SpotifyPlugin(),
-        new SoundCloundPlugin(),
+        new SoundCloudPlugin(),
         new YtDlpPlugin(),
         new DeezerPlugin(),
     ],
@@ -50,11 +50,11 @@ client.player = new DisTube(client, {
 
 const player = client.player;
 
-fs.readdir('./events', (_err, fles) => {
+fs.readdir("./events", (_err, files) => {
     files.forEach((file) => {
-        if (!file.endsWith('.js')) return;
+        if (!file.endsWith(".js")) return;
         const event = require(`./events/${file}`);
-        let eventName = file.split('.')[0];
+        let eventName = file.split(".")[0];
         client.on(eventName, event.bind(null, client));
         delete require.cache[require.resolve(`./events/${file}`)];
     });
@@ -118,19 +118,36 @@ if (config.mongodbURL || process.env.MONGO) {
     }).then(async () => {
         console.log('\x1b[32m%s\x1b[0m', `|     🍔 Đã kết nối MongoDB!`)
     }).catch((err) => {
-        console.log('\x1b[32m%s\x1b[0m', `|     🍔 Không thể kết nối với MongoDB!`)})
-    } else {
-        console.log('\x1b[32m%s\x1b[0m', `|     🍔 Lỗi MongoDB!`)
-    }
+        console.log('\x1b[32m%s\x1b[0m', `|     🍔 Không thể kết nối với MongoDB!`)
+    })
+} else {
+    console.log('\x1b[32m%s\x1b[0m', `|     🍔 Lỗi MongoDB!`)
+}
 
 const express = require('express');
 const app = express();
 const port = 3000;
+const os = require('os');
+const networkInterfaces = os.networkInterfaces();
+
+function GetContainerIP() {
+    for (const iface of Object.values(networkInterfaces)) {
+        for (const config of iface) {
+            if (config.family === 'IPv4' && !config.internal) {
+                return config.address;
+            }
+        }
+    }
+    return 'localhost';
+}
+
 app.get('/', (req, res) => {
     const imagePath = path.join(__dirname, 'index.html');
     res.sendFile(imagePath);
 });
+
 app.listen(port, () => {
-    console.log(`🔗 Nghe thông qua web: http://localhost:${port}`);
+    const ip = GetContainerIP();
+    console.log(`🔗 Nghe thông qua web: http://${ip}:${port}`);
 });
 printWatermark();

@@ -15,8 +15,8 @@
  * along with Discord Music Bot.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-const db = require('../../mongoDB');
-const { EmbedBuilder } = require('discord.js');
+const db = require("../../mongoDB");
+const { EmbedBuilder } = require("discord.js");
 
 module.exports = async (client, queue, song) => {
   if (queue) {
@@ -24,14 +24,14 @@ module.exports = async (client, queue, song) => {
     if (queue?.textChannel) {
       const embed = new EmbedBuilder()
         .setAuthor({
-          name: 'Đã thêm vào hàng đợi',
-          iconURL: 'https://cdn.discordapp.com/attachments/1378363930573017140/1380045187580956682/logo.png?ex=684515bc&is=6843c43c&hm=7e8e52f327579353602c5a89fe2f8fb3e7b4950c5231e4c2b72889e3328fba65&',
+          name: 'Đã Thêm Vào Hàng Đợi',
+          iconURL: 'https://cdn.discordapp.com/attachments/1140841446228897932/1144671132948103208/giphy.gif?ex=68470d11&is=6845bb91&hm=ff4edc729f7952776b6bad94636a4f7591d9f06785b8c98dbeea886701e94387&', 
           url: 'https://zenkho.top'
         })
         .setDescription(`<@${song.user.id}>, **${song.name}**`)
         .setColor('#14bdff')
         .setFooter({ text: 'Sử dụng /queue để biết thêm thông tin' });
-      queue?.textChannel?.send({ embds: [embed] }).catch(e => { });
+      queue?.textChannel?.send({ embeds: [embed] }).catch(e => { });
     }
   }
 }

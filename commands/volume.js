@@ -67,7 +67,7 @@ module.exports = {
             iconURL: 'https://cdn.discordapp.com/attachments/1378363930573017140/1380045187580956682/logo.png?ex=684515bc&is=6843c43c&hm=7e8e52f327579353602c5a89fe2f8fb3e7b4950c5231e4c2b72889e3328fba65&',
             url: 'https://zenkho.top'
           })
-          .setDecription(`**Điều chỉnh âm lượng: ** **${vol}/${maxVol}**`);
+          .setDescription(`**Điều chỉnh âm lượng: ** **${vol}/${maxVol}**`);
         return interaction.reply({ embeds: [embed] });
       } else {
         return interaction.reply({ content: '❌ Đã xảy ra lỗi khi thay đổi âm lượng', ephemeral: true });

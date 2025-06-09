@@ -15,8 +15,8 @@
  * along with Discord Music Bot.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-const db = require('../../mongoDB');
-const { EmbedBuilder } = require('discord.js');
+const db = require("../../mongoDB");
+const { EmbedBuilder } = require("discord.js");
 
 module.exports = async (client, queue, song) => {
   if (queue) {
@@ -25,10 +25,10 @@ module.exports = async (client, queue, song) => {
       const embed = new EmbedBuilder()
         .setAuthor({
           name: 'Đang phát nhạc',
-          iconURL: 'https://cdn.discordapp.com/attachments/1140841446228897932/1144671132948103208/giphy.gif?ex=6845bb91&is=68446a11&hm=1a8b5d3a57f87560587f0ee8b06df017079574da2e949728683543b9457a973f&',
+          iconURL: 'https://cdn.discordapp.com/attachments/1140841446228897932/1144671132948103208/giphy.gif?ex=68470d11&is=6845bb91&hm=ff4edc729f7952776b6bad94636a4f7591d9f06785b8c98dbeea886701e94387&', 
           url: 'https://zenkho.top'
         })
-        .setDescription(`\n ‎ \n▶️ ** Chi tiết :** **${song?.name}**\n▶️ **Tận hưởng trải nghiệm âm nhạc tuyệt vời.**\n▶️ **Nếu link bị hỏng, thử nhập lại truy vấn.**`)
+        .setDescription(`\n ‎ \n▶️ **Chi tiết :** **${song?.name}**\n▶️ **Tận hưởng trải nghiệm âm nhạc tuyệt vời.**\n▶️ **Nếu link bị hỏng, thử nhập lại truy vấn.**`)
         .setImage(queue.songs[0].thumbnail)
         .setColor('#FF0000')
 

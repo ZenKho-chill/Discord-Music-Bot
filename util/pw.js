@@ -28,5 +28,5 @@ function printWatermark() {
 }
 
 module.exports = {
-    printWatermark,
+  printWatermark,
 };

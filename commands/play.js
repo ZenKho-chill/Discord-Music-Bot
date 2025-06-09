@@ -16,17 +16,17 @@
  */
 
 const { ApplicationCommandOptionType, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
-const db = require('../mongoDB');
+const db = require("../mongoDB");
 
 let selectedThumbnailURL;
 
 module.exports = {
-  name: 'play',
-  description: 'Cùng nghe một chút nhạc nào!',
-  permissions: '0x0000000000000800',
+  name: "play",
+  description: "Cùng nghe một chút nhạc nào!!",
+  permissions: "0x0000000000000800",
   options: [{
     name: 'name',
-    description: 'Nhập tên bài hát bạn muốn phát',
+    description: 'Nhập tên bài hát bạn muốn phát.',
     type: ApplicationCommandOptionType.String,
     required: true
   }],
@@ -36,35 +36,35 @@ module.exports = {
       const name = interaction.options.getString('name');
       console.log(`🎵 Người dùng yêu cầu bài hát: ${name}`);
 
-      if (!name) return interaction.reply({ content: '❌ Vui lòng nhập tên bài hát hợp lệ', ephemeral: true }).catch(e => { });
+      if (!name) return interaction.reply({ content: `❌ Vui lòng nhập tên bài hát hợp lệ.`, ephemeral: true }).catch(e => { });
 
       let res;
       try {
         res = await client.player.search(name, {
           member: interaction.member,
-          textChannel: interaction,channel,
+          textChannel: interaction.channel,
           interaction
         });
-        console.log(`🔎 Kết quả tìm kiếm: ${res.length}`);
+        console.log(`🔎 Số lượng kết quả tìm kiếm: ${res.length}`);
       } catch (e) {
-        console.error('❌ Lỗi tìm kiếm:', e);
-        return interaction.reply({ content: '❌ Không có kết quả' }).catch(e => { });
+        console.error(`❌ Lỗi tìm kiếm:`, e);
+        return interaction.editReply({ content: `❌ Không có kết quả` }).catch(e => { });
       }
 
       if (!res || !res.length || res.length <= 0) {
-        console.log('❌ Không có kết quả hợp lệ.');
-        return interaction.reply({ content: '❌ Không có kết quả', ephemeral: true }).catch(e => { });
+        console.log("❌ Không có kết quả hợp lệ.");
+        return interaction.reply({ content: `❌ Không có kết quả`, ephemeral: true }).catch(e => { });
       }
 
       const embed = new EmbedBuilder();
       embed.setColor(client.config.embedColor);
       embed.setTitle(`Tìm thấy: ${name}`);
 
-      const maxTracks = res.slide(0, 10);
+      const maxTracks = res.slice(0, 10);
       console.log(`🎶 Số bài hát tối đa: ${maxTracks.length}`);
 
       let track_button_creator = maxTracks.map((song, index) => {
-        console.log(`🎶 [${index + 1}] ${song.name} - ${song.url}`);
+        console.log(`🎵 [${index + 1}] ${song.name} - ${song.url}`);
         return new ButtonBuilder()
           .setLabel(`${index + 1}`)
           .setStyle(ButtonStyle.Secondary)
@@ -87,12 +87,12 @@ module.exports = {
 
       let cancel = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
-          .setLabel('Hủy')
+          .setLabel("Hủy")
           .setStyle(ButtonStyle.Danger)
           .setCustomId('cancel')
       );
 
-      embed.setDescription(`${maxTracks.map((song, i) => `**${i + 1}**.[${song.name}](${song.url}) | \`${song.uploader.name}\``).join('\n')}\n\n✨Chọn một bài hát từ dưới đây!!`);
+      embed.setDescription(`${maxTracks.map((song, i) => `**${i + 1}**. [${song.name}](${song.url}) | \`${song.uploader.name}\``).join('\n')}\n\n✨Chọn một bài hát từ dưới đây!!`);
 
       let code;
       if (buttons1 && buttons2) {
@@ -101,16 +101,16 @@ module.exports = {
         code = { embeds: [embed], components: [buttons1, cancel] };
       }
 
-      interaction.reply(code).then(async Mesage => {
+      interaction.reply(code).then(async Message => {
         const filter = i => i.user.id === interaction.user.id;
         let collector = await Message.createMessageComponentCollector({ filter, time: 60000 });
 
         collector.on('collect', async (button) => {
-          console.log(`🔘 Nút được chọn: ${button.customId}`);
+          console.log(`🔘 Nút được nhấn: ${button.customId}`);
 
           switch (button.customId) {
             case 'cancel': {
-              embed.setDescription('Tìm kiếm bị hủy');
+              embed.setDescription(`Tìm kiếm bị hủy`);
               await interaction.editReply({ embeds: [embed], components: [] }).catch(e => { });
               return collector.stop();
             }
@@ -122,8 +122,8 @@ module.exports = {
               console.log(`🎶 Tổng số kết quả: ${res.length}`);
 
               if (selectedIndex < 0 || selectedIndex >= res.length) {
-                console.log('❌ Chỉ số chọn không hợp lệ');
-                await interaction.editReply({ content: '❌ Chọn không hợp lệ!', ephemeral: true }).catch(e => { });
+                console.log(`❌ Chỉ số chọn không hợp lệ.`);
+                await interaction.editReply({ content: `❌ Chọn không hợp lệ!`, ephemeral: true }).catch(e => { });
                 return collector.stop();
               }
 
@@ -133,16 +133,16 @@ module.exports = {
               await interaction.editReply({ embeds: [embed], components: [] }).catch(e => { });
 
               try {
-                console.log(`🚀 Đang có gắng phát: ${res[selectedIndex].url}`);
+                console.log(`🚀 Đang cố gắng phát: ${res[selectedIndex].url}`);
                 await client.player.play(interaction.member.voice.channel, res[selectedIndex].url, {
                   member: interaction.member,
                   textChannel: interaction.channel,
                   interaction
                 });
-                console.log(`✅ Lệnh phát đã được gửi thành công`);
+                console.log(`✅ Lệnh phát đã được gửi thành công.`);
               } catch (e) {
-                console.error('❌ Lỗi khi phát:', e);
-                await interaction.editReply({ content: '❌ Không có kết quả!', ephemeral: true }).catch(e => { });
+                console.error(`❌ Lỗi khi phát:`, e);
+                await interaction.editReply({ content: `❌ Không có kết quả!`, ephemeral: true }).catch(e => { });
               }
               return collector.stop();
             }
@@ -157,10 +157,10 @@ module.exports = {
           }
         });
       }).catch(e => {
-        console.error('❌ Lỗi khi trả lời lệnh', e);
+        console.error(`❌ Lỗi khi trả lời lệnh:`, e);
       });
-    } catch (E) {
-      console.error('❌ Lỗi khi thực hiện lệnh:', e);
+    } catch (e) {
+      console.error(`❌ Lỗi khi thực thi lệnh:`, e);
     }
   },
 };

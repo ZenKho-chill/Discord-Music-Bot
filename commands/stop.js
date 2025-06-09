@@ -43,7 +43,7 @@ module.exports = {
         .setDescription('**Hành trình đã dừng lại, nhưng nhịp điệu vẫn sống mãi**')
         .setTimestamp();
 
-      return interaction.reply({ embeds: [embed] }).cache(e => { });
+      return interaction.reply({ embeds: [embed] }).catch(e => { });
     } catch (e) {
       console.error(e);
       return interaction.reply({ content: '❌ Đã xảy ra lỗi khi dừng nhạc', ephemeral: true }).catch(e => { });

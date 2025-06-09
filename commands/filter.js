@@ -15,8 +15,8 @@
  * along with Discord Music Bot.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-const { resourceUsage } = require("process");
 const db = require("../mongoDB");
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require("discord.js");
 
 module.exports = {
   name: "filter",
@@ -26,22 +26,16 @@ module.exports = {
   voiceChannel: true,
   run: async (client, interaction) => {
     try {
-      const {
-        EmbedBuilder,
-        ActionRowBuilder,
-        ButtonBuilder,
-        ButtonStyle,
-      } = require("discord.js");
-      const queue = client?.player?.getQueue(interaction?.guild?.id);
-      if (!queue || !queue?.playing)
-        return interaction
-          ?.reply({
-            content: "⚠️ Hiện không có bài nhạc nào đang phát!",
-            ephemeral: true,
-          })
-          .catch((e) => {});
+      await interaction.deferReply({ ephemeral: true });
 
-      let buttons = new ActionRowBuilder().addComponents(
+      const queue = client?.player?.getQueue(interaction.guild.id);
+      if (!queue || !queue.playing) {
+        return interaction.editReply({
+          content: "⚠️ Hiện không có bài nhạc nào đang phát!",
+        });
+      }
+
+      const buttons1 = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
           .setLabel("3D")
           .setCustomId("3d")
@@ -56,7 +50,7 @@ module.exports = {
           .setStyle(ButtonStyle.Secondary)
       );
 
-      let buttons2 = new ActionRowBuilder().addComponents(
+      const buttons2 = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
           .setLabel("Vaporwave")
           .setCustomId("vaporwave")
@@ -79,86 +73,56 @@ module.exports = {
         .setColor("#01fe66")
         .setAuthor({
           name: "Bộ lọc âm thanh",
-          iconURL:
-            "https://cdn.discordapp.com/attachments/1378363930573017140/1380045187580956682/logo.png?ex=684515bc&is=6843c43c&hm=7e8e52f327579353602c5a89fe2f8fb3e7b4950c5231e4c2b72889e3328fba65&",
+          iconURL: "https://cdn.discordapp.com/attachments/1378363930573017140/1380045187580956682/logo.png?ex=684515bc&is=6843c43c&hm=7e8e52f327579353602c5a89fe2f8fb3e7b4950c5231e4c2b72889e3328fba65&",
           url: "http://zenkho.top",
         })
-        .setDescription(
-          "**🎶 Khám phá âm thanh! Chọn hiệu ứng nhạc bạn muốn!**"
-        );
+        .setDescription("**🎶 Khám phá âm thanh! Chọn hiệu ứng nhạc bạn muốn!**");
 
-      interaction
-        .reply({ embeds: [embed], components: [buttons, buttons2] })
-        .then(async (Message) => {
-          const filter = (i) => i.user.id === interaction?.user?.id;
-          let col = await Message?.createMessageComponentCollector({
-            filter,
-            time: 60000,
-          });
+      await interaction.editReply({ embeds: [embed], components: [buttons1, buttons2] });
+      const message = await interaction.fetchReply();
 
-          col.on("collect", async (button) => {
-            if (button?.user?.id !== interaction?.user?.id) return;
-            await button?.deferUpdate().catch((e) => {});
-            let filters = [
-              "3d",
-              "bassboost",
-              "echo",
-              "karaoke",
-              "nightcore",
-              "vaporwave",
-              "surround",
-              "earwax",
-            ];
-            if (!filters?.includes(button?.customId)) return;
+      const collector = message.createMessageComponentCollector({
+        filter: (i) => i.user.id === interaction.user.id,
+        time: 60000,
+      });
 
-            let filtre = button.customId;
-            if (!filtre)
-              return interaction
-                ?.editReply({
-                  content: "❌ Bộ lọc không hợp lệ!",
-                  ephemeral: true,
-                })
-                .catch((e) => {});
-            filtre = filtre?.toLowerCase();
+      collector.on("collect", async (button) => {
+        await button.deferUpdate();
+        const filterName = button.customId.toLowerCase();
 
-            if (filters?.includes(filtre?.toLowerCase())) {
-              if (queue?.filters?.has(filtre)) {
-                queue?.filters.remove(filtre);
-                embed?.setDescription(
-                  `🎛️ Bộ lọc: **${filtre}**, Trạng thái áp dụng: ❌ Đã tắt`
-                );
-                return interaction
-                  ?.editReply({ embeds: [embed] })
-                  .catch((e) => {});
-              } else {
-                queue?.filters.add(filtre);
-                embed?.setDescription(
-                  `🎛️ Bộ lọc: **${filtre}**, Trạng thái áp dụng: ✅ Đã bật`
-                );
-                return interaction
-                  ?.editReply({ embeds: [embed] })
-                  .catch((e) => {});
-              }
-            } else {
-              embed?.setDescription(`❌ Không tìm thấy bộ lọc!`);
-              return interaction
-                ?.editReply({ embeds: [embed] })
-                .catch((e) => {});
-            }
-          });
+        const validFilters = [
+          "3d",
+          "bassboost",
+          "echo",
+          "karaoke",
+          "vaporwave",
+          "surround",
+          "earwax",
+        ];
 
-          col.on("end", async (buttons, reason) => {
-            if (reason === "time") {
-              embed = new EmbedBuilder()
-                .setColor(client?.config?.embedColor)
-                .setTitle("⏰ Hết thời gian chọn bộ lọc");
+        if (!validFilters.includes(filterName)) {
+          return;
+        }
 
-              await interaction
-                ?.editReply({ embeds: [embed], components: [] })
-                .catch((e) => {});
-            }
-          });
-        });
+        if (queue.filters.names.includes(filterName)) {
+          await queue.filters.remove(filterName);
+          embed.setDescription(`🎛️ Bộ lọc: **${filterName}**, Trạng thái áp dụng: ❌ Đã tắt`);
+        } else {
+          await queue.filters.add(filterName);
+          embed.setDescription(`🎛️ Bộ lọc: **${filterName}**, Trạng thái áp dụng: ✅ Đã bật`);
+        }
+
+        await interaction.editReply({ embeds: [embed] });
+      });
+
+      collector.on("end", async (_, reason) => {
+        if (reason === "time") {
+          const timeoutEmbed = new EmbedBuilder()
+            .setColor(client.config?.embedColor || "#ff0000")
+            .setTitle("⏰ Hết thời gian chọn bộ lọc");
+          await interaction.editReply({ embeds: [timeoutEmbed], components: [] });
+        }
+      });
     } catch (e) {
       console.error(e);
     }
