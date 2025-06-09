@@ -35,7 +35,7 @@ const client = new Client({
 client.config = config;
 client.player = new DisTube(client, {
     leaveOnStop: config.opt.voiceConfig.leaveOnStop,
-    leaveOnFinish: config.opt.voiceConfig.leaveOnFinish.status,
+    leaveOnFinish: false,
     leaveOnEmpty: config.opt.voiceConfig.leaveOnEmpty.status,
     emitNewSongOnly: true,
     emitAddSongWhenCreatingQueue: false,
@@ -59,6 +59,7 @@ fs.readdir("./events", (_err, files) => {
         delete require.cache[require.resolve(`./events/${file}`)];
     });
 });
+
 client.once('ready', () => {
     const bot = client.users.cache.get(process.env.AUTHOR); // Nhập ID Discord của bạn
     if (bot) {

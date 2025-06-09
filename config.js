@@ -85,7 +85,10 @@ module.exports = {
             ]
         },
         voiceConfig: {
-            leaveOnFinish: false,
+            leaveOnFinish: {
+                status: true,
+                cooldown: 180, // giây
+            },
             leaveOnStop: true,
             leaveOnEmpty: {
                 status: true,
