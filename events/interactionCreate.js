@@ -1,138 +1,211 @@
-/*
- * Tệp này là một phần của Discord Music Bot.
- *
- * Discord Music Bot là phần mềm miễn phí: bạn có thể phân phối lại hoặc sửa đổi
- * theo các điều khoản của Giấy phép Công cộng GNU được công bố bởi
- * Tổ chức Phần mềm Tự do, phiên bản 3 hoặc (nếu bạn muốn) bất kỳ phiên bản nào sau đó.
- *
- * Discord Music Bot được phân phối với hy vọng rằng nó sẽ hữu ích,
- * nhưng KHÔNG CÓ BẢO HÀNH; thậm chí không bao gồm cả bảo đảm
- * VỀ TÍNH THƯƠNG MẠI hoặc PHÙ HỢP CHO MỘT MỤC ĐÍCH CỤ THỂ. Xem
- * Giấy phép Công cộng GNU để biết thêm chi tiết.
- *
- * Bạn sẽ nhận được một bản sao của Giấy phép Công cộng GNU cùng với Discord Music Bot.
- * Nếu không, hãy xem <https://www.gnu.org/licenses/>.
- */
+const { StringSelectMenuBuilder, ActionRowBuilder } = require('discord.js');
 
-const config = require("../config.js");
-const { EmbedBuilder, InteractionType, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
-const db = require("../mongoDB");
-const fs = require("fs");
+module.exports = async(client, interaction) => {
+  if (interaction.isAutocomplete()) {
+    const command = client.commands.get(interaction.commandName);
+    if (command && typeof command.autocomplete === 'function') {
+      await command.autocomplete(interaction);
+    }
+    return;
+  }
 
-module.exports = async (client, interaction) => {
+  if (interaction.isStringSelectMenu()) {
+    if (interaction.customId === 'play_select') {
+      const voiceChannel = interaction.member.voice.channel;
+      if (!voiceChannel) {
+        return interaction.reply({ content: '🔇 Vào voice channel trước đã!', ephemeral: true });
+      }
+      if (!client._addLock) client._addLock = {};
+      const lockKey = `${interaction.guildId}`;
+      if (client._addLock[lockKey]) {
+        return interaction.reply({ content: '🚫 Đang thêm playlist/mix vào hàng đợi, vui lòng chờ hoàn thành trước khi thêm bài mới!', ephemeral: true });
+      }
+      const url = interaction.values[0];
+      try {
+        await interaction.deferUpdate();
+        let queue;
+        try {
+          queue = client.distube.getQueue(voiceChannel);
+          if (queue && queue.filters && typeof queue.filters.clear === 'function') {
+            queue.filters.clear();
+          }
+        } catch (e) {}
+        await client.distube.play(voiceChannel, url, {
+          textChannel: interaction.channel,
+          member: interaction.member
+        });
+        // Disable select menu sau khi chọn
+        const oldMsg = await interaction.fetchReply();
+        if (oldMsg && oldMsg.components && oldMsg.components.length > 0) {
+          const oldRow = oldMsg.components[0];
+          const oldMenu = oldRow.components[0];
+          // Tạo lại select menu builder từ dữ liệu cũ
+          const disabledMenu = StringSelectMenuBuilder.from(oldMenu).setDisabled(true);
+          const newRow = new ActionRowBuilder().addComponents(disabledMenu);
+          await interaction.editReply({ content: `🎶 Đang phát: <${url}>`, components: [newRow] });
+        } else {
+          await interaction.editReply({ content: `🎶 Đang phát: <${url}>`, components: [] });
+        }
+
+        // Gửi ảnh nowplaying giống play.js
+        // Đợi queue cập nhật bài mới
+        await new Promise(r => setTimeout(r, 1000));
+        const updatedQueue = client.distube.getQueue(voiceChannel);
+        if (updatedQueue && updatedQueue.songs && updatedQueue.songs.length > 0) {
+          // Lấy bài vừa thêm (cuối queue)
+          let song = updatedQueue.songs[updatedQueue.songs.length - 1];
+          let currentIndex = updatedQueue.songs.length;
+          const { createCanvas, loadImage } = require('canvas');
+          const { AttachmentBuilder } = require('discord.js');
+          const StackBlur = require('stackblur-canvas');
+          const width = 750, height = 200;
+          const canvas = createCanvas(width, height);
+          const ctx = canvas.getContext('2d');
+          // Nền mờ từ ảnh nhạc
+          let img;
+          let thumbUrl = song.thumbnail;
+          if (song.url && song.url.includes('youtube.com')) {
+            const match = song.url.match(/v=([\w-]+)/);
+            if (match && match[1]) {
+              const videoId = match[1];
+              const resolutions = ['maxresdefault', 'sddefault', 'hqdefault', 'mqdefault'];
+              let foundImage = false;
+              for (const res of resolutions) {
+                try {
+                  thumbUrl = `https://img.youtube.com/vi/${videoId}/${res}.jpg`;
+                  img = await loadImage(thumbUrl);
+                  foundImage = true;
+                  break;
+                } catch (e) { continue; }
+              }
+              if (!foundImage) {
+                img = await loadImage('https://cdn.discordapp.com/embed/avatars/0.png');
+              }
+            }
+          }
+          if (!img) {
+            try {
+              if (!thumbUrl || !/^https?:\/\//.test(thumbUrl)) throw new Error('Invalid thumbnail');
+              img = await loadImage(thumbUrl);
+            } catch (e) {
+              img = await loadImage('https://cdn.discordapp.com/embed/avatars/0.png');
+            }
+          }
+          // Vẽ ảnh nền
+          const bgRatio = width / height;
+          const imgRatio = img.width / img.height;
+          let sx = 0, sy = 0, sWidth = img.width, sHeight = img.height;
+          if (imgRatio > bgRatio) {
+            sWidth = img.height * bgRatio;
+            sx = (img.width - sWidth) / 2;
+          } else {
+            sHeight = img.width / bgRatio;
+            sy = (img.height - sHeight) / 2;
+          }
+          ctx.drawImage(img, sx, sy, sWidth, sHeight, 0, 0, width, height);
+          StackBlur.canvasRGBA(ctx.canvas, 0, 0, width, height, 10);
+          ctx.fillStyle = 'rgba(0,0,0,0.55)';
+          ctx.fillRect(0, 0, width, height);
+          // Thumbnail bo góc
+          const thumbSize = 160;
+          const thumbX = 20;
+          const thumbY = 20;
+          const cornerRadius = 28;
+          ctx.save();
+          ctx.beginPath();
+          ctx.moveTo(thumbX + cornerRadius, thumbY);
+          ctx.arcTo(thumbX + thumbSize, thumbY, thumbX + thumbSize, thumbY + thumbSize, cornerRadius);
+          ctx.arcTo(thumbX + thumbSize, thumbY + thumbSize, thumbX, thumbY + thumbSize, cornerRadius);
+          ctx.arcTo(thumbX, thumbY + thumbSize, thumbX, thumbY, cornerRadius);
+          ctx.arcTo(thumbX, thumbY, thumbX + thumbSize, thumbY, cornerRadius);
+          ctx.closePath();
+          ctx.clip();
+          const thumbImgRatio = img.width / img.height;
+          let thumbSx = 0, thumbSy = 0, thumbSWidth = img.width, thumbSHeight = img.height;
+          if (thumbImgRatio > 1) {
+            thumbSWidth = img.height;
+            thumbSx = (img.width - thumbSWidth) / 2;
+          } else {
+            thumbSHeight = img.width;
+            thumbSy = (img.height - thumbSHeight) / 2;
+          }
+          ctx.drawImage(img, thumbSx, thumbSy, thumbSWidth, thumbSHeight, thumbX, thumbY, thumbSize, thumbSize);
+          ctx.restore();
+          const textX = thumbX + thumbSize + 30;
+          ctx.font = 'bold 32px Arial';
+          ctx.fillStyle = '#fff';
+          ctx.fillText(song.name, textX, 65, width - textX - 100);
+          ctx.font = '24px Arial';
+          ctx.fillStyle = '#ccc';
+          ctx.fillText('Tác giả: ' + (song.uploader?.name || song.artist || ''), textX, 120, width - textX - 100);
+          const circleRadius = 26;
+          const circleX = width - 60;
+          const circleY = height / 2;
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(circleX, circleY, circleRadius, 0, 2 * Math.PI);
+          ctx.closePath();
+          ctx.fillStyle = 'rgba(255, 224, 189, 0.85)';
+          ctx.fill();
+          ctx.font = 'bold 26px Arial';
+          ctx.fillStyle = '#111';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(`${currentIndex}`, circleX, circleY);
+          ctx.restore();
+          ctx.textAlign = 'left';
+          ctx.font = '18px Arial';
+          ctx.fillStyle = '#fff';
+          ctx.fillText('Thời lượng: ' + (song.formattedDuration || song.duration || ''), textX, 170);
+          const attachment = new AttachmentBuilder(canvas.toBuffer(), { name: 'nowplaying.png' });
+          await interaction.channel.send({ files: [attachment] });
+          // Xóa tin nhắn có bảng chọn nếu còn tồn tại
+          try {
+            const msgToDelete = await interaction.fetchReply();
+            if (msgToDelete && msgToDelete.delete) {
+              await msgToDelete.delete();
+            }
+          } catch (e) {}
+        }
+      } catch (err) {
+        console.error('PlayError:', err);
+        try {
+          await interaction.editReply({ content: `❌ Không thể phát bài hát!\n\n${err.message || err}`, components: [] });
+        } catch (e) {
+          await interaction.followUp({ content: `❌ Không thể phát bài hát!\n\n${err.message || err}`, ephemeral: true });
+        }
+      }
+      return;
+    }
+  }
+
+  if (interaction.isButton()) {
+    if (interaction.customId === 'stop_add') {
+      const lockKey = `${interaction.guildId}`;
+      if (interaction.client._addInfo && interaction.client._addInfo[lockKey]) {
+        const addInfo = interaction.client._addInfo[lockKey];
+        // Đánh dấu dừng
+        addInfo.shouldStop = true;
+        // Lưu ephemeralMsgId để xóa sau này
+        try {
+          const ephemeralMsg = await interaction.reply({ content: addInfo.type === 'mix' ? '⏸️ Đang dừng quá trình thêm bài...' : '⏸️ Đang dừng quá trình thêm playlist...', ephemeral: true });
+          if (ephemeralMsg && ephemeralMsg.id) addInfo.ephemeralMsgId = ephemeralMsg.id;
+        } catch {}
+        // KHÔNG xóa progressMsg ở đây nữa, để vòng lặp trong play.js xử lý
+      }
+      return;
+    }
+  }
+
+  if (!interaction.isChatInputCommand()) return;
+
+  const command = client.commands.get(interaction.commandName);
+  if (!command) return;
 
   try {
-    if (!interaction?.guild) {
-      return interaction?.reply({ content: "Đang bị giới hạn tần suất.", ephemeral: true });
-    } else {
-
-      function cmd_loader() {
-        if (interaction?.type === InteractionType.ApplicationCommand) {
-          fs.readdir(config.commandsdir, (err, files) => {
-            if (err) throw err;
-            files.forEach(async (f) => {
-              let props = require(`.${config.commandsdir}/${f}`);
-              if (interaction.commandName === props.name) {
-                try {
-                  let data = await db?.musicbot?.findOne({ guildID: interaction?.guild?.id });
-                  if (data?.channels?.length > 0) {
-
-                    let channel_control = await data?.channels?.filter(x => !interaction?.guild?.channels?.cache?.get(x?.channel));
-
-                    if (channel_control?.length > 0) {
-                      for (const x of channel_control) {
-                        await db?.musicbot?.updateOne({ guildID: interaction?.guild?.id }, { 
-                          $pull: { 
-                            channels: { 
-                              channel: x?.channel 
-                            } 
-                          } 
-                        }, { upsert: true }).catch(e => { });
-                      }
-                    } else {
-                      data = await db?.musicbot?.findOne({ guildID: interaction?.guild?.id });
-                      let channel_filter = data?.channels?.filter(x => x.channel === interaction?.channel?.id);
-
-                      if (!channel_filter?.length > 0 && !interaction?.member?.permissions?.has("0x0000000000000020")) {
-                        channel_filter = data?.channels?.map(x => `<#${x.channel}>`).join(", ");
-                        return interaction?.reply({ content: `🔴 Giới hạn tần suất đã được áp dụng cho kênh: ${channel_filter}`, ephemeral: true }).catch(e => { });
-                      }
-                    }
-                  }
-
-                  if (interaction?.member?.permissions?.has(props?.permissions || "0x0000000000000800")) {
-                    const DJ = client.config.opt.DJ;
-                    if (props && DJ.commands.includes(interaction?.commandName)) {
-                      let djRole = await db?.musicbot?.findOne({ guildID: interaction?.guild?.id }).catch(e => { });
-                      if (djRole) {
-                        const roleDJ = interaction?.guild?.roles?.cache?.get(djRole?.role);
-                        if (!interaction?.member?.permissions?.has("0x0000000000000020")) {
-                          if (roleDJ) {
-                            if (!interaction?.member?.roles?.cache?.has(roleDJ?.id)) {
-
-                              const embed = new EmbedBuilder()
-                                .setColor(client.config.embedColor)
-                                .setTitle(client?.user?.username)
-                                .setThumbnail(client?.user?.displayAvatarURL())
-                                .setTimestamp()
-
-                              return interaction?.reply({ embeds: [embed], ephemeral: true }).catch(e => { });
-                            }
-                          }
-                        }
-                      }
-                    }
-
-                    if (props && props.voiceChannel) {
-                      if (!interaction?.member?.voice?.channelId) return interaction?.reply({ content: `🔴 Vui lòng tham gia kênh thoại trước!`, ephemeral: true }).catch(e => { });
-                      const guild_me = interaction?.guild?.members?.cache?.get(client?.user?.id);
-                      if (guild_me?.voice?.channelId) {
-                        if (guild_me?.voice?.channelId !== interaction?.member?.voice?.channelId) {
-                          return interaction?.reply({ content: `🔴 Bạn phải ở trong cùng kênh thoại!`, ephemeral: true }).catch(e => { });
-                        }
-                      }
-                    }
-                    return props.run(client, interaction);
-                    
-                  } else {
-                    return interaction?.reply({ content: `▶️ Thiếu quyền: **${props?.permissions?.replace("0x0000000000000020", "QUẢN LÝ GUILD")?.replace("0x0000000000000800", "GỬI TIN NHẮN") || "GỬI TIN NHẮN"}**`, ephemeral: true });
-                  }
-                } catch (e) {
-                  return interaction?.reply({ content: `❌ Lỗi...\n\n\`\`\`${e?.message}\`\`\``, ephemeral: true });
-                }
-              }
-            });
-          });
-        }
-      }
-
-      if(config.voteManager.status === true && config.voteManager.api_key) {
-        if(config.voteManager.vote_commands.includes(interaction?.commandName)) {
-          try {
-            const topSdk = require("@top-gg/sdk");
-            let topApi = new topSdk.Api(config.voteManager.api_key, client);
-            await topApi?.hasVoted(interaction?.user?.id).then(async voted => {
-              if (!voted) {
-                const embed2 = new EmbedBuilder()
-                  .setTitle("Bầu chọn "+client?.user?.username)
-                  .setColor(client?.config?.embedColor);
-                return interaction?.reply({ content: "", embeds: [embed2], ephemeral: true });
-              } else {
-                cmd_loader();
-              }
-            })
-          } catch (e) {
-            cmd_loader();
-          }
-        } else {
-          cmd_loader();
-        }
-      } else {
-        cmd_loader();
-      }
-
-    }
-  } catch (e) {
-    console.error(e);
+    await command.execute(client, interaction);
+  } catch (err) {
+    console.error(err);
+    await interaction.reply({ content: '❌ Có lỗi xảy ra!', ephemeral: true });
   }
-}
+};
