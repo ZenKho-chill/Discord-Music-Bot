@@ -2,7 +2,8 @@ module.exports = {
   token: 'Discord Token Here',
   clientId: 'Discord ClientID Here',
   maxQueue: 30,
-  debug: false
+  debug: false,
+  registerCommands: true,
   spotify: {
     clientId: 'SPOTIFY_CLIENT_ID',
     clientSecret: 'SPOTIFY_CLIENT_SECRET'
@@ -22,8 +23,17 @@ module.exports = {
       playlist: true
     },
   },
+  // Auto Leave khi HẾT NHẠC trong queue
   leaveOnEmpty: {
-    enabled: true,
-    timeout: 30
+    finish: {
+      enabled: true,  // Tự động rời khi hết nhạc (quản lý bởi DisTube)
+      timeout: 10     // Thời gian chờ trước khi rời (giây)
+    },
+    // Auto Leave khi PHÒNG VOICE TRỐNG (không có user)
+    empty: {
+      enabled: true,
+      timeout: 30,        // Thời gian chờ trước khi rời (giây)  
+      pauseOnEmpty: false // true: tạm dừng nhạc, false: dừng và rời phòng
+    }
   }
 };

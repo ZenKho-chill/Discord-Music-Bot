@@ -17,6 +17,7 @@ class HotReloader {
       'events/interactionCreate.js', 
       'events/messageCreate.js',
       'events/guildCreate.js',
+      'events/voiceStateUpdate.js',
       'utils/loader.js'
     ];
     
@@ -53,14 +54,14 @@ class HotReloader {
         }
       });
 
-      console.log(`[TaiDong] 🔥 Hệ thống tải động đã được kích hoạt cho tất cả tệp`);
+      if (config.debug) console.log(`[HotReload] 🔥 Hệ thống tải động đã được kích hoạt cho tất cả tệp`);
       if (this.currentConfig.debug) {
-        console.log(`[TaiDong] 📂 Đang theo dõi: ${this.watchers.size} tệp/thư mục`);
-        console.log(`[TaiDong] 🚫 Tệp cốt lõi (cần khởi động lại): ${this.coreFiles.length}`);
+        console.log(`[HotReload] 📂 Đang theo dõi: ${this.watchers.size} tệp/thư mục`);
+        console.log(`[HotReload] 🚫 Tệp cốt lõi (cần khởi động lại): ${this.coreFiles.length}`);
       }
       
     } catch (error) {
-      console.error(`[TaiDong] ❌ Lỗi khi bắt đầu theo dõi:`, error.message);
+      console.error(`[HotReload] ❌ Lỗi khi bắt đầu theo dõi:`, error.message);
     }
   }
 
@@ -78,7 +79,7 @@ class HotReloader {
       this.watchers.set(filePath, { watcher, type });
       
     } catch (error) {
-      console.error(`[TaiDong] ❌ Không thể theo dõi tệp ${filePath}:`, error.message);
+      console.error(`[HotReload] ❌ Không thể theo dõi tệp ${filePath}:`, error.message);
     }
   }
 
@@ -95,17 +96,17 @@ class HotReloader {
           // If root watch, only care about core files
           if (isRootWatch) {
             if (this.isCoreFile(relativeFilePath)) {
-              console.log(`[TaiDong] ⚠️ CẢNH BÁO: Tệp cốt lõi đã thay đổi: ${relativeFilePath}`);
-              console.log(`[TaiDong] 🔄 Vui lòng KHỞI ĐỘNG LẠI bot để áp dụng thay đổi tệp cốt lõi!`);
-              console.log(`[TaiDong] 📋 Lý do: Tệp cốt lõi không thể tải động vì lý do bảo mật và ổn định.`);
+              console.log(`[HotReload] ⚠️ CẢNH BÁO: Tệp cốt lõi đã thay đổi: ${relativeFilePath}`);
+              console.log(`[HotReload] 🔄 Vui lòng KHỞI ĐỘNG LẠI bot để áp dụng thay đổi tệp cốt lõi!`);
+              console.log(`[HotReload] 📋 Lý do: Tệp cốt lõi không thể tải động vì lý do bảo mật và ổn định.`);
             }
             return; // Don't process hot reload for root watch
           }
           
           // Check if it's a core file
           if (this.isCoreFile(relativeFilePath)) {
-            console.log(`[TaiDong] ⚠️ Tệp cốt lõi đã thay đổi: ${relativeFilePath}`);
-            console.log(`[TaiDong] 🔄 Vui lòng khởi động lại bot để áp dụng thay đổi!`);
+            console.log(`[HotReload] ⚠️ Tệp cốt lõi đã thay đổi: ${relativeFilePath}`);
+            console.log(`[HotReload] 🔄 Vui lòng khởi động lại bot để áp dụng thay đổi!`);
             return;
           }
           
@@ -116,7 +117,7 @@ class HotReloader {
       this.watchers.set(dirPath, { watcher, type: 'directory' });
       
     } catch (error) {
-      console.error(`[TaiDong] ❌ Không thể theo dõi thư mục ${dirPath}:`, error.message);
+      console.error(`[HotReload] ❌ Không thể theo dõi thư mục ${dirPath}:`, error.message);
     }
   }
 
@@ -142,8 +143,8 @@ class HotReloader {
       }
       
     } catch (error) {
-      console.error(`[TaiDong] ❌ Lỗi khi xử lý tệp ${filePath}:`, error.message);
-      console.log(`[TaiDong] ⚠️ Vui lòng kiểm tra cú pháp trong tệp và thử lại`);
+      console.error(`[HotReload] ❌ Lỗi khi xử lý tệp ${filePath}:`, error.message);
+      console.log(`[HotReload] ⚠️ Vui lòng kiểm tra cú pháp trong tệp và thử lại`);
     }
   }
 
@@ -161,7 +162,7 @@ class HotReloader {
       
       if (changes.length > 0) {
         if (this.currentConfig.debug) {
-          console.log(`[TaiDong] 🔄 Config.js đã thay đổi:`, changes);
+          console.log(`[HotReload] 🔄 Config.js đã thay đổi:`, changes);
         }
         
         // Update current config
@@ -172,8 +173,8 @@ class HotReloader {
       }
       
     } catch (error) {
-      console.error(`[TaiDong] ❌ Lỗi khi tải lại cấu hình:`, error.message);
-      console.log(`[TaiDong] ⚠️ Vui lòng kiểm tra cú pháp trong config.js`);
+      console.error(`[HotReload] ❌ Lỗi khi tải lại cấu hình:`, error.message);
+      console.log(`[HotReload] ⚠️ Vui lòng kiểm tra cú pháp trong config.js`);
     }
   }
 
@@ -183,7 +184,7 @@ class HotReloader {
       // Check if file exists
       if (!fs.existsSync(filePath)) {
         if (this.currentConfig.debug) {
-          console.log(`[TaiDong] 🗑️ Tệp đã bị xóa: ${displayPath}`);
+          console.log(`[HotReload] 🗑️ Tệp đã bị xóa: ${displayPath}`);
         }
         return;
       }
@@ -201,15 +202,15 @@ class HotReloader {
         try {
           require(fullPath);
           if (this.currentConfig.debug) {
-            console.log(`[TaiDong] ✅ Đã tải lại: ${displayPath}`);
+            console.log(`[HotReload] ✅ Đã tải lại: ${displayPath}`);
           }
         } catch (syntaxError) {
-          console.error(`[TaiDong] ❌ Lỗi cú pháp trong ${displayPath}:`, syntaxError.message);
+          console.error(`[HotReload] ❌ Lỗi cú pháp trong ${displayPath}:`, syntaxError.message);
           return;
         }
       } else {
         if (this.currentConfig.debug) {
-          console.log(`[TaiDong] 📄 Tệp đã thay đổi: ${displayPath}`);
+          console.log(`[HotReload] 📄 Tệp đã thay đổi: ${displayPath}`);
         }
       }
       
@@ -217,7 +218,7 @@ class HotReloader {
       this.notifyFileChange(displayPath);
       
     } catch (error) {
-      console.error(`[TaiDong] ❌ Lỗi khi xử lý ${displayPath}:`, error.message);
+      console.error(`[HotReload] ❌ Lỗi khi xử lý ${displayPath}:`, error.message);
     }
   }
 
@@ -266,7 +267,7 @@ class HotReloader {
   // Notify about config changes
   notifyConfigChanges(changes) {
     if (this.currentConfig.debug) {
-      console.log(`[TaiDong] 📝 Chi tiết thay đổi cấu hình:`);
+      console.log(`[HotReload] 📝 Chi tiết thay đổi cấu hình:`);
       
       changes.forEach(change => {
         if (change.type === 'platform') {
@@ -277,14 +278,14 @@ class HotReloader {
         }
       });
       
-      console.log(`[TaiDong] ✨ Các thay đổi cấu hình đã được áp dụng ngay lập tức!`);
+      console.log(`[HotReload] ✨ Các thay đổi cấu hình đã được áp dụng ngay lập tức!`);
     }
   }
 
   // Notify about file changes
   notifyFileChange(filePath) {
     if (this.currentConfig.debug) {
-      console.log(`[TaiDong] 🔄 Tệp đã được tải động: ${filePath}`);
+      console.log(`[HotReload] 🔄 Tệp đã được tải động: ${filePath}`);
     }
   }
 
@@ -294,14 +295,14 @@ class HotReloader {
       try {
         watcherInfo.watcher.close();
       } catch (error) {
-        console.error(`[TaiDong] Lỗi khi dừng theo dõi ${path}:`, error.message);
+        console.error(`[HotReload] Lỗi khi dừng theo dõi ${path}:`, error.message);
       }
     });
     
     this.watchers.clear();
     this.isWatching = false;
     if (this.currentConfig.debug) {
-      console.log(`[TaiDong] 🛑 Đã dừng tất cả trình theo dõi tải động`);
+      console.log(`[HotReload] 🛑 Đã dừng tất cả trình theo dõi tải động`);
     }
   }
 
@@ -330,10 +331,10 @@ class HotReloader {
       const fullPath = path.resolve(filePath);
       delete require.cache[fullPath];
       require(fullPath);
-      console.log(`[TaiDong] ✅ Đã reload thủ công: ${filePath}`);
+      console.log(`[HotReload] ✅ Đã reload thủ công: ${filePath}`);
       return true;
     } catch (error) {
-      console.error(`[TaiDong] ❌ Lỗi reload thủ công ${filePath}:`, error.message);
+      console.error(`[HotReload] ❌ Lỗi reload thủ công ${filePath}:`, error.message);
       return false;
     }
   }

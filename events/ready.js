@@ -1,6 +1,7 @@
 const { EmbedBuilder } = require('discord.js');
 const hotReloader = require('../utils/hotReload');
 const queueManager = require('../utils/queueManager');
+const config = require('../config/config');
 
 const DEFAULT_THUMBNAIL = 'https://cdn.discordapp.com/embed/avatars/0.png';
 let nowPlayingMsg = null;
