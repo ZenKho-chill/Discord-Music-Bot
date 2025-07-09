@@ -3,7 +3,7 @@ const { createCanvas, loadImage } = require('canvas');
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName('nowplaying')
+    .setName('baihatdangphat')
     .setDescription('Hiển thị bài hát đang phát với giao diện đẹp'),
 
   async execute(client, interaction) {

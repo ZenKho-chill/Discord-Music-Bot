@@ -5,7 +5,7 @@ const queueManager = require('../utils/queueManager');
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName('queue')
+    .setName('hangdoi')
     .setDescription('Hiển thị hàng đợi nhạc với giao diện đẹp'),
 
   async execute(client, interaction) {

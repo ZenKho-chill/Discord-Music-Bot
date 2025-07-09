@@ -5,8 +5,17 @@ const ytpl = require('@distube/ytpl');
 const puppeteer = require('puppeteer');
 const { Playlist } = require('distube');
 const { YtDlpPlugin } = require('@distube/yt-dlp');
-const config = require('../../config/config');
 const queueManager = require('../../utils/queueManager');
+const { isPlatformFeatureEnabled, getPlatformDisplayName, getTypeDisplayName, createFeatureDisabledMessage } = require('./platformDetector');
+
+// Get current config safely (lazy load to avoid circular dependency)
+function getConfig() {
+  try {
+    return require('../../utils/hotReload').getCurrentConfig();
+  } catch (error) {
+    return require('../../config/config');
+  }
+}
 
 async function generatePlaylistResultImage(channel, songs, title, thumbnailUrl, type, author = '') {
   try {
@@ -86,9 +95,19 @@ async function generatePlaylistResultImage(channel, songs, title, thumbnailUrl, 
   }
 }
 
-const MAX_QUEUE_SIZE = config.maxQueue;
-
 async function handleYouTubePlaylist(client, interaction, query, voiceChannel, lockKey) {
+  const config = getConfig();
+  const MAX_QUEUE_SIZE = config.maxQueue;
+  
+  // Validation: Kiểm tra xem playlist YouTube có được bật không
+  if (!isPlatformFeatureEnabled('youtube', 'playlist')) {
+    const errorMessage = createFeatureDisabledMessage('youtube', 'playlist');
+    return await interaction.followUp({
+      content: errorMessage,
+      ephemeral: true
+    });
+  }
+  
   // Set flag để tạm dừng removeFirst logic
   const { setProcessingPlaylist } = require('../../events/ready');
   setProcessingPlaylist(interaction.guildId, true);
@@ -253,6 +272,18 @@ async function handleYouTubePlaylist(client, interaction, query, voiceChannel, l
 }
 
 async function handleYouTubeSingle(client, interaction, query, voiceChannel) {
+  const config = getConfig();
+  const MAX_QUEUE_SIZE = config.maxQueue;
+  
+  // Validation: Kiểm tra xem single YouTube có được bật không
+  if (!isPlatformFeatureEnabled('youtube', 'single')) {
+    const errorMessage = createFeatureDisabledMessage('youtube', 'single');
+    return await interaction.followUp({
+      content: errorMessage,
+      ephemeral: true
+    });
+  }
+  
   // Kiểm tra queue trước khi thêm bài mới
   const queue = client.distube.getQueue(voiceChannel);
   if (queue && Array.isArray(queue.songs) && queue.songs.length >= MAX_QUEUE_SIZE) {

@@ -1,5 +1,68 @@
-const { resolveSoundCloudShortlink } = require('./soundcloud');
-const config = require('../../config/config');
+const { resolveSoundCloudShortlink } = require('../../utils/soundcloudUtils');
+
+// Helper function to get config safely (lazy load to avoid circular dependency)
+function getConfig() {
+  try {
+    return require('../../utils/hotReload').getCurrentConfig();
+  } catch (error) {
+    return require('../../config/config');
+  }
+}
+
+// Helper functions để kiểm tra config
+function isPlatformFeatureEnabled(platform, type) {
+  // Sử dụng config được hot reload
+  const config = getConfig();
+  
+  if (!config.platform || !config.platform[platform]) {
+    if (config.debug) console.log(`[PlatformDetector] Platform ${platform} không có trong config`);
+    return false;
+  }
+  
+  const platformConfig = config.platform[platform];
+  
+  // Map các type đặc biệt
+  if (type === 'search') type = 'single'; // YouTube search được coi như single
+  if (type === 'mix') type = 'playlist'; // YouTube mix được coi như playlist
+  
+  const isEnabled = platformConfig[type] === true;
+  
+  if (config.debug) {
+    console.log(`[PlatformDetector] Kiểm tra ${platform}.${type}: ${isEnabled}`);
+    console.log(`[PlatformDetector] Platform config:`, platformConfig);
+  }
+  
+  return isEnabled;
+}
+
+function getPlatformDisplayName(platform) {
+  const names = {
+    'youtube': 'YouTube',
+    'spotify': 'Spotify', 
+    'soundcloud': 'SoundCloud'
+  };
+  return names[platform] || platform;
+}
+
+function getTypeDisplayName(type) {
+  const names = {
+    'single': 'bài hát đơn lẻ',
+    'playlist': 'playlist',
+    'album': 'album',
+    'search': 'tìm kiếm bài hát',
+    'mix': 'mix/radio'
+  };
+  return names[type] || type;
+}
+
+// Tạo thông báo lỗi khi tính năng bị tắt
+function createFeatureDisabledMessage(platform, type) {
+  const platformName = getPlatformDisplayName(platform);
+  const typeName = getTypeDisplayName(type);
+  
+  return `❌ **Tính năng bị tắt!**\n\n` +
+         `Tính năng **${typeName}** cho **${platformName}** hiện đang bị vô hiệu hóa bởi admin.`;
+}
 
 // Phát hiện loại platform và content type từ URL
 async function detectPlatform(query) {
@@ -105,6 +168,8 @@ async function detectPlatform(query) {
 
 // Router để điều hướng logic xử lý
 async function routeToPlatform(client, interaction, query, voiceChannel, lockKey) {
+  const config = getConfig(); // Sử dụng config hot reload
+  
   if (config.debug) {
     console.log(`[PlatformDetector] Bắt đầu route platform cho query:`, query);
     console.log(`[PlatformDetector] Voice Channel:`, voiceChannel?.name, voiceChannel?.id);
@@ -114,6 +179,15 @@ async function routeToPlatform(client, interaction, query, voiceChannel, lockKey
   try {
     const detection = await detectPlatform(query);
     if (config.debug) console.log(`[PlatformDetector] Kết quả detection:`, detection);
+    
+    // Kiểm tra config để xem platform/type có được bật không
+    if (!isPlatformFeatureEnabled(detection.platform, detection.type)) {
+      const errorMessage = createFeatureDisabledMessage(detection.platform, detection.type);
+      return await interaction.followUp({
+        content: errorMessage,
+        ephemeral: true
+      });
+    }
     
     switch (detection.platform) {
       case 'youtube':
@@ -182,6 +256,15 @@ async function routeToPlatform(client, interaction, query, voiceChannel, lockKey
 
 // Xử lý tìm kiếm YouTube (từ khóa)
 async function handleYouTubeSearch(client, interaction, query, voiceChannel) {
+  // Validation: Kiểm tra xem search YouTube có được bật không (search = single)
+  if (!isPlatformFeatureEnabled('youtube', 'single')) {
+    const errorMessage = createFeatureDisabledMessage('youtube', 'search');
+    return await interaction.followUp({
+      content: errorMessage,
+      ephemeral: true
+    });
+  }
+  
   const ytSearch = require('yt-search');
   const { ActionRowBuilder, StringSelectMenuBuilder } = require('discord.js');
   
@@ -211,5 +294,9 @@ async function handleYouTubeSearch(client, interaction, query, voiceChannel) {
 module.exports = {
   detectPlatform,
   routeToPlatform,
-  handleYouTubeSearch
+  handleYouTubeSearch,
+  isPlatformFeatureEnabled,
+  getPlatformDisplayName,
+  getTypeDisplayName,
+  createFeatureDisabledMessage
 }; 

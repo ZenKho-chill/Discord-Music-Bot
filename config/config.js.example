@@ -7,6 +7,21 @@ module.exports = {
     clientId: 'SPOTIFY_CLIENT_ID',
     clientSecret: 'SPOTIFY_CLIENT_SECRET'
   },
+  platform: {
+    youtube: {
+      single: true,
+      playlist: true,
+    },
+    spotify: {
+      single: true,
+      album: true,
+      playlist: true
+    },
+    soundcloud: {
+      single: true,
+      playlist: true
+    },
+  },
   leaveOnEmpty: {
     enabled: true,
     timeout: 30

@@ -1,8 +1,17 @@
 const { EmbedBuilder, AttachmentBuilder } = require('discord.js');
 const { createCanvas, loadImage } = require('canvas');
 const StackBlur = require('stackblur-canvas');
-const config = require('../../config/config');
 const queueManager = require('../../utils/queueManager');
+const { isPlatformFeatureEnabled, getPlatformDisplayName, getTypeDisplayName, createFeatureDisabledMessage } = require('./platformDetector');
+
+// Get current config safely (lazy load to avoid circular dependency)
+function getConfig() {
+  try {
+    return require('../../utils/hotReload').getCurrentConfig();
+  } catch (error) {
+    return require('../../config/config');
+  }
+}
 
 async function generatePlaylistResultImage(channel, songs, title, thumbnailUrl, type, author = '') {
   try {
@@ -82,9 +91,20 @@ async function generatePlaylistResultImage(channel, songs, title, thumbnailUrl, 
   }
 }
 
-const MAX_QUEUE_SIZE = config.maxQueue;
-
 async function handleSpotifyPlaylist(client, interaction, query, voiceChannel, lockKey, type) {
+  const config = getConfig();
+  const MAX_QUEUE_SIZE = config.maxQueue;
+  
+  // Validation: Kiểm tra xem feature có được bật không
+  const featureType = type === 'Album' ? 'album' : 'playlist';
+  if (!isPlatformFeatureEnabled('spotify', featureType)) {
+    const errorMessage = createFeatureDisabledMessage('spotify', featureType);
+    return await interaction.followUp({
+      content: errorMessage,
+      ephemeral: true
+    });
+  }
+  
   // Set flag để tạm dừng removeFirst logic
   const { setProcessingPlaylist } = require('../../events/ready');
   setProcessingPlaylist(interaction.guildId, true);
@@ -248,6 +268,17 @@ async function handleSpotifyPlaylist(client, interaction, query, voiceChannel, l
 }
 
 async function handleSpotifySingle(client, interaction, query, voiceChannel) {
+  const config = getConfig();
+  
+  // Validation: Kiểm tra xem single Spotify có được bật không
+  if (!isPlatformFeatureEnabled('spotify', 'single')) {
+    const errorMessage = createFeatureDisabledMessage('spotify', 'single');
+    return await interaction.followUp({
+      content: errorMessage,
+      ephemeral: true
+    });
+  }
+  
   if (config.debug) console.log('[Spotify Single] Bắt đầu xử lý:', query);
   const initialQueueSize = client.distube.getQueue(voiceChannel)?.songs?.length || 0;
   await interaction.editReply({ content: '🎵 Đang tìm và xử lý bài hát từ Spotify...' });

@@ -12,7 +12,7 @@ const config = require('../config/config');
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName('play')
+    .setName('phatnhac')
     .setDescription('Phát nhạc từ Youtube/Spotify/SoundCloud')
     .addStringOption(opt =>
       opt.setName('name-link')

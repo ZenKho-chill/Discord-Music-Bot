@@ -1,5 +1,5 @@
 const { EmbedBuilder } = require('discord.js');
-const config = require('../config/config');
+const hotReloader = require('../utils/hotReload');
 const queueManager = require('../utils/queueManager');
 
 const DEFAULT_THUMBNAIL = 'https://cdn.discordapp.com/embed/avatars/0.png';
@@ -9,21 +9,27 @@ let currentlyPlaying = {}; // { guildId: songId }
 let processingPlaylist = {}; // { guildId: boolean } - Tạm dừng removeFirst khi đang xử lý playlist
 
 module.exports = async(client) => {
-  console.log(`[✔] Bot đang chạy với tên ${client.user.tag}`);
+  console.log(`[✔] Bot đang chạy với tên ${client.user.tag} - HỆ THỐNG TẢI ĐỘNG!`);
+  
+  // Khởi động trình tải động để theo dõi tất cả tệp
+  hotReloader.startWatching();
 
   client.distube
     .on('playSong', async (queue, song) => {
       if (progressInterval) clearInterval(progressInterval);
       nowPlayingMsg = null;
       // Log link thực tế và nguồn
-      if (config.debug) console.log('[DisTube] Đang phát:', song.name, '| Link:', song.url, '| Thời lượng:', song.duration, '| Nguồn:', song.source || song.streamURL || 'unknown');
+      const config = hotReloader.getCurrentConfig();
+      if (config.debug) console.log('[DisTube] Đang phát:', song.name, '| Link:', song.url, '| Thời lượng:', song.duration, '| Nguồn:', song.source || song.streamURL || 'không xác định');
       
-      // Chỉ xóa bài trước đó nếu KHÔNG đang xử lý playlist
+      // Chỉ xóa bài trước đó nếu KHÔNG đang xử lý danh sách phát
       if (currentlyPlaying[queue.id] && !processingPlaylist[queue.id]) {
         queueManager.removeFirst(queue.id);
-        if (config.debug) console.log(`[DisTube] Removed previous song from queueManager for guild ${queue.id}`);
+        const config = hotReloader.getCurrentConfig();
+        if (config.debug) console.log(`[DisTube] Đã xóa bài trước khỏi queueManager cho guild ${queue.id}`);
       } else if (processingPlaylist[queue.id]) {
-        if (config.debug) console.log(`[DisTube] Skipping removeFirst - processing playlist for guild ${queue.id}`);
+        const config = hotReloader.getCurrentConfig();
+        if (config.debug) console.log(`[DisTube] Bỏ qua removeFirst - đang xử lý danh sách phát cho guild ${queue.id}`);
       }
       
       // Cập nhật bài đang phát hiện tại
@@ -33,7 +39,7 @@ module.exports = async(client) => {
       if (queue.songs.length > 1) {
         // KHÔNG gửi embed ở đây nữa
       }
-      // Đồng bộ queueManager khi thêm bài mới (với delay nhỏ để đảm bảo queue đã cập nhật)
+      // Đồng bộ queueManager khi thêm bài mới (với độ trễ nhỏ để đảm bảo queue đã cập nhật)
       setTimeout(() => {
         queueManager.syncFromDisTube(queue.id, queue);
       }, 100);
@@ -100,6 +106,7 @@ module.exports = async(client) => {
       if (channel && typeof channel.send === 'function') {
         // Tránh gửi message trùng lặp nếu lỗi đã được xử lý ở command
         if (errorMessage.includes("No result found")) {
+            const config = hotReloader.getCurrentConfig();
             if (config.debug) console.log("[DisTube Error] Bỏ qua gửi message 'No result found' để tránh trùng lặp.");
             return;
         }
@@ -111,5 +118,6 @@ module.exports = async(client) => {
 // Export functions để các platform có thể control
 module.exports.setProcessingPlaylist = (guildId, status) => {
   processingPlaylist[guildId] = status;
+  const config = hotReloader.getCurrentConfig();
   if (config.debug) console.log(`[Events] Set processing playlist for guild ${guildId}: ${status}`);
 };

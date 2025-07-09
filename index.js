@@ -56,9 +56,9 @@ process.on("uncaughtException", (err) => {
     ],
   });
 
-  // Debug plugin và version
+  // Debug plugin và phiên bản
   if (config.debug) {
-    console.log('Config truyền vào SpotifyPlugin:', config.spotify);
+    console.log('Cấu hình truyền vào SpotifyPlugin:', config.spotify);
     console.log('DisTube plugins:', client.distube.plugins?.map(p => p && p.name));
   }
 

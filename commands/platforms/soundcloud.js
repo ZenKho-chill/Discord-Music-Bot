@@ -2,8 +2,18 @@ const { EmbedBuilder, AttachmentBuilder } = require('discord.js');
 const { createCanvas, loadImage } = require('canvas');
 const StackBlur = require('stackblur-canvas');
 const https = require('https');
-const config = require('../../config/config');
 const queueManager = require('../../utils/queueManager');
+const { resolveSoundCloudShortlink } = require('../../utils/soundcloudUtils');
+const { isPlatformFeatureEnabled, getPlatformDisplayName, getTypeDisplayName, createFeatureDisabledMessage } = require('./platformDetector');
+
+// Get current config safely (lazy load to avoid circular dependency)
+function getConfig() {
+  try {
+    return require('../../utils/hotReload').getCurrentConfig();
+  } catch (error) {
+    return require('../../config/config');
+  }
+}
 
 async function getSoundCloudPlaylistInfo(url) {
   return new Promise((resolve, reject) => {
@@ -17,19 +27,6 @@ async function getSoundCloudPlaylistInfo(url) {
           reject(e);
         }
       });
-    }).on('error', reject);
-  });
-}
-
-// Resolve SoundCloud shortlinks (on.soundcloud.com)
-async function resolveSoundCloudShortlink(shortUrl) {
-  return new Promise((resolve, reject) => {
-    https.get(shortUrl, (res) => {
-      if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
-        resolve(res.headers.location);
-      } else {
-        resolve(shortUrl); // Không redirect, trả về link cũ
-      }
     }).on('error', reject);
   });
 }
@@ -112,9 +109,19 @@ async function generatePlaylistResultImage(channel, songs, title, thumbnailUrl, 
   }
 }
 
-const MAX_QUEUE_SIZE = config.maxQueue;
-
 async function handleSoundCloudPlaylist(client, interaction, query, voiceChannel, lockKey) {
+  const config = getConfig();
+  const MAX_QUEUE_SIZE = config.maxQueue;
+  
+  // Validation: Kiểm tra xem playlist SoundCloud có được bật không
+  if (!isPlatformFeatureEnabled('soundcloud', 'playlist')) {
+    const errorMessage = createFeatureDisabledMessage('soundcloud', 'playlist');
+    return await interaction.followUp({
+      content: errorMessage,
+      ephemeral: true
+    });
+  }
+  
   if (!client._addLock) client._addLock = {};
   client._addLock[lockKey] = true;
 
@@ -282,6 +289,15 @@ async function handleSoundCloudPlaylist(client, interaction, query, voiceChannel
 }
 
 async function handleSoundCloudSingle(client, interaction, query, voiceChannel) {
+  // Validation: Kiểm tra xem single SoundCloud có được bật không
+  if (!isPlatformFeatureEnabled('soundcloud', 'single')) {
+    const errorMessage = createFeatureDisabledMessage('soundcloud', 'single');
+    return await interaction.followUp({
+      content: errorMessage,
+      ephemeral: true
+    });
+  }
+  
   // Xử lý bài hát đơn lẻ SoundCloud
   const startTime = Date.now();
   let playResult, playError;
@@ -450,7 +466,6 @@ async function handleSoundCloudSingle(client, interaction, query, voiceChannel) 
 
 module.exports = {
   getSoundCloudPlaylistInfo,
-  resolveSoundCloudShortlink,
   generatePlaylistResultImage,
   handleSoundCloudPlaylist,
   handleSoundCloudSingle

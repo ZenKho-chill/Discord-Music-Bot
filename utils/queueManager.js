@@ -1,9 +1,16 @@
-const config = require('../config/config')
-
 class QueueManager {
   constructor() {
     this.queues = {}; // { guildId: [song1, song2, ...] }
     this.sttCounters = {}; // { guildId: currentSttCounter }
+  }
+
+  // Get current config safely (lazy load to avoid circular dependency)
+  getConfig() {
+    try {
+      return require('./hotReload').getCurrentConfig();
+    } catch (error) {
+      return require('../config/config');
+    }
   }
 
   setQueue(guildId, songs) {
@@ -34,6 +41,7 @@ class QueueManager {
     if (this.queues[guildId]) {
       const removedSong = this.queues[guildId][0];
       this.queues[guildId].shift();
+      const config = this.getConfig();
       if (config.debug) console.log(`[QueueManager] Removed first song from guild ${guildId}. Remaining: ${this.queues[guildId].length}`);
       // KHÔNG cập nhật lại stt - giữ nguyên số thứ tự ban đầu
     }
@@ -50,6 +58,7 @@ class QueueManager {
     // Nếu queue hiện tại rỗng, set lại từ đầu
     if (currentQueue.length === 0) {
       this.setQueue(guildId, distubeQueue.songs);
+      const config = this.getConfig();
       if (config.debug) console.log(`[QueueManager] Initialized queue for guild ${guildId} with ${distubeQueue.songs.length} songs`);
       return;
     }
@@ -70,6 +79,7 @@ class QueueManager {
     }
     
     if (newSongsCount > 0) {
+      const config = this.getConfig();
       if (config.debug) console.log(`[QueueManager] Added ${newSongsCount} new songs to guild ${guildId}. Total queue: ${this.queues[guildId].length}`);
     }
   }
