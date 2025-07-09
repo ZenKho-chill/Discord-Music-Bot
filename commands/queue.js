@@ -1,5 +1,7 @@
 const { SlashCommandBuilder, AttachmentBuilder } = require('discord.js');
 const { createCanvas, loadImage } = require('canvas');
+const config = require('../config/config');
+const queueManager = require('../utils/queueManager');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -7,18 +9,23 @@ module.exports = {
     .setDescription('Hiển thị hàng đợi nhạc với giao diện đẹp'),
 
   async execute(client, interaction) {
-    const queue = client.distube.getQueue(interaction.guildId);
+    await interaction.deferReply();
+    const guildId = interaction.guildId;
+    const queue = client.distube.getQueue(guildId);
     if (!queue || !queue.songs || queue.songs.length === 0) {
-      return interaction.reply({ content: '❌ Hàng đợi trống!', ephemeral: true });
+      return interaction.editReply({ content: '❌ Hàng đợi trống!', ephemeral: true });
     }
-    // Giới hạn queue tối đa 30 bài
-    const maxQueue = 30;
-    const allSongs = queue.songs.slice(0, maxQueue);
+    
+    // Đồng bộ queueManager trước khi lấy queue
+    queueManager.syncFromDisTube(guildId, queue);
+    const allSongs = queueManager.getQueue(guildId);
+    
+    const maxQueue = config.maxQueue;
     const chunkSize = 10;
     // Cache queue: lưu vào interaction.client._queueCache
     if (!interaction.client._queueCache) interaction.client._queueCache = {};
     const cache = interaction.client._queueCache;
-    const cacheKey = `${interaction.guildId}`;
+    const cacheKey = `${guildId}`;
     const firstSongId = allSongs[0]?.id || '';
     const queueLength = allSongs.length;
     let needRender = true;
@@ -152,7 +159,7 @@ module.exports = {
           ctxChunk.fillStyle = '#111';
           ctxChunk.textAlign = 'center';
           ctxChunk.textBaseline = 'middle';
-          ctxChunk.fillText(`${chunkIdx + i + 1}`, circleX, circleY);
+          ctxChunk.fillText(`${song.stt}`, circleX, circleY);
           ctxChunk.textAlign = 'left';
           ctxChunk.textBaseline = 'alphabetic';
           const textX = circleX + circleRadius + 15;
@@ -173,6 +180,8 @@ module.exports = {
           ctxChunk.fillText(song.formattedDuration || song.duration || '', timeX, timeY);
           ctxChunk.textAlign = 'left';
           ctxChunk.textBaseline = 'alphabetic';
+          // Debug: log số thứ tự của bài hát
+          if (config.debug) console.log(`[QUEUE DEBUG] song: ${song.name}, stt: ${song.stt}`);
         }
         imageBuffers.push(canvasChunk.toBuffer());
       }
@@ -186,11 +195,11 @@ module.exports = {
     // Lưu lại id tin nhắn queue cũ để xóa
     if (!interaction.client._queueMsgCache) interaction.client._queueMsgCache = {};
     const msgCache = interaction.client._queueMsgCache;
-    const msgCacheKey = `${interaction.guildId}`;
+    const msgCacheKey = `${guildId}`;
     let oldMsg = msgCache[msgCacheKey];
     // Gửi toàn bộ ảnh vào một tin nhắn mới
     const attachments = imageBuffers.map((buf, i) => new AttachmentBuilder(buf, { name: `queue_${i+1}.png` }));
-    const newMsg = await interaction.reply({ files: attachments });
+    const newMsg = await interaction.editReply({ files: attachments });
     // Xóa tin nhắn cũ nếu có
     if (oldMsg && oldMsg.delete) {
       try { await oldMsg.delete(); } catch {}

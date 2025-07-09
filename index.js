@@ -41,8 +41,8 @@ process.on("uncaughtException", (err) => {
     plugins: [
       new SpotifyPlugin({
         api: {
-          clientId: config.spotifyClientId,
-          clientSecret: config.spotifyClientSecret,
+          clientId: config.spotify.clientId,
+          clientSecret: config.spotify.clientSecret,
         },
       }),
       new SoundCloudPlugin(),
@@ -55,6 +55,12 @@ process.on("uncaughtException", (err) => {
       }),
     ],
   });
+
+  // Debug plugin và version
+  if (config.debug) {
+    console.log('Config truyền vào SpotifyPlugin:', config.spotify);
+    console.log('DisTube plugins:', client.distube.plugins?.map(p => p && p.name));
+  }
 
   require('./utils/loader')(client);
   require('./dashboard')();

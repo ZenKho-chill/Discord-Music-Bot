@@ -6,9 +6,25 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node index.js"
   },
-  "keywords": ["music", "bot", "discord", "music-bot", "music-bot-discord", "music-bot-discord-js", "music-bot-discord-js-v14", "music-bot-discord-js-v14-distube", "music-bot-discord-js-v14-distube-soundcloud", "music-bot-discord-js-v14-distube-spotify", "music-bot-discord-js-v14-distube-yt-dlp", "music-bot-discord-js-v14-distube-ytpl"],
+  "keywords": [
+    "music",
+    "bot",
+    "discord",
+    "music-bot",
+    "music-bot-discord",
+    "music-bot-discord-js",
+    "music-bot-discord-js-v14",
+    "music-bot-discord-js-v14-distube",
+    "music-bot-discord-js-v14-distube-soundcloud",
+    "music-bot-discord-js-v14-distube-spotify",
+    "music-bot-discord-js-v14-distube-yt-dlp",
+    "music-bot-discord-js-v14-distube-ytpl"
+  ],
   "author": "ZenKho",
-  "license": ["ISC", "LGPL-3.0"],
+  "license": [
+    "ISC",
+    "LGPL-3.0"
+  ],
   "description": "Music Bot Discord Made by ZenKho",
   "engines": {
     "node": ">=20.0.0"
@@ -20,8 +36,8 @@
     "@distube/spotify": "^2.0.2",
     "@distube/yt-dlp": "^2.0.1",
     "@distube/ytpl": "^1.2.3",
-    "canvas": "^3.1.1",
-    "discord.js": "^14.20.0",
+    "canvas": "^3.1.2",
+    "discord.js": "^14.21.0",
     "distube": "^5.0.7",
     "ejs": "^3.1.10",
     "express": "^5.1.0",
@@ -30,7 +46,7 @@
     "js": "^0.1.0",
     "node-fetch": "^3.3.2",
     "path": "^0.12.7",
-    "puppeteer": "^24.10.2",
+    "puppeteer": "^24.11.1",
     "stackblur-canvas": "^2.7.0",
     "yt-search": "^2.13.1"
   }

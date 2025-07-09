@@ -24,3 +24,5 @@ yarn-error.log*
 # OS system files
 .DS_Store
 Thumbs.db
+
+plan.txt

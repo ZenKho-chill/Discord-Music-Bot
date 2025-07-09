@@ -1,0 +1,14 @@
+module.exports = {
+  token: 'Discord Token Here',
+  clientId: 'Discord ClientID Here',
+  maxQueue: 30,
+  debug: false
+  spotify: {
+    clientId: 'SPOTIFY_CLIENT_ID',
+    clientSecret: 'SPOTIFY_CLIENT_SECRET'
+  },
+  leaveOnEmpty: {
+    enabled: true,
+    timeout: 30
+  }
+};

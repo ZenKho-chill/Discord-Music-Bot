@@ -1,9 +1,12 @@
 const { EmbedBuilder } = require('discord.js');
 const config = require('../config/config');
+const queueManager = require('../utils/queueManager');
 
 const DEFAULT_THUMBNAIL = 'https://cdn.discordapp.com/embed/avatars/0.png';
 let nowPlayingMsg = null;
 let progressInterval = null;
+let currentlyPlaying = {}; // { guildId: songId }
+let processingPlaylist = {}; // { guildId: boolean } - Tạm dừng removeFirst khi đang xử lý playlist
 
 module.exports = async(client) => {
   console.log(`[✔] Bot đang chạy với tên ${client.user.tag}`);
@@ -12,11 +15,28 @@ module.exports = async(client) => {
     .on('playSong', async (queue, song) => {
       if (progressInterval) clearInterval(progressInterval);
       nowPlayingMsg = null;
+      // Log link thực tế và nguồn
+      if (config.debug) console.log('[DisTube] Đang phát:', song.name, '| Link:', song.url, '| Thời lượng:', song.duration, '| Nguồn:', song.source || song.streamURL || 'unknown');
+      
+      // Chỉ xóa bài trước đó nếu KHÔNG đang xử lý playlist
+      if (currentlyPlaying[queue.id] && !processingPlaylist[queue.id]) {
+        queueManager.removeFirst(queue.id);
+        if (config.debug) console.log(`[DisTube] Removed previous song from queueManager for guild ${queue.id}`);
+      } else if (processingPlaylist[queue.id]) {
+        if (config.debug) console.log(`[DisTube] Skipping removeFirst - processing playlist for guild ${queue.id}`);
+      }
+      
+      // Cập nhật bài đang phát hiện tại
+      currentlyPlaying[queue.id] = song.id || song.url;
     })
     .on('addSong', (queue, song) => {
       if (queue.songs.length > 1) {
         // KHÔNG gửi embed ở đây nữa
       }
+      // Đồng bộ queueManager khi thêm bài mới (với delay nhỏ để đảm bảo queue đã cập nhật)
+      setTimeout(() => {
+        queueManager.syncFromDisTube(queue.id, queue);
+      }, 100);
     })
     .on('finish', queue => {
       if (progressInterval) clearInterval(progressInterval);
@@ -45,6 +65,9 @@ module.exports = async(client) => {
           }
         }, (config.leaveOnEmpty.timeout || 30) * 1000);
       }
+      // Khi hết hàng đợi, clear toàn bộ queueManager và currentlyPlaying
+      queueManager.clearQueue(queue.id);
+      delete currentlyPlaying[queue.id];
     })
     .on('empty', queue => {
       if (progressInterval) clearInterval(progressInterval);
@@ -56,18 +79,37 @@ module.exports = async(client) => {
           console.error('[EMPTY_EVENT] Lỗi khi rời kênh:', e);
         }
       }
+      // Clear tracking khi queue rỗng
+      delete currentlyPlaying[queue.id];
     })
     .on('error', (channel, error) => {
       if (progressInterval) clearInterval(progressInterval);
       nowPlayingMsg = null;
-      // Nếu là DisTubeError: Queue thì chỉ log message
-      if (error && error.name === 'DisTubeError' && error.message && error.message.includes('Queue')) {
-        console.error('DisTubeError:', error.message);
-      } else {
-        console.error('DisTubeError:', error);
+      
+      console.error('[DisTube Error Event]', error);
+
+      let errorMessage = 'An unknown error occurred';
+      if (typeof error === 'string') {
+        errorMessage = error;
+      } else if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === 'object' && error !== null && error.message) {
+        errorMessage = error.message;
       }
+
       if (channel && typeof channel.send === 'function') {
-        channel.send(`❌ Có lỗi xảy ra: ${error.message || error}`);
+        // Tránh gửi message trùng lặp nếu lỗi đã được xử lý ở command
+        if (errorMessage.includes("No result found")) {
+            if (config.debug) console.log("[DisTube Error] Bỏ qua gửi message 'No result found' để tránh trùng lặp.");
+            return;
+        }
+        channel.send(`❌ Có lỗi từ DisTube: ${errorMessage}`);
       }
     });
+};
+
+// Export functions để các platform có thể control
+module.exports.setProcessingPlaylist = (guildId, status) => {
+  processingPlaylist[guildId] = status;
+  if (config.debug) console.log(`[Events] Set processing playlist for guild ${guildId}: ${status}`);
 };
