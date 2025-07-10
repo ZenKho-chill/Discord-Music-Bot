@@ -7,11 +7,16 @@ module.exports = {
     .setDescription('Hiển thị bài hát đang phát với giao diện đẹp'),
 
   async execute(client, interaction) {
-    const queue = client.distube.getQueue(interaction.guildId);
+    const guildId = interaction.guildId;
+    const queue = client.distube.getQueue(guildId);
     if (!queue || !queue.songs || !queue.songs[0]) {
       return interaction.reply({ content: '❌ Không có bài hát nào đang phát!', ephemeral: true });
     }
-    const song = queue.songs[0];
+    // Lấy song từ queueManager để lấy queueId và stt đồng bộ
+    const queueManager = require('../utils/queueManager');
+    queueManager.syncFromDisTube(guildId, queue);
+    const allSongs = queueManager.getQueue(guildId);
+    const song = allSongs[0] || queue.songs[0];
     const current = Math.floor(queue.currentTime || 0);
     const total = song.duration ? (typeof song.duration === 'number' ? song.duration : song.duration.split(':').reduce((a, b) => a * 60 + +b)) : 0;
     const percent = total ? Math.min(current / total, 1) : 0;
@@ -24,6 +29,8 @@ module.exports = {
     // Nền mờ từ ảnh nhạc
     let img;
     let thumbUrl = song.thumbnail;
+    // DEBUG: Hiển thị queueId nếu muốn
+    // console.log('Now playing queueId:', song.queueId, 'STT:', song.stt);
     // Nếu là thumbnail YouTube hoặc link YouTube, tự động thử nhiều độ phân giải
     if (song.url && song.url.includes('youtube.com')) {
       const match = song.url.match(/v=([\w-]+)/);

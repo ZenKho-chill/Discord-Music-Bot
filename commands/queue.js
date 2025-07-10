@@ -15,14 +15,16 @@ module.exports = {
     if (!queue || !queue.songs || queue.songs.length === 0) {
       return interaction.editReply({ content: '❌ Hàng đợi trống!', ephemeral: true });
     }
-    
     // Đồng bộ queueManager trước khi lấy queue
     queueManager.syncFromDisTube(guildId, queue);
     const allSongs = queueManager.getQueue(guildId);
-    
+    // Map queueId -> song for fast lookup
+    const queueIdMap = {};
+    for (const song of allSongs) {
+      if (song.queueId) queueIdMap[song.queueId] = song;
+    }
     const maxQueue = config.maxQueue;
     const chunkSize = 10;
-    // Cache queue: lưu vào interaction.client._queueCache
     if (!interaction.client._queueCache) interaction.client._queueCache = {};
     const cache = interaction.client._queueCache;
     const cacheKey = `${guildId}`;
@@ -30,14 +32,12 @@ module.exports = {
     const queueLength = allSongs.length;
     let needRender = true;
     if (cache[cacheKey] && cache[cacheKey].firstSongId === firstSongId && cache[cacheKey].queueLength === queueLength) {
-      // Không đổi queue, dùng lại buffer ảnh cũ
       needRender = false;
     }
     let imageBuffers = [];
     if (!needRender) {
       imageBuffers = cache[cacheKey].buffers;
     } else {
-      // Render lại toàn bộ
       imageBuffers = [];
       for (let chunkIdx = 0; chunkIdx < allSongs.length; chunkIdx += chunkSize) {
         const songs = allSongs.slice(chunkIdx, chunkIdx + chunkSize);
@@ -89,6 +89,7 @@ module.exports = {
         }
         for (let i = 0; i < songs.length; i++) {
           const song = songs[i];
+          // Hiển thị queueId nhỏ bên cạnh STT (nếu muốn debug)
           const y = realHeaderHeight + i * itemHeight + realPadding;
           ctxChunk.fillStyle = i % 2 === 0 ? '#ffffff08' : '#ffffff04';
           ctxChunk.fillRect(padding, y, width - padding * 2, itemHeight - 10);
@@ -160,6 +161,9 @@ module.exports = {
           ctxChunk.textAlign = 'center';
           ctxChunk.textBaseline = 'middle';
           ctxChunk.fillText(`${song.stt}`, circleX, circleY);
+          // ctxChunk.font = '10px Arial';
+          // ctxChunk.fillStyle = '#0f0';
+          // ctxChunk.fillText(song.queueId ? song.queueId.slice(-6) : '', circleX, circleY + 20);
           ctxChunk.textAlign = 'left';
           ctxChunk.textBaseline = 'alphabetic';
           const textX = circleX + circleRadius + 15;

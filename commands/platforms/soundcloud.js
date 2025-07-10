@@ -6,6 +6,73 @@ const queueManager = require('../../utils/queueManager');
 const { resolveSoundCloudShortlink } = require('../../utils/soundcloudUtils');
 const { isPlatformFeatureEnabled, getPlatformDisplayName, getTypeDisplayName, createFeatureDisabledMessage } = require('./platformDetector');
 
+// Hàm lấy STT từ queueManager
+function getSttFromQueueManager(guildId, targetSong, isNewlyAdded = false) {
+  const queueManagerSongs = queueManager.getQueue(guildId);
+  
+  if (!queueManagerSongs || queueManagerSongs.length === 0) {
+    return 1; // Mặc định là 1 nếu không có queue
+  }
+  
+  // Nếu là bài vừa thêm vào
+  if (isNewlyAdded) {
+    // Ưu tiên tìm theo ID hoặc URL chính xác trước
+    if (targetSong.id || targetSong.url) {
+      const exactMatches = queueManagerSongs.filter(song => {
+        if (targetSong.id && song.id === targetSong.id) return true;
+        if (targetSong.url && song.url === targetSong.url) return true;
+        return false;
+      });
+      
+      // Nếu tìm thấy bài trùng ID/URL, trả về STT của bài cuối cùng
+      if (exactMatches.length > 0) {
+        return exactMatches[exactMatches.length - 1].stt;
+      }
+    }
+    
+    // Fallback: tìm theo tên + tác giả (cho trường hợp không có ID/URL)
+    const targetName = targetSong.name || '';
+    const targetAuthor = targetSong.uploader?.name || targetSong.artist || '';
+    
+    const nameMatches = queueManagerSongs.filter(song => {
+      const songName = song.name || '';
+      const songAuthor = song.uploader?.name || song.artist || '';
+      return songName === targetName && songAuthor === targetAuthor;
+    });
+    
+    if (nameMatches.length > 0) {
+      return nameMatches[nameMatches.length - 1].stt;
+    }
+    
+    // Nếu không tìm thấy gì, tạo STT mới
+    const maxStt = Math.max(...queueManagerSongs.map(s => s.stt || 0));
+    return maxStt + 1;
+  }
+  
+  // Logic cũ cho skip (tìm bài đầu tiên khớp)
+  const songMatch = queueManagerSongs.find(song => {
+    // Ưu tiên tìm theo ID hoặc URL
+    if (song.id && targetSong.id && song.id === targetSong.id) return true;
+    if (song.url && targetSong.url && song.url === targetSong.url) return true;
+    
+    // Tìm theo tên bài hát và tác giả
+    const songName = song.name || '';
+    const targetName = targetSong.name || '';
+    const songAuthor = song.uploader?.name || song.artist || '';
+    const targetAuthor = targetSong.uploader?.name || targetSong.artist || '';
+    
+    return songName === targetName && songAuthor === targetAuthor;
+  });
+  
+  if (songMatch && songMatch.stt) {
+    return songMatch.stt;
+  }
+  
+  // Nếu không tìm thấy, lấy STT tiếp theo từ counter
+  const maxStt = Math.max(...queueManagerSongs.map(s => s.stt || 0));
+  return maxStt + 1;
+}
+
 // Get current config safely (lazy load to avoid circular dependency)
 function getConfig() {
   try {
@@ -328,10 +395,10 @@ async function handleSoundCloudSingle(client, interaction, query, voiceChannel) 
   let song, currentIndex;
   if (updatedQueue.songs.length === 1) {
     song = updatedQueue.songs[0];
-    currentIndex = 1;
+    currentIndex = getSttFromQueueManager(interaction.guildId, song, true);
   } else {
     song = updatedQueue.songs[updatedQueue.songs.length - 1];
-    currentIndex = updatedQueue.songs.length;
+    currentIndex = getSttFromQueueManager(interaction.guildId, song, true);
   }
   
   if (!song || !interaction || !interaction.channel) {
