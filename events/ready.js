@@ -23,18 +23,28 @@ module.exports = async(client) => {
       const config = hotReloader.getCurrentConfig();
       if (config.debug) console.log('[DisTube] Đang phát:', song.name, '| Liên kết:', song.url, '| Thời lượng:', song.duration, '| Nguồn:', song.source || song.streamURL || 'không xác định');
       
-      // Chỉ xóa bài trước đó nếu KHÔNG đang xử lý danh sách phát
-      if (currentlyPlaying[queue.id] && !processingPlaylist[queue.id]) {
+      // Chỉ xóa bài trước đó nếu KHÔNG đang xử lý danh sách phát và KHÔNG ở repeat mode
+      if (currentlyPlaying[queue.id] && !processingPlaylist[queue.id] && queue.repeatMode !== 1 && queue.repeatMode !== 2) {
         queueManager.removeFirst(queue.id);
         const config = hotReloader.getCurrentConfig();
         if (config.debug) console.log(`[DisTube] Đã xóa bài trước khỏi quản lý hàng đợi cho máy chủ ${queue.id}`);
       } else if (processingPlaylist[queue.id]) {
         const config = hotReloader.getCurrentConfig();
         if (config.debug) console.log(`[DisTube] Bỏ qua removeFirst - đang xử lý danh sách phát cho máy chủ ${queue.id}`);
+      } else if (queue.repeatMode === 1) {
+        const config = hotReloader.getCurrentConfig();
+        if (config.debug) console.log(`[DisTube] Bỏ qua removeFirst - đang ở chế độ lặp lại bài hát cho máy chủ ${queue.id}`);
+      } else if (queue.repeatMode === 2) {
+        const config = hotReloader.getCurrentConfig();
+        if (config.debug) console.log(`[DisTube] Bỏ qua removeFirst - đang ở chế độ lặp lại hàng đợi cho máy chủ ${queue.id}`);
       }
       
       // Cập nhật bài đang phát hiện tại
       currentlyPlaying[queue.id] = song.id || song.url;
+      
+      // Expose currentlyPlaying qua client để các lệnh khác có thể truy cập
+      if (!client.distube.currentlyPlaying) client.distube.currentlyPlaying = {};
+      client.distube.currentlyPlaying[queue.id] = song.id || song.url;
     })
     .on('addSong', (queue, song) => {
       if (queue.songs.length > 1) {
@@ -105,6 +115,9 @@ module.exports = async(client) => {
       // Khi hết hàng đợi, xóa toàn bộ quản lý hàng đợi và bài đang phát
       queueManager.clearQueue(queue.id);
       delete currentlyPlaying[queue.id];
+      if (client.distube.currentlyPlaying) {
+        delete client.distube.currentlyPlaying[queue.id];
+      }
     })
     .on('empty', async queue => {
       if (progressInterval) clearInterval(progressInterval);
@@ -119,6 +132,9 @@ module.exports = async(client) => {
       
       // Xóa theo dõi khi hàng đợi trống
       delete currentlyPlaying[queue.id];
+      if (client.distube.currentlyPlaying) {
+        delete client.distube.currentlyPlaying[queue.id];
+      }
     })
     .on('error', (channel, error) => {
       if (progressInterval) clearInterval(progressInterval);

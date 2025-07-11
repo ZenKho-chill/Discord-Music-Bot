@@ -169,7 +169,28 @@ module.exports = {
           const textX = circleX + circleRadius + 15;
           const maxTextWidth = width - textX - padding - 100;
           ctxChunk.font = 'bold 20px Arial';
-          ctxChunk.fillStyle = (chunkIdx + i === 0) ? '#00ff29' : '#fff';
+          // Kiểm tra xem bài hát này có phải là bài đang phát không
+          let isCurrentlyPlaying = false;
+          
+          // Method 1: Sử dụng currentlyPlaying từ ready.js
+          if (client.distube.currentlyPlaying && client.distube.currentlyPlaying[guildId]) {
+            isCurrentlyPlaying = (song.id === client.distube.currentlyPlaying[guildId] || song.url === client.distube.currentlyPlaying[guildId]);
+            if (config.debug) console.log(`[QUEUE DEBUG] Method 1 - Song: ${song.name} (stt: ${song.stt}), currentlyPlaying: ${client.distube.currentlyPlaying[guildId]}, match: ${isCurrentlyPlaying}`);
+          }
+          
+          // Method 2: Kiểm tra với queue internal state
+          if (!isCurrentlyPlaying && queue.playing && queue.songs[0]) {
+            isCurrentlyPlaying = (song.id === queue.songs[0].id || song.url === queue.songs[0].url);
+            if (config.debug) console.log(`[QUEUE DEBUG] Method 2 - Song: ${song.name} (stt: ${song.stt}), queue.songs[0]: ${queue.songs[0].name}, match: ${isCurrentlyPlaying}`);
+          }
+          
+          // Method 3: Fallback - Kiểm tra nếu song có thuộc tính playing hoặc similar
+          if (!isCurrentlyPlaying && queue.resource && queue.resource.metadata) {
+            isCurrentlyPlaying = (song.id === queue.resource.metadata.id || song.url === queue.resource.metadata.url);
+            if (config.debug) console.log(`[QUEUE DEBUG] Method 3 - Song: ${song.name} (stt: ${song.stt}), resource.metadata: ${queue.resource.metadata.name}, match: ${isCurrentlyPlaying}`);
+          }
+          
+          ctxChunk.fillStyle = isCurrentlyPlaying ? '#00ff29' : '#fff';
           const truncatedTitle = song.name.length > 40 ? song.name.substring(0, 37) + '...' : song.name;
           ctxChunk.fillText(truncatedTitle, textX, y + 35, maxTextWidth);
           ctxChunk.font = '16px Arial';

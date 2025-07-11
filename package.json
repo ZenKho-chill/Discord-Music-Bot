@@ -11,20 +11,10 @@
     "bot",
     "discord",
     "music-bot",
-    "music-bot-discord",
-    "music-bot-discord-js",
-    "music-bot-discord-js-v14",
-    "music-bot-discord-js-v14-distube",
-    "music-bot-discord-js-v14-distube-soundcloud",
-    "music-bot-discord-js-v14-distube-spotify",
-    "music-bot-discord-js-v14-distube-yt-dlp",
-    "music-bot-discord-js-v14-distube-ytpl"
+    "music-bot-discord"
   ],
   "author": "ZenKho",
-  "license": [
-    "ISC",
-    "LGPL-3.0"
-  ],
+  "license": "LGPL-3.0",
   "description": "Music Bot Discord Made by ZenKho",
   "engines": {
     "node": ">=20.0.0"

@@ -132,6 +132,55 @@ class QueueManager {
       this.updateStt(guildId);
     }
   }
+
+  // Xóa tất cả các bài trước bài đang phát (dành cho repeat off)
+  removeBeforeCurrentlyPlaying(guildId, currentlyPlayingId) {
+    const config = this.getConfig();
+    if (config.debug) console.log(`[QueueManager] removeBeforeCurrentlyPlaying - guildId: ${guildId}, currentlyPlayingId: ${currentlyPlayingId}`);
+    
+    if (!this.queues[guildId] || this.queues[guildId].length <= 1) {
+      if (config.debug) console.log(`[QueueManager] Không có gì để xóa - queue trống hoặc chỉ có 1 bài`);
+      return { removedCount: 0, removedSongs: [] };
+    }
+
+    const currentQueue = this.queues[guildId];
+    let currentSongIndex = -1;
+    
+    // Tìm bài đang phát trong queue
+    for (let i = 0; i < currentQueue.length; i++) {
+      const song = currentQueue[i];
+      const isMatch = song.id === currentlyPlayingId || 
+                     song.url === currentlyPlayingId ||
+                     (song.url && song.url.includes(currentlyPlayingId)) ||
+                     (currentlyPlayingId && currentlyPlayingId.includes && currentlyPlayingId.includes(song.id));
+      
+      if (config.debug) console.log(`[QueueManager] Checking song ${i}: ${song.name} (stt: ${song.stt}), isMatch: ${isMatch}`);
+      
+      if (isMatch) {
+        currentSongIndex = i;
+        break;
+      }
+    }
+
+    if (currentSongIndex <= 0) {
+      if (config.debug) console.log(`[QueueManager] Bài đang phát ở vị trí đầu hoặc không tìm thấy (${currentSongIndex}), không cần xóa`);
+      return { removedCount: 0, removedSongs: [] };
+    }
+
+    // Xóa các bài trước bài đang phát
+    const removedSongs = this.queues[guildId].splice(0, currentSongIndex);
+    const removedCount = removedSongs.length;
+    
+    if (config.debug) {
+      console.log(`[QueueManager] Đã xóa ${removedCount} bài trước bài đang phát:`);
+      removedSongs.forEach((song, i) => {
+        console.log(`[QueueManager] - Bài ${i + 1}: ${song.name} (stt: ${song.stt})`);
+      });
+      console.log(`[QueueManager] Queue sau khi xóa:`, this.queues[guildId].map(s => `${s.name} (stt: ${s.stt})`));
+    }
+
+    return { removedCount, removedSongs };
+  }
 }
 
 module.exports = new QueueManager();
