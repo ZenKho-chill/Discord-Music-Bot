@@ -4,6 +4,7 @@ module.exports = {
   maxQueue: 30,
   debug: false,
   registerCommands: true,
+  maxVolume: 150,
   spotify: {
     clientId: 'SPOTIFY_CLIENT_ID',
     clientSecret: 'SPOTIFY_CLIENT_SECRET'
@@ -35,5 +36,10 @@ module.exports = {
       timeout: 30,        // Thời gian chờ trước khi rời (giây)  
       pauseOnEmpty: false // true: tạm dừng nhạc, false: dừng và rời phòng
     }
+  },
+  // Auto Leave khi DỪNG NHẠC bằng lệnh /dungnhac
+  leaveOnStop: {
+    enabled: true,    // Tự động rời khỏi voice channel khi dừng nhạc
+    timeout: 0        // Thời gian chờ trước khi rời (giây), 0 = ngay lập tức
   }
 };
