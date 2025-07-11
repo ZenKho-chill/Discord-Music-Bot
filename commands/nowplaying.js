@@ -12,7 +12,7 @@ module.exports = {
     if (!queue || !queue.songs || !queue.songs[0]) {
       return interaction.reply({ content: '❌ Không có bài hát nào đang phát!', ephemeral: true });
     }
-    // Lấy song từ queueManager để lấy queueId và stt đồng bộ
+    // Lấy bài hát từ queueManager để lấy queueId và số thứ tự đồng bộ
     const queueManager = require('../utils/queueManager');
     queueManager.syncFromDisTube(guildId, queue);
     const allSongs = queueManager.getQueue(guildId);
@@ -21,7 +21,7 @@ module.exports = {
     const total = song.duration ? (typeof song.duration === 'number' ? song.duration : song.duration.split(':').reduce((a, b) => a * 60 + +b)) : 0;
     const percent = total ? Math.min(current / total, 1) : 0;
 
-    // Tạo card nhạc
+    // Tạo thẻ nhạc
     const width = 750, height = 200;
     const canvas = createCanvas(width, height);
     const ctx = canvas.getContext('2d');
@@ -30,8 +30,8 @@ module.exports = {
     let img;
     let thumbUrl = song.thumbnail;
     // DEBUG: Hiển thị queueId nếu muốn
-    // console.log('Now playing queueId:', song.queueId, 'STT:', song.stt);
-    // Nếu là thumbnail YouTube hoặc link YouTube, tự động thử nhiều độ phân giải
+    // console.log('Bài đang phát queueId:', song.queueId, 'STT:', song.stt);
+    // Nếu là hình thu nhỏ YouTube hoặc link YouTube, tự động thử nhiều độ phân giải
     if (song.url && song.url.includes('youtube.com')) {
       const match = song.url.match(/v=([\w-]+)/);
       if (match && match[1]) {
@@ -112,7 +112,7 @@ module.exports = {
     ctx.drawImage(img, thumbSx, thumbSy, thumbSWidth, thumbSHeight, thumbX, thumbY, thumbSize, thumbSize);
     ctx.restore();
 
-    // Điều chỉnh vị trí text để phù hợp với thumbnail mới
+    // Điều chỉnh vị trí văn bản để phù hợp với hình thu nhỏ mới
     const textX = thumbX + thumbSize + 30;
 
     // Tiêu đề
@@ -128,20 +128,20 @@ module.exports = {
     // Trạng thái
     ctx.font = '20px Arial';
     ctx.fillStyle = '#00ff29';
-    ctx.fillText('NOW PLAYING', textX, 130);
+    ctx.fillText('ĐANG PHÁT', textX, 130);
 
-    // Progress bar với gradient và bo góc
+    // Thanh tiến trình với gradient và bo góc
     const progressWidth = width - textX - 100;
     const progressHeight = 10;
     const progressY = 140;
 
-    // Vẽ background của progress bar
+    // Vẽ nền của thanh tiến trình
     ctx.beginPath();
     ctx.roundRect(textX, progressY, progressWidth, progressHeight, progressHeight/2);
     ctx.fillStyle = '#444';
     ctx.fill();
 
-    // Vẽ progress hiện tại với gradient
+    // Vẽ tiến trình hiện tại với gradient
     const gradient = ctx.createLinearGradient(textX, 0, textX + progressWidth, 0);
     gradient.addColorStop(0, '#00ff29');
     gradient.addColorStop(1, '#00cc29');
@@ -159,7 +159,7 @@ module.exports = {
     ctx.fillText(new Date(total * 1000).toISOString().substr(14, 5), textX + progressWidth, 170);
     ctx.textAlign = 'left';
 
-    // Gửi ảnh card nhạc trực tiếp
+    // Gửi ảnh thẻ nhạc trực tiếp
     const attachment = new AttachmentBuilder(canvas.toBuffer(), { name: 'nowplaying.png' });
     await interaction.reply({ files: [attachment] });
   }

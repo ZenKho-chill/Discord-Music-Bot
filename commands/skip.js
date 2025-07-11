@@ -4,12 +4,12 @@ const StackBlur = require('stackblur-canvas');
 const queueManager = require('../utils/queueManager');
 const config = require('../config/config');
 
-// Hàm lấy STT từ queueManager
+// Hàm lấy số thứ tự từ queueManager
 function getSttFromQueueManager(guildId, targetSong, isNewlyAdded = false) {
   const queueManagerSongs = queueManager.getQueue(guildId);
   
   if (!queueManagerSongs || queueManagerSongs.length === 0) {
-    return 1; // Mặc định là 1 nếu không có queue
+    return 1; // Mặc định là 1 nếu không có hàng đợi
   }
   
   // Nếu là bài vừa thêm vào
@@ -28,7 +28,7 @@ function getSttFromQueueManager(guildId, targetSong, isNewlyAdded = false) {
       }
     }
     
-    // Fallback: tìm theo tên + tác giả (cho trường hợp không có ID/URL)
+    // Dự phòng: tìm theo tên + tác giả (cho trường hợp không có ID/URL)
     const targetName = targetSong.name || '';
     const targetAuthor = targetSong.uploader?.name || targetSong.artist || '';
     
@@ -66,17 +66,17 @@ function getSttFromQueueManager(guildId, targetSong, isNewlyAdded = false) {
     return songMatch.stt;
   }
   
-  // Nếu không tìm thấy, lấy STT tiếp theo từ counter
+  // Nếu không tìm thấy, lấy STT tiếp theo từ bộ đếm
   const maxStt = Math.max(...queueManagerSongs.map(s => s.stt || 0));
   return maxStt + 1;
 }
 
-// Hàm lấy STT từ queueManager dựa trên vị trí trong DisTube queue
+// Hàm lấy số thứ tự từ queueManager dựa trên vị trí trong DisTube queue
 function getSttFromQueueManagerByPosition(guildId, targetSong, distubePosition) {
   const queueManagerSongs = queueManager.getQueue(guildId);
   
   if (!queueManagerSongs || queueManagerSongs.length === 0) {
-    return distubePosition + 1; // Fallback: vị trí + 1
+    return distubePosition + 1; // Dự phòng: vị trí + 1
   }
   
   // Tìm bài hát trong queueManager khớp với bài ở vị trí distubePosition
@@ -85,7 +85,7 @@ function getSttFromQueueManagerByPosition(guildId, targetSong, distubePosition) 
     if (song.id && targetSong.id && song.id === targetSong.id) return true;
     if (song.url && targetSong.url && song.url === targetSong.url) return true;
     
-    // Fallback: tìm theo tên + tác giả
+    // Dự phòng: tìm theo tên + tác giả
     const songName = song.name || '';
     const targetName = targetSong.name || '';
     const songAuthor = song.uploader?.name || song.artist || '';
@@ -104,7 +104,7 @@ function getSttFromQueueManagerByPosition(guildId, targetSong, distubePosition) 
 
 
 
-// Hàm tạo ảnh bài hát sau khi skip
+// Hàm tạo ảnh bài hát sau khi bỏ qua
 async function generateSkipResultImage(song, currentIndex, channel) {
   try {
     const width = 750, height = 200;
@@ -114,7 +114,7 @@ async function generateSkipResultImage(song, currentIndex, channel) {
     let img;
     let thumbUrl = song.thumbnail;
     
-    // Xử lý thumbnail cho YouTube
+    // Xử lý hình thu nhỏ cho YouTube
     if (song.url && song.url.includes('youtube.com')) {
       const match = song.url.match(/v=([\w-]+)/);
       if (match && match[1]) {
@@ -137,14 +137,14 @@ async function generateSkipResultImage(song, currentIndex, channel) {
     
     if (!img) {
       try {
-        if (!thumbUrl || !/^https?:\/\//.test(thumbUrl)) throw new Error('Invalid thumbnail');
+        if (!thumbUrl || !/^https?:\/\//.test(thumbUrl)) throw new Error('Hình thu nhỏ không hợp lệ');
         img = await loadImage(thumbUrl);
       } catch (e) {
         img = await loadImage('https://cdn.discordapp.com/embed/avatars/0.png');
       }
     }
     
-    // Vẽ background với blur
+    // Vẽ nền với hiệu ứng mờ
     const bgRatio = width / height;
     const imgRatio = img.width / img.height;
     let sx = 0, sy = 0, sWidth = img.width, sHeight = img.height;
@@ -211,27 +211,27 @@ async function generateSkipResultImage(song, currentIndex, channel) {
     ctx.restore();
     ctx.textAlign = 'left';
     
-    // Thêm icon skip và thời lượng
+    // Thêm biểu tượng bỏ qua và thời lượng
     ctx.font = '18px Arial';
     ctx.fillStyle = '#fff';
-    ctx.fillText('⏭️ Đã skip đến bài này', textX, 150);
+    ctx.fillText('⏭️ Đã bỏ qua đến bài này', textX, 150);
     ctx.fillText('Thời lượng: ' + (song.formattedDuration || song.duration || ''), textX, 170);
     
     const attachment = new AttachmentBuilder(canvas.toBuffer(), { name: 'skip_result.png' });
     await channel.send({ files: [attachment] });
     
   } catch (error) {
-    console.error('[generateSkipResultImage] Lỗi khi tạo ảnh skip:', error);
+    console.error('[generateSkipResultImage] Lỗi khi tạo ảnh bỏ qua:', error);
   }
 }
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('boqua')
-    .setDescription('Skip đến bài hát được chọn trong queue')
+    .setDescription('Bỏ qua đến bài hát được chọn trong hàng đợi')
     .addStringOption(opt =>
       opt.setName('song')
-        .setDescription('Chọn bài hát để skip đến')
+        .setDescription('Chọn bài hát để bỏ qua đến')
         .setRequired(true)
         .setAutocomplete(true)
     ),
@@ -243,11 +243,11 @@ module.exports = {
       
       if (!queue || !queue.songs || queue.songs.length <= 1) {
         return await interaction.respond([
-          { name: '❌ Không có bài hát nào trong queue để skip!', value: 'empty' }
+          { name: '❌ Không có bài hát nào trong hàng đợi để bỏ qua!', value: 'empty' }
         ]);
       }
 
-      // Đồng bộ queueManager trước khi lấy queue (như logic hangdoi)
+      // Đồng bộ queueManager trước khi lấy hàng đợi (như logic hangdoi)
       queueManager.syncFromDisTube(guildId, queue);
       const allSongs = queueManager.getQueue(guildId);
       
@@ -322,7 +322,7 @@ module.exports = {
       // Xử lý các trường hợp đặc biệt
       if (songOption === 'empty') {
         return interaction.reply({
-          content: '❌ Không có bài hát nào trong queue để skip!',
+          content: '❌ Không có bài hát nào trong hàng đợi để bỏ qua!',
           ephemeral: true
         });
       }
@@ -334,10 +334,10 @@ module.exports = {
         });
       }
 
-      // Parse queueId của bài hát được chọn
+      // Phân tích queueId của bài hát được chọn
       const selectedQueueId = songOption;
       
-      // Lấy queue từ queueManager
+      // Lấy hàng đợi từ queueManager
       queueManager.syncFromDisTube(guildId, queue);
       const allSongs = queueManager.getQueue(guildId);
       
@@ -350,16 +350,16 @@ module.exports = {
         });
       }
       
-      // Tìm index của bài hát trong allSongs
+      // Tìm chỉ số của bài hát trong allSongs
       const targetIndex = allSongs.findIndex(song => song.queueId === selectedQueueId);
       if (targetIndex === -1) {
         return interaction.reply({
-          content: '❌ Không tìm thấy vị trí bài hát trong queue!',
+          content: '❌ Không tìm thấy vị trí bài hát trong hàng đợi!',
           ephemeral: true
         });
       }
 
-      // Nếu chọn bài đang phát (index 0)
+      // Nếu chọn bài đang phát (chỉ số 0)
       if (targetIndex === 0) {
         await interaction.deferReply({ ephemeral: true });
         
@@ -367,35 +367,35 @@ module.exports = {
           const currentSong = queue.songs[0];
           client.distube.skip(guildId);
           
-          // Delay nhỏ để đảm bảo queue đã cập nhật
+          // Đợi ngắn để đảm bảo hàng đợi đã cập nhật
           await new Promise(resolve => setTimeout(resolve, 1000));
           
-          // Lấy bài tiếp theo sau khi skip
+          // Lấy bài tiếp theo sau khi bỏ qua
           const newQueue = client.distube.getQueue(guildId);
           if (newQueue && newQueue.songs && newQueue.songs.length > 0) {
-            // Đồng bộ queueManager sau khi skip bài đầu tiên
+            // Đồng bộ queueManager sau khi bỏ qua bài đầu tiên
             queueManager.syncAfterSkip(guildId, newQueue);
             
             const nextSong = newQueue.songs[0];
             
-            // Lấy STT từ queueManager cho bài tiếp theo
+            // Lấy số thứ tự từ queueManager cho bài tiếp theo
             const nextStt = getSttFromQueueManager(guildId, nextSong);
             
             await generateSkipResultImage(nextSong, nextStt, interaction.channel);
             
             return interaction.followUp({
-              content: `⏭️ Đã skip bài hiện tại và chuyển đến: **${nextSong.name}**`,
+              content: `⏭️ Đã bỏ qua bài hiện tại và chuyển đến: **${nextSong.name}**`,
               ephemeral: true
             });
           } else {
             return interaction.followUp({
-              content: `⏭️ Đã skip bài hiện tại: **${currentSong.name}** (không còn bài nào)`,
+              content: `⏭️ Đã bỏ qua bài hiện tại: **${currentSong.name}** (không còn bài nào)`,
               ephemeral: true
             });
           }
         } catch (error) {
           return interaction.followUp({
-            content: '❌ Không thể skip bài hát: ' + error.message,
+            content: '❌ Không thể bỏ qua bài hát: ' + error.message,
             ephemeral: true
           });
         }
@@ -450,74 +450,74 @@ module.exports = {
         await new Promise(resolve => setTimeout(resolve, 2000));
 
         if (successfulSkips > 0) {
-          // Lấy queue sau khi skip để kiểm tra bài hiện tại
+          // Lấy hàng đợi sau khi bỏ qua để kiểm tra bài hiện tại
           const finalQueue = client.distube.getQueue(guildId);
           
-          // Đồng bộ queueManager sau khi skip
+          // Đồng bộ queueManager sau khi bỏ qua
           queueManager.syncAfterSkip(guildId, finalQueue);
           
           if (finalQueue && finalQueue.songs && finalQueue.songs.length > 0) {
             const currentSong = finalQueue.songs[0];
             
-            // Sử dụng STT gốc từ originalTargetSong
+            // Sử dụng số thứ tự gốc từ originalTargetSong
             const originalStt = originalTargetSong.stt;
             
-            // Debug logging
+            // Ghi log debug
             if (config.debug) {
-              console.log(`[Skip] Original target song: ${originalTargetSong.name} - ${originalTargetSong.uploader?.name || originalTargetSong.artist}`);
-              console.log(`[Skip] Current playing song: ${currentSong.name} - ${currentSong.uploader?.name || currentSong.artist}`);
-              console.log(`[Skip] Original STT from queueManager: ${originalStt}`);
-              console.log(`[Skip] Target index: ${targetIndex}`);
-              console.log(`[Skip] Successful skips: ${successfulSkips}`);
+              console.log(`[Bỏ qua] Bài hát mục tiêu gốc: ${originalTargetSong.name} - ${originalTargetSong.uploader?.name || originalTargetSong.artist}`);
+              console.log(`[Bỏ qua] Bài hát hiện đang phát: ${currentSong.name} - ${currentSong.uploader?.name || currentSong.artist}`);
+              console.log(`[Bỏ qua] STT gốc từ queueManager: ${originalStt}`);
+              console.log(`[Bỏ qua] Chỉ số mục tiêu: ${targetIndex}`);
+              console.log(`[Bỏ qua] Số lần bỏ qua thành công: ${successfulSkips}`);
             }
             
-            // Sử dụng bài hiện tại đang phát với STT gốc từ queueManager
+            // Sử dụng bài hiện tại đang phát với số thứ tự gốc từ queueManager
             await generateSkipResultImage(currentSong, originalStt, interaction.channel);
             
             await interaction.followUp({
-              content: `⏭️ Đã skip ${successfulSkips} bài để đến: **${currentSong.name}**\n` +
+              content: `⏭️ Đã bỏ qua ${successfulSkips} bài để đến: **${currentSong.name}**\n` +
                        `👤 Tác giả: ${currentSong.uploader?.name || currentSong.artist || 'Không rõ'}`,
               ephemeral: true
             });
           } else {
             await interaction.followUp({
-              content: `⏭️ Đã skip ${successfulSkips} bài nhưng không còn bài nào để phát!`,
+              content: `⏭️ Đã bỏ qua ${successfulSkips} bài nhưng không còn bài nào để phát!`,
               ephemeral: true
             });
           }
         } else {
           await interaction.followUp({
-            content: '❌ Không thể skip bài hát nào!',
+            content: '❌ Không thể bỏ qua bài hát nào!',
             ephemeral: true
           });
         }
 
       } catch (error) {
-        if (config.debug) console.error('[Skip] Lỗi khi skip:', error);
+        if (config.debug) console.error('[Bỏ qua] Lỗi khi bỏ qua:', error);
         
         await interaction.followUp({
-          content: '❌ Có lỗi xảy ra khi skip: ' + error.message,
+          content: '❌ Có lỗi xảy ra khi bỏ qua: ' + error.message,
           ephemeral: true
         });
       }
 
     } catch (error) {
-      if (config.debug) console.error('[Skip] Lỗi ngoài cùng:', error);
+      if (config.debug) console.error('[Bỏ qua] Lỗi ngoài cùng:', error);
       
       try {
         if (interaction.deferred || interaction.replied) {
           await interaction.followUp({
-            content: '❌ Có lỗi ngoài cùng khi thực hiện lệnh skip!',
+            content: '❌ Có lỗi ngoài cùng khi thực hiện lệnh bỏ qua!',
             ephemeral: true
           });
         } else {
           await interaction.reply({
-            content: '❌ Có lỗi ngoài cùng khi thực hiện lệnh skip!',
+            content: '❌ Có lỗi ngoài cùng khi thực hiện lệnh bỏ qua!',
             ephemeral: true
           });
         }
       } catch (e) {
-        if (config.debug) console.error('[Skip] Lỗi khi reply/followUp:', e);
+        if (config.debug) console.error('[Bỏ qua] Lỗi khi trả lời/followUp:', e);
       }
     }
   },

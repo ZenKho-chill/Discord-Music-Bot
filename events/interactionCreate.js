@@ -54,7 +54,7 @@ module.exports = async(client, interaction) => {
   }
 
   if (interaction.isButton()) {
-    if (interaction.customId === 'stop_add') {
+      if (interaction.customId === 'stop_add') {
       const lockKey = `${interaction.guildId}`;
       if (interaction.client._addInfo && interaction.client._addInfo[lockKey]) {
         const addInfo = interaction.client._addInfo[lockKey];
@@ -62,7 +62,7 @@ module.exports = async(client, interaction) => {
         addInfo.shouldStop = true;
         // Lưu ephemeralMsgId để xóa sau này
         try {
-          const ephemeralMsg = await interaction.reply({ content: addInfo.type === 'mix' ? '⏸️ Đang dừng quá trình thêm bài...' : '⏸️ Đang dừng quá trình thêm playlist...', ephemeral: true });
+          const ephemeralMsg = await interaction.reply({ content: addInfo.type === 'mix' ? '⏸️ Đang dừng quá trình thêm bài...' : '⏸️ Đang dừng quá trình thêm danh sách phát...', ephemeral: true });
           if (ephemeralMsg && ephemeralMsg.id) addInfo.ephemeralMsgId = ephemeralMsg.id;
         } catch {}
         // KHÔNG xóa progressMsg ở đây nữa, để vòng lặp trong play.js xử lý
@@ -79,9 +79,10 @@ module.exports = async(client, interaction) => {
   try {
     await command.execute(client, interaction);
   } catch (err) {
-    console.error('[interactionCreate.js] Lỗi khi execute command:', err);
+    console.error('[interactionCreate.js] Lỗi khi thực thi lệnh:', err);
     try {
-      if (config.debug) console.log('[interactionCreate.js] Trạng thái interaction trước khi reply lỗi:', {
+      const config = require('../config/config');
+      if (config.debug) console.log('[interactionCreate.js] Trạng thái tương tác trước khi trả lời lỗi:', {
         replied: interaction.replied,
         deferred: interaction.deferred,
         id: interaction.id,
@@ -89,13 +90,13 @@ module.exports = async(client, interaction) => {
       });
       if (interaction.replied || interaction.deferred) {
         await interaction.followUp({ content: '❌ Có lỗi xảy ra!', ephemeral: true });
-        if (config.debug) console.log('[interactionCreate.js] Đã followUp lỗi thành công cho interaction:', interaction.id);
+        if (config.debug) console.log('[interactionCreate.js] Đã followUp lỗi thành công cho tương tác:', interaction.id);
       } else {
         await interaction.reply({ content: '❌ Có lỗi xảy ra!', ephemeral: true });
-        if (config.debug) console.log('[interactionCreate.js] Đã reply lỗi thành công cho interaction:', interaction.id);
+        if (config.debug) console.log('[interactionCreate.js] Đã trả lời lỗi thành công cho tương tác:', interaction.id);
       }
     } catch (e) {
-      console.error('[interactionCreate.js] Lỗi khi reply/followUp lỗi:', e);
+      console.error('[interactionCreate.js] Lỗi khi trả lời/followUp lỗi:', e);
     }
   }
 };

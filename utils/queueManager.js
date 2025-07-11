@@ -1,10 +1,10 @@
 class QueueManager {
   constructor() {
-    this.queues = {}; // { guildId: [song1, song2, ...] }
-    this.sttCounters = {}; // { guildId: currentSttCounter }
+    this.queues = {}; // { guildId: [bài1, bài2, ...] }
+    this.sttCounters = {}; // { guildId: bộDếmSTTHiệnTại }
   }
 
-  // Get current config safely (lazy load to avoid circular dependency)
+  // Lấy cấu hình hiện tại một cách an toàn (tải lười để tránh phụ thuộc vòng tròn)
   getConfig() {
     try {
       return require('./hotReload').getCurrentConfig();
@@ -13,7 +13,7 @@ class QueueManager {
     }
   }
 
-  // Tạo unique ID ngẫu nhiên
+  // Tạo ID duy nhất ngẫu nhiên
   generateUniqueId() {
     return 'qm_' + Date.now() + '_' + Math.random().toString(36).substring(2, 15);
   }
@@ -22,9 +22,9 @@ class QueueManager {
     this.queues[guildId] = songs.map((song, idx) => ({ 
       ...song, 
       stt: idx + 1,
-      queueId: this.generateUniqueId() // Thêm unique ID
+      queueId: this.generateUniqueId() // Thêm ID duy nhất
     }));
-    // Cập nhật counter để theo dõi stt tiếp theo
+    // Cập nhật bộ đếm để theo dõi số thứ tự tiếp theo
     this.sttCounters[guildId] = songs.length;
   }
 
@@ -38,7 +38,7 @@ class QueueManager {
     
     this.sttCounters[guildId]++;
     const stt = this.sttCounters[guildId];
-    const queueId = this.generateUniqueId(); // Tạo unique ID
+    const queueId = this.generateUniqueId(); // Tạo ID duy nhất
     this.queues[guildId].push({ ...song, stt, queueId });
   }
 
@@ -58,15 +58,15 @@ class QueueManager {
       const removedSong = this.queues[guildId][0];
       this.queues[guildId].shift();
       const config = this.getConfig();
-      if (config.debug) console.log(`[QueueManager] Removed first song from guild ${guildId}. Remaining: ${this.queues[guildId].length}`);
-      // KHÔNG cập nhật lại stt - giữ nguyên số thứ tự ban đầu
+      if (config.debug) console.log(`[QueueManager] Đã xóa bài đầu tiên khỏi guild ${guildId}. Còn lại: ${this.queues[guildId].length}`);
+      // KHÔNG cập nhật lại số thứ tự - giữ nguyên số thứ tự ban đầu
     }
   }
 
-  // Đồng bộ queue với DisTube sau khi skip - xóa bài đã skip
+  // Đồng bộ hàng đợi với DisTube sau khi bỏ qua - xóa bài đã bỏ qua
   syncAfterSkip(guildId, currentDistubeQueue) {
     if (!currentDistubeQueue || !currentDistubeQueue.songs) {
-      // Nếu không còn bài nào trong DisTube, clear queueManager
+      // Nếu không còn bài nào trong DisTube, xóa sạch queueManager
       this.clearQueue(guildId);
       return;
     }
@@ -82,21 +82,21 @@ class QueueManager {
 
     const config = this.getConfig();
     if (config.debug) {
-      console.log(`[QueueManager] Synced after skip: ${this.queues[guildId].length} songs remaining`);
+      console.log(`[QueueManager] Đã đồng bộ sau khi bỏ qua: còn lại ${this.queues[guildId].length} bài`);
     }
   }
 
-  // Đồng bộ queue từ DisTube - đảm bảo sync chính xác kể cả bài trùng
+  // Đồng bộ hàng đợi từ DisTube - đảm bảo đồng bộ chính xác kể cả bài trùng
   syncFromDisTube(guildId, distubeQueue) {
     if (!distubeQueue || !distubeQueue.songs) return;
     
     const currentQueue = this.queues[guildId] || [];
     
-    // Nếu queue hiện tại rỗng, set lại từ đầu
+    // Nếu hàng đợi hiện tại rỗng, thiết lập lại từ đầu
     if (currentQueue.length === 0) {
       this.setQueue(guildId, distubeQueue.songs);
       const config = this.getConfig();
-      if (config.debug) console.log(`[QueueManager] Initialized queue for guild ${guildId} with ${distubeQueue.songs.length} songs`);
+      if (config.debug) console.log(`[QueueManager] Khởi tạo hàng đợi cho guild ${guildId} với ${distubeQueue.songs.length} bài`);
       return;
     }
     
@@ -109,16 +109,16 @@ class QueueManager {
         const newSong = distubeQueue.songs[i];
         if (!this.sttCounters[guildId]) this.sttCounters[guildId] = currentQueue.length;
         this.sttCounters[guildId]++;
-        const queueId = this.generateUniqueId(); // Tạo unique ID cho bài mới
+        const queueId = this.generateUniqueId(); // Tạo ID duy nhất cho bài mới
         this.queues[guildId].push({ ...newSong, stt: this.sttCounters[guildId], queueId });
       }
       
       const config = this.getConfig();
-      if (config.debug) console.log(`[QueueManager] Added ${newSongsCount} new songs to guild ${guildId}. Total queue: ${this.queues[guildId].length}`);
+      if (config.debug) console.log(`[QueueManager] Đã thêm ${newSongsCount} bài mới vào guild ${guildId}. Tổng hàng đợi: ${this.queues[guildId].length}`);
     }
   }
 
-  // Cập nhật lại tất cả stt cho queue
+  // Cập nhật lại tất cả số thứ tự cho hàng đợi
   updateStt(guildId) {
     if (this.queues[guildId]) {
       this.queues[guildId] = this.queues[guildId].map((song, idx) => ({ ...song, stt: idx + 1 }));

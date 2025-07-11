@@ -15,9 +15,9 @@ module.exports = async (client, guild) => {
     console.warn(`⚠️ "${guild.name}" thiếu quyền: `, missing.join(", "));
     const defaultChannel = guild.systemChannel || guild.channes.cache.find(c => c.isTextBased() && c.permissionsFor(botMember).has("SendMessages"));
     if (defaultChannel) {
-      defaultChannel.send(`⚠️ Bot không có đủ quyền để hoạt động!\nThiếu: ${missing.join(', ')}`);
+      defaultChannel.send(`⚠️ Bot không có đủ quyền để hoạt động!\nThiếu quyền: ${missing.join(', ')}`);
     }
   } else {
-    console.log(`✔ Bot đã vào server "${guild.name}" với đủ quyền.`);
+    console.log(`✔ Bot đã vào máy chủ "${guild.name}" với đủ quyền.`);
   }
 };

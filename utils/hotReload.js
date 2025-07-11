@@ -9,7 +9,7 @@ class HotReloader {
     this.watchers = new Map();
     this.isWatching = false;
     
-    // List of CORE files that cannot be hot reloaded (require bot restart)
+    // Danh sách các tệp CORE không thể tải động (cần khởi động lại bot)
     this.coreFiles = [
       'index.js',
       'package.json', 
@@ -21,7 +21,7 @@ class HotReloader {
       'utils/loader.js'
     ];
     
-    // List of directories to watch for hot reloading
+    // Danh sách các thư mục cần theo dõi để tải động
     this.watchDirectories = [
       'commands',
       'config',
@@ -29,24 +29,24 @@ class HotReloader {
       'dashboard'
     ];
     
-    // File cache for loaded files
+    // Bộ nhớ đệm tệp cho các tệp đã tải
     this.fileCache = new Map();
   }
 
-  // Start watching all files
+  // Bắt đầu theo dõi tất cả các tệp
   startWatching() {
     if (this.isWatching) return;
     
     this.isWatching = true;
     
     try {
-      // Watch config.js specially
+      // Theo dõi config.js đặc biệt
       this.watchFile(this.configPath, 'config');
       
-      // Watch root directory to detect core file changes
+      // Theo dõi thư mục gốc để phát hiện thay đổi tệp cốt lõi
       this.watchDirectory(path.join(__dirname, '..'), '', true);
       
-      // Watch directories
+      // Theo dõi các thư mục
       this.watchDirectories.forEach(dir => {
         const fullPath = path.join(__dirname, '..', dir);
         if (fs.existsSync(fullPath)) {
@@ -65,7 +65,7 @@ class HotReloader {
     }
   }
 
-  // Watch a specific file
+  // Theo dõi một tệp cụ thể
   watchFile(filePath, type = 'general') {
     if (this.watchers.has(filePath)) return;
     
@@ -83,27 +83,27 @@ class HotReloader {
     }
   }
 
-  // Watch directory recursively
+  // Theo dõi thư mục một cách đệ quy
   watchDirectory(dirPath, relativePath, isRootWatch = false) {
     try {
-      // Watch main directory
-      const watchRecursive = !isRootWatch; // Root only watches non-recursively
+      // Theo dõi thư mục chính
+      const watchRecursive = !isRootWatch; // Thư mục gốc chỉ theo dõi không đệ quy
       const watcher = fs.watch(dirPath, { persistent: true, recursive: watchRecursive }, (eventType, filename) => {
         if (eventType === 'change' && filename) {
           const fullPath = path.join(dirPath, filename);
           const relativeFilePath = relativePath ? path.join(relativePath, filename).replace(/\\/g, '/') : filename;
           
-          // If root watch, only care about core files
+          // Nếu theo dõi thư mục gốc, chỉ quan tâm đến tệp cốt lõi
           if (isRootWatch) {
             if (this.isCoreFile(relativeFilePath)) {
               console.log(`[HotReload] ⚠️ CẢNH BÁO: Tệp cốt lõi đã thay đổi: ${relativeFilePath}`);
               console.log(`[HotReload] 🔄 Vui lòng KHỞI ĐỘNG LẠI bot để áp dụng thay đổi tệp cốt lõi!`);
               console.log(`[HotReload] 📋 Lý do: Tệp cốt lõi không thể tải động vì lý do bảo mật và ổn định.`);
             }
-            return; // Don't process hot reload for root watch
+            return; // Không xử lý tải động cho theo dõi thư mục gốc
           }
           
-          // Check if it's a core file
+          // Kiểm tra xem có phải tệp cốt lõi không
           if (this.isCoreFile(relativeFilePath)) {
             console.log(`[HotReload] ⚠️ Tệp cốt lõi đã thay đổi: ${relativeFilePath}`);
             console.log(`[HotReload] 🔄 Vui lòng khởi động lại bot để áp dụng thay đổi!`);
@@ -121,17 +121,17 @@ class HotReloader {
     }
   }
 
-  // Check if file is a core file
+  // Kiểm tra xem tệp có phải là tệp cốt lõi không
   isCoreFile(filePath) {
     return this.coreFiles.some(coreFile => 
       filePath.includes(coreFile) || filePath.endsWith(coreFile)
     );
   }
 
-  // Handle file changes
+  // Xử lý thay đổi tệp
   async handleFileChange(filePath, type, relativePath = null) {
     try {
-      // Wait a bit for file to be written completely
+      // Đợi một chút để tệp được ghi hoàn toàn
       await new Promise(resolve => setTimeout(resolve, 100));
       
       const displayPath = relativePath || path.relative(path.join(__dirname, '..'), filePath);
@@ -148,16 +148,16 @@ class HotReloader {
     }
   }
 
-  // Handle config.js changes
+  // Xử lý thay đổi config.js
   async handleConfigChange(filePath) {
     try {
-      // Clear config module cache
+      // Xóa bộ nhớ đệm module config
       delete require.cache[require.resolve('../config/config.js')];
       
-      // Load new config
+      // Tải config mới
       const newConfig = require('../config/config.js');
       
-      // Compare old and new config
+      // So sánh config cũ và mới
       const changes = this.compareConfigs(this.currentConfig, newConfig);
       
       if (changes.length > 0) {
@@ -165,10 +165,10 @@ class HotReloader {
           console.log(`[HotReload] 🔄 Config.js đã thay đổi:`, changes);
         }
         
-        // Update current config
+        // Cập nhật config hiện tại
         this.currentConfig = { ...newConfig };
         
-        // Notify about changes
+        // Thông báo về các thay đổi
         this.notifyConfigChanges(changes);
       }
       
@@ -178,10 +178,10 @@ class HotReloader {
     }
   }
 
-  // Handle general file changes
+  // Xử lý thay đổi tệp thường
   async handleGeneralFileChange(filePath, displayPath) {
     try {
-      // Check if file exists
+      // Kiểm tra xem tệp có tồn tại không
       if (!fs.existsSync(filePath)) {
         if (this.currentConfig.debug) {
           console.log(`[HotReload] 🗑️ Tệp đã bị xóa: ${displayPath}`);
@@ -189,12 +189,12 @@ class HotReloader {
         return;
       }
 
-      // Read file content to check syntax
+      // Đọc nội dung tệp để kiểm tra cú pháp
       const fileContent = fs.readFileSync(filePath, 'utf8');
       
-      // If it's a .js file, check syntax
+      // Nếu là tệp .js, kiểm tra cú pháp
       if (path.extname(filePath) === '.js') {
-        // Clear module cache for this file
+        // Xóa bộ nhớ đệm module cho tệp này
         const fullPath = path.resolve(filePath);
         delete require.cache[fullPath];
         

@@ -1,6 +1,6 @@
 const { resolveSoundCloudShortlink } = require('../../utils/soundcloudUtils');
 
-// Helper function to get config safely (lazy load to avoid circular dependency)
+// Hàm helper để lấy config một cách an toàn (tải lười để tránh phụ thuộc vòng tròn)
 function getConfig() {
   try {
     return require('../../utils/hotReload').getCurrentConfig();
@@ -9,27 +9,27 @@ function getConfig() {
   }
 }
 
-// Helper functions để kiểm tra config
+// Hàm helper để kiểm tra config
 function isPlatformFeatureEnabled(platform, type) {
-  // Sử dụng config được hot reload
+  // Sử dụng config được tải động
   const config = getConfig();
   
   if (!config.platform || !config.platform[platform]) {
-    if (config.debug) console.log(`[PlatformDetector] Platform ${platform} không có trong config`);
+    if (config.debug) console.log(`[PlatformDetector] Nền tảng ${platform} không có trong cấu hình`);
     return false;
   }
   
   const platformConfig = config.platform[platform];
   
-  // Map các type đặc biệt
-  if (type === 'search') type = 'single'; // YouTube search được coi như single
-  if (type === 'mix') type = 'playlist'; // YouTube mix được coi như playlist
+  // Ánh xạ các loại đặc biệt
+  if (type === 'search') type = 'single'; // Tìm kiếm YouTube được coi như bài hát đơn lẻ
+  if (type === 'mix') type = 'playlist'; // YouTube mix được coi như danh sách phát
   
   const isEnabled = platformConfig[type] === true;
   
   if (config.debug) {
     console.log(`[PlatformDetector] Kiểm tra ${platform}.${type}: ${isEnabled}`);
-    console.log(`[PlatformDetector] Platform config:`, platformConfig);
+    console.log(`[PlatformDetector] Cấu hình nền tảng:`, platformConfig);
   }
   
   return isEnabled;
@@ -47,7 +47,7 @@ function getPlatformDisplayName(platform) {
 function getTypeDisplayName(type) {
   const names = {
     'single': 'bài hát đơn lẻ',
-    'playlist': 'playlist',
+    'playlist': 'danh sách phát',
     'album': 'album',
     'search': 'tìm kiếm bài hát',
     'mix': 'mix/radio'
@@ -61,12 +61,12 @@ function createFeatureDisabledMessage(platform, type) {
   const typeName = getTypeDisplayName(type);
   
   return `❌ **Tính năng bị tắt!**\n\n` +
-         `Tính năng **${typeName}** cho **${platformName}** hiện đang bị vô hiệu hóa bởi admin.`;
+         `Tính năng **${typeName}** cho **${platformName}** hiện đang bị vô hiệu hóa bởi quản trị viên.`;
 }
 
-// Phát hiện loại platform và content type từ URL
+// Phát hiện loại nền tảng và loại nội dung từ URL
 async function detectPlatform(query) {
-  // Nếu là link rút gọn SoundCloud thì resolve sang link gốc
+  // Nếu là link rút gọn SoundCloud thì giải quyết sang link gốc
   if (query.includes('soundcloud.com') && !query.includes('on.soundcloud.com')) {
     // Nếu là link soundcloud.com nhưng không phải shortlink thì báo lỗi
     throw new Error('Chỉ chấp nhận link SoundCloud dạng shortlink (on.soundcloud.com) để tránh vượt giới hạn độ dài của Discord.');
@@ -256,7 +256,7 @@ async function routeToPlatform(client, interaction, query, voiceChannel, lockKey
 
 // Xử lý tìm kiếm YouTube (từ khóa)
 async function handleYouTubeSearch(client, interaction, query, voiceChannel) {
-  // Validation: Kiểm tra xem search YouTube có được bật không (search = single)
+  // Xác thực: Kiểm tra xem tìm kiếm YouTube có được bật không (search = single)
   if (!isPlatformFeatureEnabled('youtube', 'single')) {
     const errorMessage = createFeatureDisabledMessage('youtube', 'search');
     return await interaction.followUp({
@@ -274,7 +274,7 @@ async function handleYouTubeSearch(client, interaction, query, voiceChannel) {
     return interaction.followUp({ content: '❌ Không tìm thấy kết quả nào!', ephemeral: true });
   }
   
-  // Tạo select menu
+  // Tạo menu chọn
   const options = videos.map((v, i) => ({
     label: v.title.length > 100 ? v.title.slice(0, 97) + '...' : v.title,
     description: v.author.name.length > 50 ? v.author.name.slice(0, 47) + '...' : v.author.name,

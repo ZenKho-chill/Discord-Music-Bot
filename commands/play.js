@@ -9,6 +9,7 @@ const ytpl = require('@distube/ytpl');
 const puppeteer = require('puppeteer');
 const { routeToPlatform } = require('./platforms/platformDetector');
 const config = require('../config/config');
+const autoLeaveManager = require('../utils/autoLeaveManager');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -54,38 +55,51 @@ module.exports = {
 
   async execute(client, interaction) {
     try {
+      // Kiểm tra xem máy chủ có bị chặn không cho bot tham gia
+      if (autoLeaveManager.isGuildBlocked(interaction.guildId)) {
+        return interaction.reply({
+          content: "🚫 Bot đã rời kênh thoại do không có ai. Hãy vào kênh thoại rồi thử lại!",
+          ephemeral: true
+        });
+      }
+
       let query = interaction.options.getString('name-link');
       const voiceChannel = interaction.member.voice.channel;
 
-      // Chuyển đổi link watch?v=...&list=... thành playlist?list=...
+      // Chuyển đổi liên kết watch?v=...&list=... thành playlist?list=...
       try {
         if (query.includes('youtube.com/watch') && query.includes('list=')) {
           const url = new URL(query);
           const playlistId = url.searchParams.get('list');
           if (playlistId) {
             query = `https://www.youtube.com/playlist?list=${playlistId}`;
-            if (config.debug) console.log(`[URL] Đã chuyển đổi link playlist thành: ${query}`);
+            if (config.debug) console.log(`[URL] Đã chuyển đổi liên kết playlist thành: ${query}`);
           }
         }
       } catch (e) {
         // Bỏ qua nếu URL không hợp lệ, để logic cũ xử lý
       }
 
-      // Đảm bảo luôn khởi tạo lock/info object
+      // Đảm bảo luôn khởi tạo đối tượng lock/info
       if (!client._addLock) client._addLock = {};
       if (!client._addInfo) client._addInfo = {};
 
-      // Kiểm tra voice channel trước khi defer
+      // Kiểm tra kênh thoại trước khi defer
       if (!voiceChannel) {
         return interaction.reply({
-          content: "🔇 Vào voice channel trước đã!",
+          content: "🔇 Vào kênh thoại trước đã!",
           ephemeral: true
         });
       }
 
-      // Nếu query là link thì phát luôn, nếu không thì tìm kiếm và gửi select menu
+      // Xóa cờ chặn khi người dùng tham gia thoại và cố phát nhạc
+      if (autoLeaveManager.isGuildBlocked(interaction.guildId)) {
+        autoLeaveManager.unblockGuild(interaction.guildId);
+      }
+
+      // Nếu query là liên kết thì phát luôn, nếu không thì tìm kiếm và gửi menu chọn
       if (!query) {
-        return interaction.reply({ content: '❌ Bạn chưa nhập từ khóa hoặc link!', ephemeral: true });
+        return interaction.reply({ content: '❌ Bạn chưa nhập từ khóa hoặc liên kết!', ephemeral: true });
       }
 
       // deferReply duy nhất tại đây (public)
@@ -93,7 +107,7 @@ module.exports = {
 
       const lockKey = `${interaction.guildId}`;
 
-      // Kiểm tra playlist YouTube có tồn tại không trước khi play
+      // Kiểm tra playlist YouTube có tồn tại không trước khi phát
       if ((query.includes('youtube.com/playlist') || query.includes('youtu.be/playlist')) && !/[?&]list=RD[\w-]+/i.test(query)) {
         try {
           // Sử dụng ytpl để kiểm tra playlist
