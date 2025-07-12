@@ -15,7 +15,16 @@
                 Music Bot Dashboard
             </a>
             <ul class="nav-links">
-                <li><a href="/dashboard">Dashboard</a></li>
+                <li class="user-nav-info">
+                    <% if (user.avatar) { %>
+                        <img src="<%= user.avatar %>" alt="Avatar" class="nav-user-avatar">
+                    <% } else { %>
+                        <div class="nav-user-avatar nav-user-avatar-fallback">
+                            <%= user.username.charAt(0).toUpperCase() %>
+                        </div>
+                    <% } %>
+                    <span class="nav-user-name"><%= user.global_name || user.username %></span>
+                </li>
                 <li><a href="/logout" class="logout-btn">Đăng xuất</a></li>
             </ul>
         </nav>
@@ -36,23 +45,6 @@
             <p style="margin: 0; font-size: 1.1rem; opacity: 0.9;">
                 Quản lý Music Bot trên các server Discord của bạn một cách dễ dàng!
             </p>
-        </div>
-
-        <!-- User Info Header -->
-        <div class="dashboard-header fade-in">
-            <div class="user-info">
-                <% if (user.avatar) { %>
-                    <img src="<%= user.avatar %>" alt="Avatar" class="user-avatar">
-                <% } else { %>
-                    <div class="user-avatar" style="background: #5865F2; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 1.5rem;">
-                        <%= user.username.charAt(0).toUpperCase() %>
-                    </div>
-                <% } %>
-                <div class="user-details">
-                    <h2>Xin chào, <%= user.global_name || user.username %><% if (user.discriminator && user.discriminator !== '0') { %>#<%= user.discriminator %><% } %>!</h2>
-                    <p>Quản lý Music Bot trên các server của bạn</p>
-                </div>
-            </div>
         </div>
 
         <!-- Servers Section -->

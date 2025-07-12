@@ -100,7 +100,8 @@ module.exports = async function (client) {
     clientID: config.dashboard.clientId,
     clientSecret: config.dashboard.clientSecret,
     callbackURL: config.dashboard.redirectUri,
-    scope: config.dashboard.scopes
+    scope: config.dashboard.scopes,
+    prompt: 'none' // Không hiển thị prompt nếu user đã authorize trước đó
   }, async (accessToken, refreshToken, profile, done) => {
     try {
       // Lưu user session vào database

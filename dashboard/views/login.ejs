@@ -15,33 +15,28 @@
                 Music Bot
             </a>
             <ul class="nav-links">
-                <li><a href="#features">Tính năng</a></li>
-                <li><a href="#about">Giới thiệu</a></li>
+                <li><a href="/auth/discord" class="discord-btn">Đăng nhập</a></li>
             </ul>
         </nav>
     </header>
 
     <div class="login-container">
+        <% if (typeof error !== 'undefined' && error) { %>
+            <div style="background: #ff6b6b; color: white; padding: 1rem; border-radius: 8px; margin-bottom: 2rem; text-align: center;" class="error-message">
+                <i class="fas fa-exclamation-triangle"></i>
+                <%= error %>
+            </div>
+        <% } %>
+        
         <div class="login-box fade-in">
             <i class="fab fa-discord" style="font-size: 4rem; color: #5865F2; margin-bottom: 1rem;"></i>
             <h1>Chào mừng!</h1>
             <p>Đăng nhập bằng tài khoản Discord của bạn để quản lý Music Bot trên các server của bạn.</p>
             
-            <a href="/auth/discord" class="discord-btn">
+            <a href="/auth/discord" class="discord-btn login-btn">
                 <i class="fab fa-discord"></i>
                 Đăng nhập với Discord
             </a>
-            
-            <div style="margin-top: 1rem; color: #57F287; font-size: 0.9rem;">
-                <i class="fas fa-info-circle"></i>
-                Tự động đăng nhập trong 7 ngày (không cần login lại)
-            </div>
-            
-            <div style="margin-top: 1rem;">
-                <a href="/setup" style="color: #666; text-decoration: none; font-size: 0.9rem;">
-                    <i class="fas fa-cog"></i> Hướng dẫn setup OAuth2
-                </a>
-            </div>
             
             <div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid #eee;">
                 <h3 style="color: #333; margin-bottom: 1rem;">Tính năng nổi bật:</h3>
@@ -70,6 +65,25 @@
                 this.style.transform = 'scale(1)';
             });
         });
+        
+        // Show loading when clicking login button (Dyno-style)
+        function showLoading() {
+          const btn = document.querySelector('.login-btn');
+          if (btn) {
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang kết nối với Discord...';
+            btn.style.pointerEvents = 'none';
+          }
+        }
+        
+        // Auto-hide error messages after 5 seconds
+        setTimeout(() => {
+          const errorMsg = document.querySelector('.error-message');
+          if (errorMsg) {
+            errorMsg.style.transition = 'opacity 0.5s ease';
+            errorMsg.style.opacity = '0';
+            setTimeout(() => errorMsg.remove(), 500);
+          }
+        }, 5000);
     </script>
 </body>
 </html>

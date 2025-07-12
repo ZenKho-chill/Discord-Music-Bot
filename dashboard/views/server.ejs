@@ -15,7 +15,16 @@
                 Music Bot Dashboard
             </a>
             <ul class="nav-links">
-                <li><a href="/dashboard">Dashboard</a></li>
+                <li class="user-nav-info">
+                    <% if (user.avatar) { %>
+                        <img src="<%= user.avatar %>" alt="Avatar" class="nav-user-avatar">
+                    <% } else { %>
+                        <div class="nav-user-avatar nav-user-avatar-fallback">
+                            <%= user.username.charAt(0).toUpperCase() %>
+                        </div>
+                    <% } %>
+                    <span class="nav-user-name"><%= user.global_name || user.username %></span>
+                </li>
                 <li><a href="/logout" class="logout-btn">Đăng xuất</a></li>
             </ul>
         </nav>

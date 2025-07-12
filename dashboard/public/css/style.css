@@ -50,6 +50,7 @@ body {
     display: flex;
     list-style: none;
     gap: 2rem;
+    align-items: center; /* Align items vertically */
 }
 
 .nav-links a {
@@ -63,6 +64,45 @@ body {
 .nav-links a:hover {
     background: rgba(255, 255, 255, 0.2);
     transform: translateY(-2px);
+}
+
+/* User info in navbar */
+.user-nav-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 1rem;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 25px;
+    backdrop-filter: blur(10px);
+}
+
+.nav-user-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.nav-user-avatar-fallback {
+    background: rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+
+.nav-user-name {
+    color: white;
+    font-weight: 600;
+    font-size: 0.95rem;
+    white-space: nowrap;
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /* Container */
@@ -284,55 +324,6 @@ body {
 .manage-btn:disabled {
     background: #999;
     cursor: not-allowed;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-    .nav {
-        flex-direction: column;
-        gap: 1rem;
-        padding: 1rem;
-    }
-
-    .nav-links {
-        flex-direction: column;
-        gap: 0.5rem;
-        text-align: center;
-    }
-
-    .container {
-        padding: 1rem;
-    }
-
-    .login-box {
-        padding: 2rem;
-        margin: 1rem;
-    }
-
-    .servers-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .user-info {
-        flex-direction: column;
-        text-align: center;
-    }
-}
-
-/* Loading animation */
-.loading {
-    display: inline-block;
-    width: 20px;
-    height: 20px;
-    border: 3px solid #f3f3f3;
-    border-top: 3px solid #5865F2;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
 }
 
 /* Animations */
