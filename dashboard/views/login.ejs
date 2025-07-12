@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <header class="header">
+        <nav class="nav">
+            <a href="/" class="logo">
+                <i class="fas fa-music"></i>
+                Music Bot
+            </a>
+            <ul class="nav-links">
+                <li><a href="#features">Tính năng</a></li>
+                <li><a href="#about">Giới thiệu</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="login-container">
+        <div class="login-box fade-in">
+            <i class="fab fa-discord" style="font-size: 4rem; color: #5865F2; margin-bottom: 1rem;"></i>
+            <h1>Chào mừng!</h1>
+            <p>Đăng nhập bằng tài khoản Discord của bạn để quản lý Music Bot trên các server của bạn.</p>
+            
+            <a href="/auth/discord" class="discord-btn">
+                <i class="fab fa-discord"></i>
+                Đăng nhập với Discord
+            </a>
+            
+            <div style="margin-top: 1rem; color: #57F287; font-size: 0.9rem;">
+                <i class="fas fa-info-circle"></i>
+                Tự động đăng nhập trong 7 ngày (không cần login lại)
+            </div>
+            
+            <div style="margin-top: 1rem;">
+                <a href="/setup" style="color: #666; text-decoration: none; font-size: 0.9rem;">
+                    <i class="fas fa-cog"></i> Hướng dẫn setup OAuth2
+                </a>
+            </div>
+            
+            <div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid #eee;">
+                <h3 style="color: #333; margin-bottom: 1rem;">Tính năng nổi bật:</h3>
+                <div style="text-align: left; color: #666;">
+                    <p><i class="fas fa-check" style="color: #57F287; margin-right: 0.5rem;"></i>Phát nhạc từ YouTube, Spotify, SoundCloud</p>
+                    <p><i class="fas fa-check" style="color: #57F287; margin-right: 0.5rem;"></i>Hàng đợi nhạc không giới hạn</p>
+                    <p><i class="fas fa-check" style="color: #57F287; margin-right: 0.5rem;"></i>Điều khiển âm lượng và phát lặp</p>
+                    <p><i class="fas fa-check" style="color: #57F287; margin-right: 0.5rem;"></i>Dashboard quản lý trực quan</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/dashboard.js"></script>
+    <script>
+        // Add some interactive effects
+        document.addEventListener('DOMContentLoaded', function() {
+            const loginBox = document.querySelector('.login-box');
+            
+            loginBox.addEventListener('mouseenter', function() {
+                this.style.transform = 'scale(1.02)';
+                this.style.transition = 'transform 0.3s ease';
+            });
+            
+            loginBox.addEventListener('mouseleave', function() {
+                this.style.transform = 'scale(1)';
+            });
+        });
+    </script>
+</body>
+</html>

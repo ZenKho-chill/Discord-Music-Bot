@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <header class="header">
+        <nav class="nav">
+            <a href="/dashboard" class="logo">
+                <i class="fas fa-music"></i>
+                Music Bot Dashboard
+            </a>
+            <ul class="nav-links">
+                <li><a href="/dashboard">Dashboard</a></li>
+                <li><a href="/logout" class="logout-btn">Đăng xuất</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="container">
+        <!-- Server Header -->
+        <div class="dashboard-header fade-in">
+            <div class="server-info">
+                <% if (guild.icon) { %>
+                    <img src="<%= guild.icon %>" alt="<%= guild.name %>" class="server-icon" style="width: 80px; height: 80px;">
+                <% } else { %>
+                    <div class="server-icon" style="width: 80px; height: 80px; font-size: 2rem;">
+                        <%= guild.name.charAt(0).toUpperCase() %>
+                    </div>
+                <% } %>
+                <div class="server-details">
+                    <h2><%= guild.name %></h2>
+                    <p><i class="fas fa-users"></i> <%= guild.memberCount.toLocaleString() %> thành viên</p>
+                    <div class="bot-status">
+                        <div class="status-indicator status-online"></div>
+                        <span>Bot đang hoạt động</span>
+                    </div>
+                </div>
+            </div>
+            
+            <a href="/dashboard" class="discord-btn" style="background: #6c757d;">
+                <i class="fas fa-arrow-left"></i>
+                Quay lại Dashboard
+            </a>
+        </div>
+
+        <!-- Server Management Sections -->
+        <div class="servers-section fade-in">
+            <h3><i class="fas fa-cog"></i> Quản lý Server</h3>
+            
+            <div class="servers-grid">
+                <!-- Music Controls -->
+                <div class="server-card">
+                    <h4><i class="fas fa-music"></i> Điều khiển nhạc</h4>
+                    <p>Quản lý phát nhạc hiện tại trong server</p>
+                    <div style="margin-top: 1rem;">
+                        <button class="manage-btn" onclick="sendCommand('nowplaying')">
+                            <i class="fas fa-info-circle"></i> Nhạc hiện tại
+                        </button>
+                        <button class="manage-btn" onclick="sendCommand('queue')">
+                            <i class="fas fa-list"></i> Hàng đợi
+                        </button>
+                        <button class="manage-btn" onclick="sendCommand('stop')" style="background: #ed4245;">
+                            <i class="fas fa-stop"></i> Dừng nhạc
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Volume Control -->
+                <div class="server-card">
+                    <h4><i class="fas fa-volume-up"></i> Điều chỉnh âm lượng</h4>
+                    <p>Thay đổi âm lượng phát nhạc</p>
+                    <div style="margin-top: 1rem;">
+                        <input type="range" id="volumeSlider" min="0" max="150" value="100" 
+                               style="width: 100%; margin-bottom: 1rem;">
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button class="manage-btn" onclick="setVolume(50)">50%</button>
+                            <button class="manage-btn" onclick="setVolume(100)">100%</button>
+                            <button class="manage-btn" onclick="setVolume(150)">150%</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Queue Management -->
+                <div class="server-card">
+                    <h4><i class="fas fa-list-ol"></i> Quản lý hàng đợi</h4>
+                    <p>Thao tác với danh sách nhạc chờ</p>
+                    <div style="margin-top: 1rem;">
+                        <button class="manage-btn" onclick="sendCommand('skip')">
+                            <i class="fas fa-forward"></i> Bỏ qua
+                        </button>
+                        <button class="manage-btn" onclick="sendCommand('repeat')">
+                            <i class="fas fa-repeat"></i> Lặp lại
+                        </button>
+                        <button class="manage-btn" onclick="clearQueue()" style="background: #FFA500;">
+                            <i class="fas fa-trash"></i> Xóa hàng đợi
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Bot Status -->
+                <div class="server-card">
+                    <h4><i class="fas fa-robot"></i> Trạng thái Bot</h4>
+                    <p>Thông tin về hoạt động của bot</p>
+                    <div style="margin-top: 1rem;">
+                        <div class="bot-status" style="margin-bottom: 0.5rem;">
+                            <div class="status-indicator status-online"></div>
+                            <span>Trực tuyến</span>
+                        </div>
+                        <div style="color: #666; font-size: 0.9rem;">
+                            <p><i class="fas fa-clock"></i> Uptime: <span id="uptime">Đang tải...</span></p>
+                            <p><i class="fas fa-memory"></i> RAM: <span id="memory">Đang tải...</span></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Play -->
+                <div class="server-card">
+                    <h4><i class="fas fa-play"></i> Phát nhạc nhanh</h4>
+                    <p>Tìm kiếm và phát nhạc ngay lập tức</p>
+                    <div style="margin-top: 1rem;">
+                        <input type="text" id="searchInput" placeholder="Nhập tên bài hát hoặc URL..." 
+                               style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 5px; margin-bottom: 1rem;">
+                        <button class="manage-btn" onclick="playMusic()" style="width: 100%;">
+                            <i class="fas fa-play"></i> Phát nhạc
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Server Settings -->
+                <div class="server-card">
+                    <h4><i class="fas fa-cogs"></i> Cài đặt Server</h4>
+                    <p>Tùy chỉnh hoạt động của bot trong server</p>
+                    <div style="margin-top: 1rem;">
+                        <label style="display: block; margin-bottom: 0.5rem;">
+                            <input type="checkbox" checked> Tự động rời khi hết nhạc
+                        </label>
+                        <label style="display: block; margin-bottom: 0.5rem;">
+                            <input type="checkbox" checked> Tự động tạm dừng khi phòng trống
+                        </label>
+                        <label style="display: block; margin-bottom: 1rem;">
+                            <input type="checkbox"> Chế độ DJ (chỉ DJ mới điều khiển)
+                        </label>
+                        <button class="manage-btn" onclick="saveSettings()">
+                            <i class="fas fa-save"></i> Lưu cài đặt
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/dashboard.js"></script>
+    <script>
+        // Command functions
+        function sendCommand(command) {
+            // In a real implementation, this would send commands to the bot
+            // For now, we'll just show a notification
+            showNotification(`Đã gửi lệnh: ${command}`, 'success');
+        }
+
+        function setVolume(volume) {
+            document.getElementById('volumeSlider').value = volume;
+            showNotification(`Đã đặt âm lượng: ${volume}%`, 'success');
+        }
+
+        function clearQueue() {
+            if (confirm('Bạn có chắc muốn xóa toàn bộ hàng đợi?')) {
+                showNotification('Đã xóa hàng đợi', 'success');
+            }
+        }
+
+        function playMusic() {
+            const search = document.getElementById('searchInput').value;
+            if (!search.trim()) {
+                showNotification('Vui lòng nhập tên bài hát hoặc URL', 'error');
+                return;
+            }
+            showNotification(`Đang tìm kiếm: ${search}`, 'info');
+            document.getElementById('searchInput').value = '';
+        }
+
+        function saveSettings() {
+            showNotification('Đã lưu cài đặt', 'success');
+        }
+
+        // Update bot stats periodically
+        function updateStats() {
+            // Simulate updating stats
+            const uptime = Math.floor(Math.random() * 24) + 'h ' + Math.floor(Math.random() * 60) + 'm';
+            const memory = Math.floor(Math.random() * 100 + 50) + 'MB';
+            
+            document.getElementById('uptime').textContent = uptime;
+            document.getElementById('memory').textContent = memory;
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            updateStats();
+            
+            // Update stats every 30 seconds
+            setInterval(updateStats, 30000);
+            
+            // Volume slider event
+            document.getElementById('volumeSlider').addEventListener('input', function() {
+                const volume = this.value;
+                showNotification(`Âm lượng: ${volume}%`, 'info');
+            });
+            
+            // Enter key for search
+            document.getElementById('searchInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    playMusic();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

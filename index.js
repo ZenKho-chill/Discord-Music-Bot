@@ -63,7 +63,12 @@ process.on("uncaughtException", (err) => {
   }
 
   require('./utils/loader')(client);
-  require('./dashboard')();
+  
+  // Start dashboard after client is ready
+  client.once('ready', () => {
+    require('./dashboard')(client);
+  });
+  
   client.login(config.token);
 })();
 

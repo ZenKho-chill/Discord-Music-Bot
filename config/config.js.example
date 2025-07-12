@@ -9,6 +9,14 @@ module.exports = {
     clientId: 'SPOTIFY_CLIENT_ID',
     clientSecret: 'SPOTIFY_CLIENT_SECRET'
   },
+  // Dashboard OAuth Configuration
+  dashboard: {
+    clientId: 'Discord ClientID Here', // Sử dụng cùng clientId với bot
+    clientSecret: 'Discord Client Secret Here', // Lấy từ Discord Developer Portal
+    redirectUri: 'http://localhost:3000/auth/callback',
+    scopes: ['identify', 'guilds'],
+    sessionSecret: 'your-random-session-secret-here' // Thay đổi thành chuỗi ngẫu nhiên phức tạp
+  },
   platform: {
     youtube: {
       single: true,
