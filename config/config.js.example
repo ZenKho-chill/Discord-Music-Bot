@@ -1,21 +1,13 @@
 module.exports = {
-  token: 'Discord Token Here',
-  clientId: 'Discord ClientID Here',
+  token: 'DISCORD_TOKEN_ID',
+  clientId: 'DISCORD_CLIEND_ID',
   maxQueue: 30,
   debug: false,
-  registerCommands: true,
+  registerCommands: false,
   maxVolume: 150,
   spotify: {
     clientId: 'SPOTIFY_CLIENT_ID',
     clientSecret: 'SPOTIFY_CLIENT_SECRET'
-  },
-  // Dashboard OAuth Configuration
-  dashboard: {
-    clientId: 'Discord ClientID Here', // Sử dụng cùng clientId với bot
-    clientSecret: 'Discord Client Secret Here', // Lấy từ Discord Developer Portal
-    redirectUri: 'http://localhost:3000/auth/callback',
-    scopes: ['identify', 'guilds'],
-    sessionSecret: 'your-random-session-secret-here' // Thay đổi thành chuỗi ngẫu nhiên phức tạp
   },
   platform: {
     youtube: {
@@ -29,7 +21,7 @@ module.exports = {
     },
     soundcloud: {
       single: true,
-      playlist: true
+      playlist: true,
     },
   },
   // Auto Leave khi HẾT NHẠC trong queue
@@ -49,5 +41,41 @@ module.exports = {
   leaveOnStop: {
     enabled: true,    // Tự động rời khỏi voice channel khi dừng nhạc
     timeout: 0        // Thời gian chờ trước khi rời (giây), 0 = ngay lập tức
-  }
+  },
+  // Dashboard OAuth Configuration
+  dashboard: {
+    clientId: 'DISCORD_CLIEND_ID', // Sử dụng cùng clientId với bot
+    clientSecret: 'DISCORD_SECRET_ID', // Bạn cần thêm client secret từ Discord Developer Portal
+    redirectUri: 'http://localhost:3000/auth/callback',
+    scopes: ['identify', 'guilds'],
+    sessionSecret: 'music-bot-dashboard-secret-2024', // Thay đổi thành secret phức tạp
+    
+    // Cookie Configuration
+    cookies: {
+      // Session Cookie Settings
+      session: {
+        secure: false,           // Set to true if using HTTPS
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 ngày (7 days in milliseconds)
+        httpOnly: true,          // Prevent XSS attacks
+        sameSite: 'lax'          // CSRF protection ('strict', 'lax', 'none')
+      },
+      
+      // Remember Token Cookie Settings
+      rememberToken: {
+        name: 'remember_token',  // Cookie name
+        maxAge: 30 * 24 * 60 * 60 * 1000, // 30 ngày (30 days in milliseconds)
+        httpOnly: true,          // Chỉ server mới đọc được, bảo mật cao
+        secure: false,           // Set true nếu dùng HTTPS in production
+        sameSite: 'lax',         // CSRF protection ('strict', 'lax', 'none')
+        path: '/',               // Đảm bảo cookie hoạt động trên toàn site
+        domain: 'localhost'      // Explicit domain, change for production (hoặc undefined để auto-detect)
+      }
+    },
+    
+    // Auto-login Configuration
+    autoLogin: {
+      enabled: true,             // Enable/disable auto-login feature
+      tokenExpiryDays: 30        // Number of days before remember token expires
+    }
+  },
 };

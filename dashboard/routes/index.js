@@ -1,5 +1,6 @@
 const express = require('express');
 const passport = require('passport');
+const config = require('../../config/config');
 const router = express.Router();
 
 // Import fetch with dynamic import for node-fetch v3
@@ -153,15 +154,8 @@ router.get('/auth/callback',
       const rememberToken = await UserSessionService.createRememberToken(req.user.id);
       
       if (rememberToken) {
-        // Set cookie với thời hạn 7 ngày
-        res.cookie('remember_token', rememberToken, {
-          maxAge: 7 * 24 * 60 * 60 * 1000, // 7 ngày
-          httpOnly: true, // Chỉ server mới đọc được
-          secure: false, // Set true nếu dùng HTTPS
-          sameSite: 'lax',
-          path: '/', // Đảm bảo cookie hoạt động trên toàn site
-          domain: 'localhost' // Explicit domain
-        });
+        // Set cookie với thời hạn từ config
+        res.cookie(config.dashboard.cookies.rememberToken.name, rememberToken, config.dashboard.cookies.rememberToken);
         console.log('🍪 Remember token set for user:', req.user.username);
       }
       
@@ -219,7 +213,7 @@ router.get('/dashboard', isAuthenticated, async (req, res) => {
       serversWithBot,
       serversWithoutBot,
       isFirstVisit: isFirstVisit, // Pass flag to view
-      hasRememberToken: !!req.cookies.remember_token // Pass auto-login status
+      hasRememberToken: !!req.cookies[config.dashboard.cookies.rememberToken.name] // Pass auto-login status
     });
   } catch (error) {
     console.error('💥 Dashboard error:', error);
@@ -239,7 +233,7 @@ router.get('/dashboard', isAuthenticated, async (req, res) => {
         serversWithBot: [],
         serversWithoutBot: [],
         isFirstVisit: false, // Set to false on error
-        hasRememberToken: !!req.cookies.remember_token, // Pass auto-login status
+        hasRememberToken: !!req.cookies[config.dashboard.cookies.rememberToken.name], // Pass auto-login status
         apiError: 'Không thể tải danh sách server từ Discord. Vui lòng thử lại sau.'
       });
     } else {
@@ -310,7 +304,7 @@ router.get('/logout', async (req, res) => {
     }
     
     // Xóa remember token cookie
-    res.clearCookie('remember_token');
+    res.clearCookie(config.dashboard.cookies.rememberToken.name);
     
     // Xóa session khỏi database  
     if (userId) {
@@ -326,7 +320,7 @@ router.get('/logout', async (req, res) => {
     });
   } catch (error) {
     console.error('❌ Error during logout:', error);
-    res.clearCookie('remember_token');
+    res.clearCookie(config.dashboard.cookies.rememberToken.name);
     req.logout((err) => {
       if (err) {
         console.error('Logout error:', err);
@@ -399,8 +393,8 @@ router.get('/debug/remember-token', (req, res) => {
       id: req.user.id,
       username: req.user.username
     } : null,
-    rememberTokenCookie: req.cookies.remember_token ? 'EXISTS' : 'MISSING',
-    rememberTokenPreview: req.cookies.remember_token ? req.cookies.remember_token.substring(0, 10) + '...' : 'N/A',
+    rememberTokenCookie: req.cookies[config.dashboard.cookies.rememberToken.name] ? 'EXISTS' : 'MISSING',
+    rememberTokenPreview: req.cookies[config.dashboard.cookies.rememberToken.name] ? req.cookies[config.dashboard.cookies.rememberToken.name].substring(0, 10) + '...' : 'N/A',
     allCookies: Object.keys(req.cookies),
     cookieValues: req.cookies,
     headers: {

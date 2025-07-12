@@ -34,10 +34,7 @@ module.exports = async function (client) {
     secret: config.dashboard.sessionSecret,
     resave: false,
     saveUninitialized: false,
-    cookie: { 
-      secure: false, // Set to true if using HTTPS
-      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 ngày
-    }
+    cookie: config.dashboard.cookies.session
   }));
 
   // Passport configuration
@@ -52,10 +49,10 @@ module.exports = async function (client) {
     }
     
     // Nếu user chưa login và có remember_token cookie
-    if (!req.user && req.cookies.remember_token) {
+    if (!req.user && req.cookies[config.dashboard.cookies.rememberToken.name]) {
       try {
         // Tìm user session từ remember token
-        const userSession = await UserSessionService.getSessionByRememberToken(req.cookies.remember_token);
+        const userSession = await UserSessionService.getSessionByRememberToken(req.cookies[config.dashboard.cookies.rememberToken.name]);
         
         if (userSession && userSession.isTokenValid()) {
           // Tự động login user
@@ -72,7 +69,7 @@ module.exports = async function (client) {
             }, (err) => {
               if (err) {
                 console.error('❌ Auto-login error:', err);
-                res.clearCookie('remember_token');
+                res.clearCookie(config.dashboard.cookies.rememberToken.name);
                 next();
               } else {
                 console.log('✅ Auto-login successful for:', userSession.username);
@@ -88,11 +85,11 @@ module.exports = async function (client) {
           });
         } else {
           // Token hết hạn hoặc không hợp lệ
-          res.clearCookie('remember_token');
+          res.clearCookie(config.dashboard.cookies.rememberToken.name);
         }
       } catch (error) {
         console.error('❌ Error during auto-login:', error);
-        res.clearCookie('remember_token');
+        res.clearCookie(config.dashboard.cookies.rememberToken.name);
       }
     }
     next();
