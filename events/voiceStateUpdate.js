@@ -63,9 +63,11 @@ module.exports = (client) => {
       const action = oldState.channelId && !newState.channelId ? 'rời' :
                     !oldState.channelId && newState.channelId ? 'tham gia' : 'di chuyển';
       
-      console.log(`[AutoLeave] Người dùng ${userName} (bot: ${userIsBot}) ${action} kênh thoại: ${botVoiceChannel.name}`);
-      console.log(`[AutoLeave] Thành viên kênh:`, botVoiceChannel.members.map(m => `${m.displayName} (bot: ${m.user.bot})`).join(', '));
-      console.log(`[AutoLeave] Người dùng thật còn lại: ${realUsers.size}`);
+      if (config.debug) {
+        console.log(`[AutoLeave] Người dùng ${userName} (bot: ${userIsBot}) ${action} kênh thoại: ${botVoiceChannel.name}`);
+        console.log(`[AutoLeave] Thành viên kênh:`, botVoiceChannel.members.map(m => `${m.displayName} (bot: ${m.user.bot})`).join(', '));
+        console.log(`[AutoLeave] Người dùng thật còn lại: ${realUsers.size}`);
+      }
     }
 
     // Nếu vẫn còn người dùng thật, xóa timeout hiện có

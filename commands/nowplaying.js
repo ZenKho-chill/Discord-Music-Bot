@@ -29,9 +29,6 @@ module.exports = {
     // Nền mờ từ ảnh nhạc
     let img;
     let thumbUrl = song.thumbnail;
-    // DEBUG: Hiển thị queueId nếu muốn
-    // console.log('Bài đang phát queueId:', song.queueId, 'STT:', song.stt);
-    // Nếu là hình thu nhỏ YouTube hoặc link YouTube, tự động thử nhiều độ phân giải
     if (song.url && song.url.includes('youtube.com')) {
       const match = song.url.match(/v=([\w-]+)/);
       if (match && match[1]) {

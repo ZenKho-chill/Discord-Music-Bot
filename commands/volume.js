@@ -66,7 +66,7 @@ module.exports = {
       const volumeBar = '█'.repeat(filledBars) + '░'.repeat(emptyBars);
 
       await interaction.reply({
-        content: `${volumeEmoji} **Đã điều chỉnh âm lượng thành ${volumeValue}%**\n\n📊 **Thanh âm lượng:** \`${volumeBar}\` ${volumeValue}%\n📈 **Thay đổi:** ${oldVolume}% → ${volumeValue}%\n📏 **Giới hạn:** 0% - ${config.maxVolume}%\n\n🎶 **Đang phát:** ${queue.songs[0].name}\n👤 **Yêu cầu bởi:** ${queue.songs[0].user}`,
+        content: `${volumeEmoji} **Đã điều chỉnh âm lượng thành ${volumeValue}%**\n\n📊 **Âm lượng:** \`${volumeBar}\` ${volumeValue}%\n📈 **Thay đổi:** ${oldVolume}% → ${volumeValue}%\n\n🎶 **Đang phát:** ${queue.songs[0].name}`,
         ephemeral: true
       });
 

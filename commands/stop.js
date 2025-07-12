@@ -92,7 +92,7 @@ module.exports = {
       }
       
       // Tạo thông báo dựa trên cấu hình
-      let replyContent = `⏹️ **Đã dừng phát nhạc!**\n\n🗑️ Đã xóa **${songCount}** bài hát khỏi hàng đợi.`;
+      let replyContent = `⏹️ **Đã dừng phát nhạc!**\n\n`;
       
       if (config.leaveOnStop && config.leaveOnStop.enabled) {
         if (config.leaveOnStop.timeout > 0) {
