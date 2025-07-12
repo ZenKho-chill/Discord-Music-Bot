@@ -546,7 +546,7 @@ function applyTheme(ctx, themeName) {
 
 ## 📄 License
 
-Dự án này được phát hành dưới giấy phép [LGPL-3.0](LICENSE).
+Dự án này được phát hành dưới giấy phép [GPL-3.0](LICENSE).
 
 ## 🤝 Contributing
 
