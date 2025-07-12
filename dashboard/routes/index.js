@@ -289,6 +289,18 @@ router.get('/dashboard', isAuthenticated, async (req, res) => {
     const userSession = await userSessionService.getSessionByDiscordId(user.id);
     const isFirstVisit = userSession ? userSession.isFirstVisit : false;
     
+    // Check if user has remember token (auto-login enabled)
+    const hasRememberToken = !!req.cookies[config.dashboard.cookies.rememberToken.name];
+    
+    // Check if this is a fresh session (auto-login just happened)
+    const showAutoLoginMessage = hasRememberToken && userSession && userSession.lastAutoLogin;
+    
+    // Clear the auto-login flag after showing message once
+    if (showAutoLoginMessage && userSession.lastAutoLogin) {
+      userSession.lastAutoLogin = false;
+      await userSession.save();
+    }
+    
     // Mark user as visited after first access
     if (isFirstVisit) {
       await userSessionService.markUserVisited(user.id);
@@ -321,7 +333,8 @@ router.get('/dashboard', isAuthenticated, async (req, res) => {
       serversWithBot,
       serversWithoutBot,
       isFirstVisit: isFirstVisit, // Pass flag to view
-      hasRememberToken: !!req.cookies[config.dashboard.cookies.rememberToken.name] // Pass auto-login status
+      hasRememberToken: hasRememberToken, // Pass auto-login status
+      showAutoLoginMessage: showAutoLoginMessage // Pass auto-login message flag
     });
   } catch (error) {
     console.error('💥 Dashboard error:', error);
@@ -342,6 +355,7 @@ router.get('/dashboard', isAuthenticated, async (req, res) => {
         serversWithoutBot: [],
         isFirstVisit: false, // Set to false on error
         hasRememberToken: !!req.cookies[config.dashboard.cookies.rememberToken.name], // Pass auto-login status
+        showAutoLoginMessage: false, // No message on error
         apiError: 'Không thể tải danh sách server từ Discord. Vui lòng thử lại sau.'
       });
     } else {

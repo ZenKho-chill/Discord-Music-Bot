@@ -71,6 +71,10 @@ const userSessionSchema = new mongoose.Schema({
         type: Boolean,
         default: true // Flag để hiển thị thông báo chào mừng lần đầu
     },
+    lastAutoLogin: {
+        type: Boolean,
+        default: false // Flag để hiển thị thông báo auto-login thành công
+    },
     lastLogin: {
         type: Date,
         default: Date.now

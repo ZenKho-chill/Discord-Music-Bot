@@ -56,7 +56,7 @@ module.exports = async function (client) {
         
         if (userSession && userSession.isTokenValid()) {
           // Tự động login user
-          return new Promise((resolve) => {
+          return new Promise(async (resolve) => {
             req.logIn({
               id: userSession.discordId,
               username: userSession.username,
@@ -66,13 +66,22 @@ module.exports = async function (client) {
               email: userSession.email,
               accessToken: userSession.accessToken,
               refreshToken: userSession.refreshToken
-            }, (err) => {
+            }, async (err) => {
               if (err) {
                 console.error('❌ Auto-login error:', err);
                 res.clearCookie(config.dashboard.cookies.rememberToken.name);
                 next();
               } else {
                 console.log('✅ Auto-login successful for:', userSession.username);
+                
+                // Set flag để hiển thị thông báo auto-login
+                try {
+                  userSession.lastAutoLogin = true;
+                  await userSession.save();
+                } catch (saveError) {
+                  console.error('❌ Error saving auto-login flag:', saveError);
+                }
+                
                 // Redirect tới dashboard nếu đang ở trang chủ
                 if (req.path === '/' || req.path === '/login') {
                   res.redirect('/dashboard');
