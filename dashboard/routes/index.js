@@ -128,7 +128,7 @@ router.get('/', (req, res) => {
   } else {
     const error = req.query.error;
     res.render('login', { 
-      title: 'Discord Music Bot - Đăng nhập',
+      title: 'ZK Music Bot - Đăng nhập',
       error: error || null
     });
   }
@@ -309,7 +309,7 @@ router.get('/dashboard', isAuthenticated, async (req, res) => {
     const { serversWithBot, serversWithoutBot, allServers } = categorizeServers(userGuilds, botGuilds);
     
     res.render('dashboard', {
-      title: 'Dashboard - Discord Music Bot',
+      title: 'Dashboard - ZK Music Bot',
       user: {
         id: user.id,
         username: user.username,
@@ -329,7 +329,7 @@ router.get('/dashboard', isAuthenticated, async (req, res) => {
     // Check if it's a specific Discord API error
     if (error.message.includes('Discord API Error')) {
       res.render('dashboard', {
-        title: 'Dashboard - Discord Music Bot',
+        title: 'Dashboard - ZK Music Bot',
         user: {
           id: user.id,
           username: user.username,
@@ -389,7 +389,13 @@ router.get('/server/:serverId', isAuthenticated, async (req, res) => {
         memberCount: guild.memberCount,
         icon: guild.iconURL()
       },
-      user
+      user: {
+        id: user.id,
+        username: user.username,
+        global_name: user.global_name,
+        discriminator: user.discriminator,
+        avatar: user.avatar ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png` : null
+      }
     });
   } catch (error) {
     console.error('Server management error:', error);

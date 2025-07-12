@@ -1,6 +1,6 @@
 // Dashboard Interactive Features
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🎵 Music Bot Dashboard loaded successfully!');
+    console.log('🎵 ZK Music Bot Dashboard loaded successfully!');
     
     // Add smooth scrolling
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
