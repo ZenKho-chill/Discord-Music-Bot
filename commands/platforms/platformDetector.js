@@ -1,4 +1,5 @@
 const { resolveSoundCloudShortlink } = require('../../utils/soundcloudUtils');
+const logger = require('../../utils/logger');
 
 // Hàm helper để lấy config một cách an toàn (tải lười để tránh phụ thuộc vòng tròn)
 function getConfig() {
@@ -14,8 +15,12 @@ function isPlatformFeatureEnabled(platform, type) {
   // Sử dụng config được tải động
   const config = getConfig();
   
+  if (config.debug) {
+    logger.debug(`[PlatformDetector] isPlatformFeatureEnabled được gọi với platform:`, platform, `type:`, type);
+  }
+  
   if (!config.platform || !config.platform[platform]) {
-    if (config.debug) console.log(`[PlatformDetector] Nền tảng ${platform} không có trong cấu hình`);
+    if (config.debug) logger.debug(`[PlatformDetector] Nền tảng ${platform} không có trong cấu hình`);
     return false;
   }
   
@@ -66,6 +71,11 @@ function createFeatureDisabledMessage(platform, type) {
 
 // Phát hiện loại nền tảng và loại nội dung từ URL
 async function detectPlatform(query) {
+  const config = getConfig();
+  if (config.debug) {
+    console.log(`[PlatformDetector] ASYNC detectPlatform được gọi với query:`, query, typeof query);
+  }
+  
   // Nếu là link rút gọn SoundCloud thì giải quyết sang link gốc
   if (query.includes('soundcloud.com') && !query.includes('on.soundcloud.com')) {
     // Nếu là link soundcloud.com nhưng không phải shortlink thì báo lỗi
@@ -78,11 +88,13 @@ async function detectPlatform(query) {
   const isUrl = query.startsWith('http://') || query.startsWith('https://');
   
   if (!isUrl) {
-    return {
+    const result = {
       platform: 'youtube',
       type: 'search',
       query: query
     };
+    if (config.debug) console.log(`[PlatformDetector] ASYNC detectPlatform return (search):`, result);
+    return result;
   }
 
   // YouTube
@@ -91,23 +103,29 @@ async function detectPlatform(query) {
     const isYouTubeMix = /[?&]list=RD[\w-]+/i.test(query);
     
     if (isYouTubeMix) {
-      return {
+      const result = {
         platform: 'youtube',
         type: 'mix',
         query: query
       };
+      if (config.debug) console.log(`[PlatformDetector] ASYNC detectPlatform return (mix):`, result);
+      return result;
     } else if (isYouTubePlaylist) {
-      return {
+      const result = {
         platform: 'youtube',
         type: 'playlist',
         query: query
       };
+      if (config.debug) console.log(`[PlatformDetector] ASYNC detectPlatform return (playlist):`, result);
+      return result;
     } else {
-      return {
+      const result = {
         platform: 'youtube',
         type: 'single',
         query: query
       };
+      if (config.debug) console.log(`[PlatformDetector] ASYNC detectPlatform return (single):`, result);
+      return result;
     }
   }
 
@@ -178,7 +196,7 @@ async function routeToPlatform(client, interaction, query, voiceChannel, lockKey
   
   try {
     const detection = await detectPlatform(query);
-    if (config.debug) console.log(`[PlatformDetector] Kết quả detection:`, detection);
+    if (config.debug) console.log(`[PlatformDetector] Kết quả detection:`, JSON.stringify(detection, null, 2));
     
     // Kiểm tra config để xem platform/type có được bật không
     if (!isPlatformFeatureEnabled(detection.platform, detection.type)) {
@@ -291,12 +309,82 @@ async function handleYouTubeSearch(client, interaction, query, voiceChannel) {
   });
 }
 
+/**
+ * Trích xuất các ID từ URL dựa trên platform
+ */
+function extractIds(url) {
+    const ids = {};
+    
+    if (url.includes('youtube.com') || url.includes('youtu.be')) {
+        // YouTube Video ID
+        const videoMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/);
+        if (videoMatch) {
+            ids.videoId = videoMatch[1];
+        }
+        
+        // YouTube Playlist ID
+        const playlistMatch = url.match(/[?&]list=([a-zA-Z0-9_-]+)/);
+        if (playlistMatch) {
+            ids.playlistId = playlistMatch[1];
+        }
+    } else if (url.includes('spotify.com')) {
+        // Spotify Track ID
+        const trackMatch = url.match(/spotify\.com\/track\/([a-zA-Z0-9]+)/);
+        if (trackMatch) {
+            ids.trackId = trackMatch[1];
+        }
+        
+        // Spotify Playlist ID
+        const playlistMatch = url.match(/spotify\.com\/playlist\/([a-zA-Z0-9]+)/);
+        if (playlistMatch) {
+            ids.playlistId = playlistMatch[1];
+        }
+        
+        // Spotify Album ID
+        const albumMatch = url.match(/spotify\.com\/album\/([a-zA-Z0-9]+)/);
+        if (albumMatch) {
+            ids.albumId = albumMatch[1];
+        }
+    } else if (url.includes('soundcloud.com')) {
+        // SoundCloud track hoặc playlist từ URL path
+        const pathMatch = url.match(/soundcloud\.com\/([^\/]+)\/([^\/?\s]+)/);
+        if (pathMatch) {
+            ids.trackId = `${pathMatch[1]}/${pathMatch[2]}`;
+            
+            // Check if it's a sets (playlist)
+            if (url.includes('/sets/')) {
+                ids.playlistId = ids.trackId;
+                delete ids.trackId;
+            }
+        }
+    }
+    
+    return ids;
+}
+
+/**
+ * Detect platform từ URL (simple version, chỉ trả về platform name)
+ */
+function detectPlatformSimple(url) {
+    if (url.includes('youtube.com') || url.includes('youtu.be')) {
+        return 'youtube';
+    } else if (url.includes('spotify.com')) {
+        return 'spotify';
+    } else if (url.includes('soundcloud.com')) {
+        return 'soundcloud';
+    } else {
+        return 'other';
+    }
+}
+
 module.exports = {
   detectPlatform,
+  detectPlatformSimple,
   routeToPlatform,
   handleYouTubeSearch,
   isPlatformFeatureEnabled,
   getPlatformDisplayName,
   getTypeDisplayName,
-  createFeatureDisabledMessage
-}; 
+  createFeatureDisabledMessage,
+  extractIds
+};

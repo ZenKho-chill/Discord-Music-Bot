@@ -1,232 +1,730 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= title %></title>
-    <link rel="stylesheet" href="/css/style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
+
 <body>
-    <header class="header">
-        <nav class="nav">
-            <a href="/dashboard" class="logo">
-                <i class="fas fa-music"></i>
-                ZK Music Bot Dashboard
-            </a>
-            <ul class="nav-links">
-                <li class="user-nav-info">
-                    <% if (user.avatar) { %>
-                        <img src="<%= user.avatar %>" alt="Avatar" class="nav-user-avatar">
-                    <% } else { %>
-                        <div class="nav-user-avatar nav-user-avatar-fallback">
-                            <%= user.username.charAt(0).toUpperCase() %>
-                        </div>
-                    <% } %>
-                    <span class="nav-user-name"><%= user.global_name || user.username %></span>
-                </li>
-                <li><a href="/logout" class="logout-btn">Đăng xuất</a></li>
-            </ul>
-        </nav>
-    </header>
+  <header class="header">
+    <nav class="nav">
+      <a href="/dashboard" class="logo">
+        <i class="fas fa-music"></i>
+        ZK Music Bot Dashboard
+      </a>
+      <ul class="nav-links">
+        <li class="user-nav-info">
+          <% if (user.avatar) { %>
+          <img src="<%= user.avatar %>" alt="Avatar" class="nav-user-avatar">
+          <% } else { %>
+          <div class="nav-user-avatar nav-user-avatar-fallback">
+            <%= user.username.charAt(0).toUpperCase() %>
+          </div>
+          <% } %>
+          <span class="nav-user-name"><%= user.global_name || user.username %></span>
+        </li>
+        <li><a href="/logout" class="logout-btn">Đăng xuất</a></li>
+      </ul>
+    </nav>
+  </header>
 
-    <div class="container">
-        <!-- Server Header -->
-        <div class="dashboard-header fade-in">
-            <div class="server-info">
-                <% if (guild.icon) { %>
-                    <img src="<%= guild.icon %>" alt="<%= guild.name %>" class="server-icon" style="width: 80px; height: 80px;">
-                <% } else { %>
-                    <div class="server-icon" style="width: 80px; height: 80px; font-size: 2rem;">
-                        <%= guild.name.charAt(0).toUpperCase() %>
-                    </div>
-                <% } %>
-                <div class="server-details">
-                    <h2><%= guild.name %></h2>
-                    <p><i class="fas fa-users"></i> <%= guild.memberCount.toLocaleString() %> thành viên</p>
-                    <div class="bot-status">
-                        <div class="status-indicator status-online"></div>
-                        <span>Bot đang hoạt động</span>
-                    </div>
-                </div>
+  <div class="container">
+    <!-- Server Header -->
+    <div class="dashboard-header fade-in" style="display: flex; min-height: 200px; overflow: visible;">
+      <!-- Server Info + Back Button Container (30-40% space) -->
+      <div style="flex: 0 0 35%; display: flex; flex-direction: column; padding: 1rem 0; gap: 2rem;">
+        <div class="server-info" style="margin-bottom: 1rem;">
+          <% if (guild.icon) { %>
+          <img src="<%= guild.icon %>" alt="<%= guild.name %>" class="server-icon" style="width: 80px; height: 80px;">
+          <% } else { %>
+          <div class="server-icon" style="width: 80px; height: 80px; font-size: 2rem;">
+            <%= guild.name.charAt(0).toUpperCase() %>
+          </div>
+          <% } %>
+          <div class="server-details">
+            <h2><%= guild.name %></h2>
+            <p><i class="fas fa-users"></i> <%= guild.memberCount.toLocaleString() %> thành viên</p>
+            <div class="bot-status">
+              <div class="status-indicator status-online"></div>
+              <span>Bot đang hoạt động</span>
             </div>
-            
-            <a href="/dashboard" class="discord-btn" style="background: #6c757d;">
-                <i class="fas fa-arrow-left"></i>
-                Quay lại Dashboard
-            </a>
+          </div>
         </div>
 
-        <!-- Server Management Sections -->
-        <div class="servers-section fade-in">
-            <h3><i class="fas fa-cog"></i> Quản lý Server</h3>
-            
-            <div class="servers-grid">
-                <!-- Music Controls -->
-                <div class="server-card">
-                    <h4><i class="fas fa-music"></i> Điều khiển nhạc</h4>
-                    <p>Quản lý phát nhạc hiện tại trong server</p>
-                    <div style="margin-top: 1rem;">
-                        <button class="manage-btn" onclick="sendCommand('nowplaying')">
-                            <i class="fas fa-info-circle"></i> Nhạc hiện tại
-                        </button>
-                        <button class="manage-btn" onclick="sendCommand('queue')">
-                            <i class="fas fa-list"></i> Hàng đợi
-                        </button>
-                        <button class="manage-btn" onclick="sendCommand('stop')" style="background: #ed4245;">
-                            <i class="fas fa-stop"></i> Dừng nhạc
-                        </button>
-                    </div>
-                </div>
+        <a href="/dashboard" class="discord-btn" style="background: #6c757d; align-self: flex-start;">
+          <i class="fas fa-arrow-left"></i>
+          Quay lại Dashboard
+        </a>
+      </div>
 
-                <!-- Volume Control -->
-                <div class="server-card">
-                    <h4><i class="fas fa-volume-up"></i> Điều chỉnh âm lượng</h4>
-                    <p>Thay đổi âm lượng phát nhạc</p>
-                    <div style="margin-top: 1rem;">
-                        <input type="range" id="volumeSlider" min="0" max="150" value="100" 
-                               style="width: 100%; margin-bottom: 1rem;">
-                        <div style="display: flex; gap: 0.5rem;">
-                            <button class="manage-btn" onclick="setVolume(50)">50%</button>
-                            <button class="manage-btn" onclick="setVolume(100)">100%</button>
-                            <button class="manage-btn" onclick="setVolume(150)">150%</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Queue Management -->
-                <div class="server-card">
-                    <h4><i class="fas fa-list-ol"></i> Quản lý hàng đợi</h4>
-                    <p>Thao tác với danh sách nhạc chờ</p>
-                    <div style="margin-top: 1rem;">
-                        <button class="manage-btn" onclick="sendCommand('skip')">
-                            <i class="fas fa-forward"></i> Bỏ qua
-                        </button>
-                        <button class="manage-btn" onclick="sendCommand('repeat')">
-                            <i class="fas fa-repeat"></i> Lặp lại
-                        </button>
-                        <button class="manage-btn" onclick="clearQueue()" style="background: #FFA500;">
-                            <i class="fas fa-trash"></i> Xóa hàng đợi
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Bot Status -->
-                <div class="server-card">
-                    <h4><i class="fas fa-robot"></i> Trạng thái Bot</h4>
-                    <p>Thông tin về hoạt động của bot</p>
-                    <div style="margin-top: 1rem;">
-                        <div class="bot-status" style="margin-bottom: 0.5rem;">
-                            <div class="status-indicator status-online"></div>
-                            <span>Trực tuyến</span>
-                        </div>
-                        <div style="color: #666; font-size: 0.9rem;">
-                            <p><i class="fas fa-clock"></i> Uptime: <span id="uptime">Đang tải...</span></p>
-                            <p><i class="fas fa-memory"></i> RAM: <span id="memory">Đang tải...</span></p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Quick Play -->
-                <div class="server-card">
-                    <h4><i class="fas fa-play"></i> Phát nhạc nhanh</h4>
-                    <p>Tìm kiếm và phát nhạc ngay lập tức</p>
-                    <div style="margin-top: 1rem;">
-                        <input type="text" id="searchInput" placeholder="Nhập tên bài hát hoặc URL..." 
-                               style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 5px; margin-bottom: 1rem;">
-                        <button class="manage-btn" onclick="playMusic()" style="width: 100%;">
-                            <i class="fas fa-play"></i> Phát nhạc
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Server Settings -->
-                <div class="server-card">
-                    <h4><i class="fas fa-cogs"></i> Cài đặt Server</h4>
-                    <p>Tùy chỉnh hoạt động của bot trong server</p>
-                    <div style="margin-top: 1rem;">
-                        <label style="display: block; margin-bottom: 0.5rem;">
-                            <input type="checkbox" checked> Tự động rời khi hết nhạc
-                        </label>
-                        <label style="display: block; margin-bottom: 0.5rem;">
-                            <input type="checkbox" checked> Tự động tạm dừng khi phòng trống
-                        </label>
-                        <label style="display: block; margin-bottom: 1rem;">
-                            <input type="checkbox"> Chế độ DJ (chỉ DJ mới điều khiển)
-                        </label>
-                        <button class="manage-btn" onclick="saveSettings()">
-                            <i class="fas fa-save"></i> Lưu cài đặt
-                        </button>
-                    </div>
-                </div>
+      <!-- Music Statistics Container (60-70% space) -->
+      <% if (musicStats && (musicStats.totalTracks > 0)) { %>
+      <div style="flex: 1; display: flex; align-items: center; justify-content: center; padding: 1rem; overflow: visible;">
+        <div style="display: flex; flex-direction: column; width: 100%; max-width: 600px; position: relative; gap: 1rem; overflow: visible;">
+          <!-- Platform Tooltip -->
+          <div id="platformTooltip" style="position: absolute; top: -35px; background: rgba(0,0,0,0.9); color: white; padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.9rem; display: none; z-index: 9999; white-space: nowrap; pointer-events: none; min-width: 100px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.3); font-weight: 500;"></div>
+          
+          <!-- Platform Statistics Chart -->
+          <div style="border-radius: 8px; overflow: visible;">
+            <!-- Custom Platform Legend -->
+            <div id="platformLegend" style="display: flex; justify-content: center; gap: 1rem; margin-bottom: 0.8rem; flex-wrap: wrap;"></div>
+            <div style="height: 60px; position: relative; overflow: visible;">
+              <canvas id="platformChart" style="max-height: 60px; width: 100%;"></canvas>
             </div>
+          </div>
+
+          <!-- Content Type Statistics Chart -->
+          <div style="border-radius: 8px; overflow: visible;">
+            <div style="height: 60px; position: relative; overflow: visible;">
+              <canvas id="contentTypeChart" style="max-height: 60px; width: 100%;"></canvas>
+            </div>
+            <!-- Custom Content Type Legend -->
+            <div id="contentTypeLegend" style="display: flex; justify-content: center; gap: 1rem; margin-top: 0.8rem; flex-wrap: wrap;"></div>
+          </div>
+
+          <!-- Content Type Tooltip -->
+          <div id="contentTypeTooltip" style="position: absolute; bottom: -35px; background: rgba(0,0,0,0.9); color: white; padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.9rem; display: none; z-index: 9999; white-space: nowrap; pointer-events: none; min-width: 100px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.3); font-weight: 500;"></div>
         </div>
+      </div>
+      <% } else { %>
+      <div style="flex: 1; display: flex; align-items: center; justify-content: center; padding: 1rem;">
+        <div style="text-align: center; color: #666; background: rgba(255,255,255,0.1); border-radius: 8px; padding: 2rem;">
+          <i class="fas fa-chart-bar" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+          <h4 style="margin: 0 0 0.5rem 0;">Chưa có dữ liệu thống kê</h4>
+          <p style="margin: 0; font-size: 0.9rem;">Sử dụng lệnh phát nhạc để bắt đầu thu thập dữ liệu</p>
+        </div>
+      </div>
+      <% } %>
     </div>
 
-    <script src="/js/dashboard.js"></script>
-    <script>
-        // Command functions
-        function sendCommand(command) {
-            // In a real implementation, this would send commands to the bot
-            // For now, we'll just show a notification
-            showNotification(`Đã gửi lệnh: ${command}`, 'success');
-        }
+    <!-- Server Management Sections -->
+    <div class="servers-section fade-in">
+      <h3><i class="fas fa-cog"></i> Quản lý Server</h3>
 
-        function setVolume(volume) {
-            document.getElementById('volumeSlider').value = volume;
-            showNotification(`Đã đặt âm lượng: ${volume}%`, 'success');
-        }
+      <div class="servers-grid">
+        <!-- Music Controls -->
+        <div class="server-card">
+          <h4><i class="fas fa-music"></i> Điều khiển nhạc</h4>
+          <p>Quản lý phát nhạc hiện tại trong server</p>
+          <div style="margin-top: 1rem;">
+            <button class="manage-btn" onclick="sendCommand('nowplaying')">
+              <i class="fas fa-info-circle"></i> Nhạc hiện tại
+            </button>
+            <button class="manage-btn" onclick="sendCommand('queue')">
+              <i class="fas fa-list"></i> Hàng đợi
+            </button>
+            <button class="manage-btn" onclick="sendCommand('stop')" style="background: #ed4245;">
+              <i class="fas fa-stop"></i> Dừng nhạc
+            </button>
+          </div>
+        </div>
 
-        function clearQueue() {
-            if (confirm('Bạn có chắc muốn xóa toàn bộ hàng đợi?')) {
-                showNotification('Đã xóa hàng đợi', 'success');
-            }
-        }
+        <!-- Volume Control -->
+        <div class="server-card">
+          <h4><i class="fas fa-volume-up"></i> Điều chỉnh âm lượng</h4>
+          <p>Thay đổi âm lượng phát nhạc</p>
+          <div style="margin-top: 1rem;">
+            <input type="range" id="volumeSlider" min="0" max="150" value="100" style="width: 100%; margin-bottom: 1rem;">
+            <div style="display: flex; gap: 0.5rem;">
+              <button class="manage-btn" onclick="setVolume(50)">50%</button>
+              <button class="manage-btn" onclick="setVolume(100)">100%</button>
+              <button class="manage-btn" onclick="setVolume(150)">150%</button>
+            </div>
+          </div>
+        </div>
 
-        function playMusic() {
-            const search = document.getElementById('searchInput').value;
-            if (!search.trim()) {
-                showNotification('Vui lòng nhập tên bài hát hoặc URL', 'error');
-                return;
-            }
-            showNotification(`Đang tìm kiếm: ${search}`, 'info');
-            document.getElementById('searchInput').value = '';
-        }
+        <!-- Queue Management -->
+        <div class="server-card">
+          <h4><i class="fas fa-list-ol"></i> Quản lý hàng đợi</h4>
+          <p>Thao tác với danh sách nhạc chờ</p>
+          <div style="margin-top: 1rem;">
+            <button class="manage-btn" onclick="sendCommand('skip')">
+              <i class="fas fa-forward"></i> Bỏ qua
+            </button>
+            <button class="manage-btn" onclick="sendCommand('repeat')">
+              <i class="fas fa-repeat"></i> Lặp lại
+            </button>
+            <button class="manage-btn" onclick="clearQueue()" style="background: #FFA500;">
+              <i class="fas fa-trash"></i> Xóa hàng đợi
+            </button>
+          </div>
+        </div>
 
-        function saveSettings() {
-            showNotification('Đã lưu cài đặt', 'success');
-        }
+        <!-- Bot Status -->
+        <div class="server-card">
+          <h4><i class="fas fa-robot"></i> Trạng thái Bot</h4>
+          <p>Thông tin về hoạt động của bot</p>
+          <div style="margin-top: 1rem;">
+            <div class="bot-status" style="margin-bottom: 0.5rem;">
+              <div class="status-indicator status-online"></div>
+              <span>Trực tuyến</span>
+            </div>
+            <div style="color: #666; font-size: 0.9rem;">
+              <p><i class="fas fa-clock"></i> Uptime: <span id="uptime">Đang tải...</span></p>
+              <p><i class="fas fa-memory"></i> RAM: <span id="memory">Đang tải...</span></p>
+            </div>
+          </div>
+        </div>
 
-        // Update bot stats periodically
-        function updateStats() {
-            // Simulate updating stats
-            const uptime = Math.floor(Math.random() * 24) + 'h ' + Math.floor(Math.random() * 60) + 'm';
-            const memory = Math.floor(Math.random() * 100 + 50) + 'MB';
-            
-            document.getElementById('uptime').textContent = uptime;
-            document.getElementById('memory').textContent = memory;
-        }
+        <!-- Quick Play -->
+        <div class="server-card">
+          <h4><i class="fas fa-play"></i> Phát nhạc nhanh</h4>
+          <p>Tìm kiếm và phát nhạc ngay lập tức</p>
+          <div style="margin-top: 1rem;">
+            <input type="text" id="searchInput" placeholder="Nhập tên bài hát hoặc URL..." style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 5px; margin-bottom: 1rem;">
+            <button class="manage-btn" onclick="playMusic()" style="width: 100%;">
+              <i class="fas fa-play"></i> Phát nhạc
+            </button>
+          </div>
+        </div>
 
-        // Initialize
-        document.addEventListener('DOMContentLoaded', function() {
-            updateStats();
-            
-            // Update stats every 30 seconds
-            setInterval(updateStats, 30000);
-            
-            // Volume slider event
-            document.getElementById('volumeSlider').addEventListener('input', function() {
-                const volume = this.value;
-                showNotification(`Âm lượng: ${volume}%`, 'info');
-            });
-            
-            // Enter key for search
-            document.getElementById('searchInput').addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    playMusic();
-                }
-            });
+        <!-- Server Settings -->
+        <div class="server-card">
+          <h4><i class="fas fa-cogs"></i> Cài đặt Server</h4>
+          <p>Tùy chỉnh hoạt động của bot trong server</p>
+          <div style="margin-top: 1rem;">
+            <label style="display: block; margin-bottom: 0.5rem;">
+              <input type="checkbox" checked> Tự động rời khi hết nhạc
+            </label>
+            <label style="display: block; margin-bottom: 0.5rem;">
+              <input type="checkbox" checked> Tự động tạm dừng khi phòng trống
+            </label>
+            <label style="display: block; margin-bottom: 1rem;">
+              <input type="checkbox"> Chế độ DJ (chỉ DJ mới điều khiển)
+            </label>
+            <button class="manage-btn" onclick="saveSettings()">
+              <i class="fas fa-save"></i> Lưu cài đặt
+            </button>
+          </div>
+        </div>
+
+        <!-- Additional Feature 1 -->
+        <div class="server-card">
+          <h4><i class="fas fa-shield-alt"></i> Bảo mật & Quyền</h4>
+          <p>Quản lý quyền truy cập và bảo mật</p>
+          <div style="margin-top: 1rem;">
+            <div style="color: #666; font-size: 0.9rem;">
+              <p><i class="fas fa-users"></i> Vai trò DJ: <span style="color: #007bff;">@DJ</span></p>
+              <p><i class="fas fa-lock"></i> Kênh chỉ định: <span style="color: #28a745;">Không giới hạn</span></p>
+              <p><i class="fas fa-volume-up"></i> Giới hạn âm lượng: <span style="color: #ffc107;">150%</span></p>
+            </div>
+            <button class="manage-btn" onclick="showNotification('Đang phát triển!', 'info')" style="width: 100%; margin-top: 0.5rem;">
+              <i class="fas fa-cog"></i> Cấu hình quyền
+            </button>
+          </div>
+        </div>
+
+        <!-- Additional Feature 2 -->
+        <div class="server-card">
+          <h4><i class="fas fa-history"></i> Lịch sử & Logs</h4>
+          <p>Xem hoạt động và lịch sử phát nhạc</p>
+          <div style="margin-top: 1rem;">
+            <div style="color: #666; font-size: 0.9rem;">
+              <p><i class="fas fa-play"></i> Bài gần nhất: <span style="color: #007bff;">Chưa có</span></p>
+              <p><i class="fas fa-clock"></i> Thời gian hoạt động: <span style="color: #28a745;">24/7</span></p>
+              <p><i class="fas fa-chart-line"></i> Tổng bài đã phát: <span style="color: #ffc107;"><%= musicStats ? musicStats.totalTracks || 0 : 0 %></span></p>
+            </div>
+            <button class="manage-btn" onclick="showNotification('Đang phát triển!', 'info')" style="width: 100%; margin-top: 0.5rem;">
+              <i class="fas fa-history"></i> Xem chi tiết
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/dashboard.js"></script>
+  <script>
+    // Debug Mode Control - get from server config
+    const DEBUG_MODE = <%= JSON.stringify(typeof debugMode !== 'undefined' ? debugMode : true) %>;
+    
+    // Debug logging function
+    function debugLog(...args) {
+      if (DEBUG_MODE) {
+        console.log(...args);
+      }
+    }
+    
+    // Command functions
+    function sendCommand(command) {
+      // In a real implementation, this would send commands to the bot
+      // For now, we'll just show a notification
+      showNotification(`Đã gửi lệnh: ${command}`, 'success');
+    }
+
+    function setVolume(volume) {
+      document.getElementById('volumeSlider').value = volume;
+      showNotification(`Đã đặt âm lượng: ${volume}%`, 'success');
+    }
+
+    function clearQueue() {
+      if (confirm('Bạn có chắc muốn xóa toàn bộ hàng đợi?')) {
+        showNotification('Đã xóa hàng đợi', 'success');
+      }
+    }
+
+    function playMusic() {
+      const search = document.getElementById('searchInput').value;
+      if (!search.trim()) {
+        showNotification('Vui lòng nhập tên bài hát hoặc URL', 'error');
+        return;
+      }
+      showNotification(`Đang tìm kiếm: ${search}`, 'info');
+      document.getElementById('searchInput').value = '';
+    }
+
+    function saveSettings() {
+      showNotification('Đã lưu cài đặt', 'success');
+    }
+
+    // Update bot stats periodically
+    function updateStats() {
+      // Simulate updating stats
+      const uptime = Math.floor(Math.random() * 24) + 'h ' + Math.floor(Math.random() * 60) + 'm';
+      const memory = Math.floor(Math.random() * 100 + 50) + 'MB';
+
+      document.getElementById('uptime').textContent = uptime;
+      document.getElementById('memory').textContent = memory;
+    }
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+      updateStats();
+
+      // Update stats every 30 seconds
+      setInterval(updateStats, 30000);
+
+      // Volume slider event
+      document.getElementById('volumeSlider').addEventListener('input', function() {
+        const volume = this.value;
+        showNotification(`Âm lượng: ${volume}%`, 'info');
+      });
+
+      // Enter key for search
+      document.getElementById('searchInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+          playMusic();
+        }
+      });
+
+      // Initialize Music Statistics Charts
+      <% if (musicStats && musicStats.totalTracks > 0) { %>
+      initializeMusicCharts();
+      <% } %>
+    });
+
+    // Music Statistics Charts
+    <% if (musicStats && musicStats.totalTracks > 0) { %>
+
+    function initializeMusicCharts() {
+      try {
+        // Platform Chart Data (100% stacked bar chart)
+        <% if (typeof platformStats !== 'undefined' && platformStats.length > 0) { %>
+        const platformLabels = <%- JSON.stringify(platformStats.map(stat => stat.platform.toUpperCase())) %>;
+        const platformCounts = <%- JSON.stringify(platformStats.map(stat => stat.count)) %>;
+        const platformTotal = platformCounts.reduce((a, b) => a + b, 0);
+        const platformPercentages = platformCounts.map(count => ((count / platformTotal) * 100).toFixed(1));
+
+        // Create datasets for 100% stacked bar
+        const platformDatasets = platformLabels.map((label, index) => {
+          let backgroundColor, borderColor;
+          
+          // Set colors based on platform
+          switch(label) {
+            case 'YOUTUBE':
+              backgroundColor = 'rgba(255, 0, 0, 0.8)';
+              borderColor = '#CC0000';
+              break;
+            case 'SPOTIFY':
+              backgroundColor = 'rgba(29, 185, 84, 0.8)';
+              borderColor = '#1AA34A';
+              break;
+            case 'SOUNDCLOUD':
+              backgroundColor = 'rgba(255, 119, 0, 0.8)';
+              borderColor = '#E56600';
+              break;
+            default:
+              backgroundColor = 'rgba(108, 117, 125, 0.8)';
+              borderColor = '#5A6268';
+          }
+          
+          // Only round corners for first and last segments
+          let borderRadius = 0;
+          let borderSkipped = false;
+          
+          if (index === 0) {
+            // First segment - round left corners only
+            borderRadius = { topLeft: 4, bottomLeft: 4, topRight: 0, bottomRight: 0 };
+            borderSkipped = false;
+          } else if (index === platformLabels.length - 1) {
+            // Last segment - round right corners only
+            borderRadius = { topLeft: 0, bottomLeft: 0, topRight: 4, bottomRight: 4 };
+            borderSkipped = false;
+          } else {
+            // Middle segments - no rounded corners
+            borderRadius = 0;
+            borderSkipped = false;
+          }
+          
+          return {
+            label: label,
+            data: [platformPercentages[index]],
+            backgroundColor: backgroundColor,
+            borderWidth: 0,
+            borderRadius: borderRadius,
+            borderSkipped: borderSkipped
+          };
         });
-    </script>
+
+        const platformData = {
+          labels: [''],
+          datasets: platformDatasets
+        };
+
+        // Create Platform Chart
+        const platformCtx = document.getElementById('platformChart');
+        if (platformCtx) {
+          const platformChart = new Chart(platformCtx.getContext('2d'), {
+            type: 'bar',
+            data: platformData,
+            options: {
+              indexAxis: 'y',
+              responsive: true,
+              maintainAspectRatio: false,
+              interaction: {
+                intersect: false,
+                mode: 'index'
+              },
+              scales: {
+                x: {
+                  beginAtZero: true,
+                  display: false,
+                  stacked: true,
+                  max: 100
+                },
+                y: {
+                  display: false,
+                  stacked: true
+                }
+              },
+              plugins: {
+                legend: {
+                  display: false
+                },
+                tooltip: {
+                  enabled: false
+                }
+              },
+              onHover: function(event, activeElements) {
+                const tooltip = document.getElementById('platformTooltip');
+                
+                // Use manual detection exclusively for better accuracy
+                const rect = this.canvas.getBoundingClientRect();
+                const mouseX = event.native.clientX - rect.left;
+                const chartArea = this.chartArea;
+                
+                if (mouseX >= chartArea.left && mouseX <= chartArea.right) {
+                  const relativeX = mouseX - chartArea.left;
+                  const totalWidth = chartArea.right - chartArea.left;
+                  const mousePercentage = (relativeX / totalWidth) * 100;
+                  
+                  // Find which segment the mouse is over - iterate in same order as datasets
+                  let accumulatedPercentage = 0;
+                  let foundSegment = false;
+                  
+                  for (let i = 0; i < platformDatasets.length; i++) {
+                    const segmentPercentage = parseFloat(platformPercentages[i]);
+                    const segmentStart = accumulatedPercentage;
+                    const segmentEnd = accumulatedPercentage + segmentPercentage;
+                    
+                    if (mousePercentage >= segmentStart && mousePercentage <= segmentEnd) {
+                      const value = platformCounts[i];
+                      const label = platformLabels[i];
+                      const percentage = platformPercentages[i];
+                      
+                      const segmentCenter = segmentStart + (segmentPercentage / 2);
+                      const tooltipX = chartArea.left + (segmentCenter * totalWidth / 100);
+                      
+                      tooltip.innerHTML = `${label}: ${value} lượt (${percentage}%)`;
+                      tooltip.style.display = 'block';
+                      tooltip.style.left = Math.max(10, Math.min(tooltipX - tooltip.offsetWidth / 2, chartArea.right - tooltip.offsetWidth)) + 'px';
+                      debugLog(`Platform detected: ${label} (index: ${i}, mouse: ${mousePercentage.toFixed(1)}%, segment: ${segmentStart.toFixed(1)}%-${segmentEnd.toFixed(1)}%)`);
+                      foundSegment = true;
+                      return;
+                    }
+                    accumulatedPercentage += segmentPercentage;
+                  }
+                  
+                  if (!foundSegment) {
+                    tooltip.style.display = 'none';
+                  }
+                } else {
+                  tooltip.style.display = 'none';
+                }
+              },
+              onLeave: function() {
+                const tooltip = document.getElementById('platformTooltip');
+                tooltip.style.display = 'none';
+              }
+            }
+          });
+          
+          // Create custom platform legend
+          const platformLegendContainer = document.getElementById('platformLegend');
+          if (platformLegendContainer) {
+            platformLegendContainer.innerHTML = '';
+            platformLabels.forEach((label, index) => {
+              const legendItem = document.createElement('div');
+              legendItem.style.cssText = 'display: flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; color: #333; font-weight: 500;';
+              legendItem.innerHTML = `
+                <div style="width: 14px; height: 14px; background: ${platformDatasets[index].backgroundColor}; border-radius: 3px;"></div>
+                <span>${label} (${platformCounts[index]})</span>
+              `;
+              platformLegendContainer.appendChild(legendItem);
+            });
+          }
+          
+          // Add comprehensive mouse leave events to hide tooltip
+          const platformChartContainer = platformCtx.closest('div[style*="position: relative"]');
+          if (platformChartContainer) {
+            platformChartContainer.addEventListener('mouseleave', function() {
+              const tooltip = document.getElementById('platformTooltip');
+              tooltip.style.display = 'none';
+            });
+          }
+          
+          // Also hide tooltip when mouse leaves chart canvas specifically
+          platformCtx.addEventListener('mouseleave', function() {
+            const tooltip = document.getElementById('platformTooltip');
+            tooltip.style.display = 'none';
+          });
+          
+          // Global mouse move event to hide tooltip when mouse is outside chart area
+          document.addEventListener('mousemove', function(e) {
+            const tooltip = document.getElementById('platformTooltip');
+            if (tooltip && tooltip.style.display === 'block') {
+              const rect = platformCtx.getBoundingClientRect();
+              const chartArea = platformChart.chartArea;
+              const absoluteLeft = rect.left + chartArea.left;
+              const absoluteRight = rect.left + chartArea.right;
+              const absoluteTop = rect.top + chartArea.top;
+              const absoluteBottom = rect.top + chartArea.bottom;
+              
+              // Hide tooltip if mouse is outside chart area
+              if (e.clientX < absoluteLeft || e.clientX > absoluteRight || 
+                  e.clientY < absoluteTop || e.clientY > absoluteBottom) {
+                tooltip.style.display = 'none';
+              }
+            }
+          });
+        }
+        <% } else { %>
+        console.warn('No platform stats available');
+        <% } %>
+
+        // Content Type Chart Data (100% stacked bar chart)
+        <% if (typeof contentTypeStats !== 'undefined' && contentTypeStats.length > 0) { %>
+        const contentTypeLabels = <%- JSON.stringify(contentTypeStats.map(stat => stat.type === 'single' ? 'Đơn lẻ' : (stat.type === 'playlist' ? 'Playlist' : 'Album'))) %>;
+        const contentTypeCounts = <%- JSON.stringify(contentTypeStats.map(stat => stat.count)) %>;
+        const contentTypeTotal = contentTypeCounts.reduce((a, b) => a + b, 0);
+        const contentTypePercentages = contentTypeCounts.map(count => ((count / contentTypeTotal) * 100).toFixed(1));
+
+        // Create datasets for 100% stacked bar
+        const contentTypeDatasets = contentTypeLabels.map((label, index) => {
+          let backgroundColor, borderColor;
+          
+          // Set colors based on content type
+          switch(label) {
+            case 'Đơn lẻ':
+              backgroundColor = 'rgba(40, 167, 69, 0.8)';
+              borderColor = '#1e7e34';
+              break;
+            case 'Playlist':
+              backgroundColor = 'rgba(0, 123, 255, 0.8)';
+              borderColor = '#0056b3';
+              break;
+            case 'Album':
+              backgroundColor = 'rgba(255, 193, 7, 0.8)';
+              borderColor = '#e0a800';
+              break;
+            default:
+              backgroundColor = 'rgba(108, 117, 125, 0.8)';
+              borderColor = '#5A6268';
+          }
+          
+          return {
+            label: label,
+            data: [contentTypePercentages[index]],
+            backgroundColor: backgroundColor,
+            borderWidth: 0,
+            borderRadius: 4,
+            borderSkipped: false
+          };
+        });
+
+        const contentTypeData = {
+          labels: [''],
+          datasets: contentTypeDatasets
+        };
+
+        // Create Content Type Chart
+        const contentTypeCtx = document.getElementById('contentTypeChart');
+        if (contentTypeCtx) {
+          const contentTypeChart = new Chart(contentTypeCtx.getContext('2d'), {
+            type: 'bar',
+            data: contentTypeData,
+            options: {
+              indexAxis: 'y',
+              responsive: true,
+              maintainAspectRatio: false,
+              interaction: {
+                intersect: false,
+                mode: 'index'
+              },
+              scales: {
+                x: {
+                  beginAtZero: true,
+                  display: false,
+                  stacked: true,
+                  max: 100
+                },
+                y: {
+                  display: false,
+                  stacked: true
+                }
+              },
+              plugins: {
+                legend: {
+                  display: false
+                },
+                tooltip: {
+                  enabled: false
+                }
+              },
+              onHover: function(event, activeElements) {
+                const tooltip = document.getElementById('contentTypeTooltip');
+                
+                // Use manual detection exclusively for better accuracy
+                const rect = this.canvas.getBoundingClientRect();
+                const mouseX = event.native.clientX - rect.left;
+                const chartArea = this.chartArea;
+                
+                if (mouseX >= chartArea.left && mouseX <= chartArea.right) {
+                  const relativeX = mouseX - chartArea.left;
+                  const totalWidth = chartArea.right - chartArea.left;
+                  const mousePercentage = (relativeX / totalWidth) * 100;
+                  
+                  // Find which segment the mouse is over - iterate in same order as datasets
+                  let accumulatedPercentage = 0;
+                  let foundSegment = false;
+                  
+                  for (let i = 0; i < contentTypeDatasets.length; i++) {
+                    const segmentPercentage = parseFloat(contentTypePercentages[i]);
+                    const segmentStart = accumulatedPercentage;
+                    const segmentEnd = accumulatedPercentage + segmentPercentage;
+                    
+                    if (mousePercentage >= segmentStart && mousePercentage <= segmentEnd) {
+                      const value = contentTypeCounts[i];
+                      const label = contentTypeLabels[i];
+                      const percentage = contentTypePercentages[i];
+                      
+                      const segmentCenter = segmentStart + (segmentPercentage / 2);
+                      const tooltipX = chartArea.left + (segmentCenter * totalWidth / 100);
+                      
+                      tooltip.innerHTML = `${label}: ${value} lượt (${percentage}%)`;
+                      tooltip.style.display = 'block';
+                      tooltip.style.left = Math.max(10, Math.min(tooltipX - tooltip.offsetWidth / 2, window.innerWidth - tooltip.offsetWidth - 10)) + 'px';
+                      debugLog(`Content type detected: ${label} (index: ${i}, mouse: ${mousePercentage.toFixed(1)}%, segment: ${segmentStart.toFixed(1)}%-${segmentEnd.toFixed(1)}%)`);
+                      foundSegment = true;
+                      return;
+                    }
+                    accumulatedPercentage += segmentPercentage;
+                  }
+                  
+                  if (!foundSegment) {
+                    tooltip.style.display = 'none';
+                  }
+                } else {
+                  tooltip.style.display = 'none';
+                }
+              },
+              onLeave: function() {
+                const tooltip = document.getElementById('contentTypeTooltip');
+                tooltip.style.display = 'none';
+              }
+            }
+          });
+          
+          // Create custom content type legend
+          const contentTypeLegendContainer = document.getElementById('contentTypeLegend');
+          if (contentTypeLegendContainer) {
+            contentTypeLegendContainer.innerHTML = '';
+            contentTypeLabels.forEach((label, index) => {
+              const legendItem = document.createElement('div');
+              legendItem.style.cssText = 'display: flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; color: #333; font-weight: 500;';
+              legendItem.innerHTML = `
+                <div style="width: 14px; height: 14px; background: ${contentTypeDatasets[index].backgroundColor}; border-radius: 3px;"></div>
+                <span>${label} (${contentTypeCounts[index]})</span>
+              `;
+              contentTypeLegendContainer.appendChild(legendItem);
+            });
+          }
+          
+          // Add comprehensive mouse leave events to hide tooltip
+          const contentTypeChartContainer = contentTypeCtx.closest('div[style*="position: relative"]');
+          if (contentTypeChartContainer) {
+            contentTypeChartContainer.addEventListener('mouseleave', function() {
+              const tooltip = document.getElementById('contentTypeTooltip');
+              tooltip.style.display = 'none';
+            });
+          }
+          
+          // Also hide tooltip when mouse leaves chart canvas specifically
+          contentTypeCtx.addEventListener('mouseleave', function() {
+            const tooltip = document.getElementById('contentTypeTooltip');
+            tooltip.style.display = 'none';
+          });
+          
+          // Global mouse move event to hide tooltip when mouse is outside chart area
+          document.addEventListener('mousemove', function(e) {
+            const tooltip = document.getElementById('contentTypeTooltip');
+            if (tooltip && tooltip.style.display === 'block') {
+              const rect = contentTypeCtx.getBoundingClientRect();
+              const chartArea = contentTypeChart.chartArea;
+              const absoluteLeft = rect.left + chartArea.left;
+              const absoluteRight = rect.left + chartArea.right;
+              const absoluteTop = rect.top + chartArea.top;
+              const absoluteBottom = rect.top + chartArea.bottom;
+              
+              // Hide tooltip if mouse is outside chart area
+              if (e.clientX < absoluteLeft || e.clientX > absoluteRight || 
+                  e.clientY < absoluteTop || e.clientY > absoluteBottom) {
+                tooltip.style.display = 'none';
+              }
+            }
+          });
+        }
+        <% } else { %>
+        console.warn('No content type stats available');
+        <% } %>
+      } catch (error) {
+        console.error('Error initializing music charts:', error);
+        // Show fallback message
+        const chartContainers = document.querySelectorAll('#platformChart, #contentTypeChart');
+        chartContainers.forEach(container => {
+          if (container) {
+            container.parentElement.innerHTML = '<div style="text-align: center; padding: 2rem; color: #666;"><i class="fas fa-exclamation-triangle"></i> Lỗi hiển thị biểu đồ</div>';
+          }
+        });
+      }
+    }
+    <% } %>
+  </script>
 </body>
+
 </html>

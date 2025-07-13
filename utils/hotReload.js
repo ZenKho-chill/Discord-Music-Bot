@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const config = require('../config/config.js');
+const logger = require('./logger.js');
 
 class HotReloader {
   constructor() {
@@ -54,14 +55,14 @@ class HotReloader {
         }
       });
 
-      if (config.debug) console.log(`[HotReload] 🔥 Hệ thống tải động đã được kích hoạt cho tất cả tệp`);
+      if (config.debug) logger.debug(`[HotReload] 🔥 Hệ thống tải động đã được kích hoạt cho tất cả tệp`);
       if (this.currentConfig.debug) {
-        console.log(`[HotReload] 📂 Đang theo dõi: ${this.watchers.size} tệp/thư mục`);
-        console.log(`[HotReload] 🚫 Tệp cốt lõi (cần khởi động lại): ${this.coreFiles.length}`);
+        logger.debug(`[HotReload] 📂 Đang theo dõi: ${this.watchers.size} tệp/thư mục`);
+        logger.debug(`[HotReload] 🚫 Tệp cốt lõi (cần khởi động lại): ${this.coreFiles.length}`);
       }
       
     } catch (error) {
-      console.error(`[HotReload] ❌ Lỗi khi bắt đầu theo dõi:`, error.message);
+      logger.error(`[HotReload] ❌ Lỗi khi bắt đầu theo dõi:`, error.message);
     }
   }
 
@@ -79,7 +80,7 @@ class HotReloader {
       this.watchers.set(filePath, { watcher, type });
       
     } catch (error) {
-      console.error(`[HotReload] ❌ Không thể theo dõi tệp ${filePath}:`, error.message);
+      logger.error(`[HotReload] ❌ Không thể theo dõi tệp ${filePath}:`, error.message);
     }
   }
 
@@ -96,17 +97,17 @@ class HotReloader {
           // Nếu theo dõi thư mục gốc, chỉ quan tâm đến tệp cốt lõi
           if (isRootWatch) {
             if (this.isCoreFile(relativeFilePath)) {
-              console.log(`[HotReload] ⚠️ CẢNH BÁO: Tệp cốt lõi đã thay đổi: ${relativeFilePath}`);
-              console.log(`[HotReload] 🔄 Vui lòng KHỞI ĐỘNG LẠI bot để áp dụng thay đổi tệp cốt lõi!`);
-              console.log(`[HotReload] 📋 Lý do: Tệp cốt lõi không thể tải động vì lý do bảo mật và ổn định.`);
+              logger.core(`[HotReload] ⚠️ CẢNH BÁO: Tệp cốt lõi đã thay đổi: ${relativeFilePath}`);
+              logger.core(`[HotReload] 🔄 Vui lòng KHỞI ĐỘNG LẠI bot để áp dụng thay đổi tệp cốt lõi!`);
+              logger.core(`[HotReload] 📋 Lý do: Tệp cốt lõi không thể tải động vì lý do bảo mật và ổn định.`);
             }
             return; // Không xử lý tải động cho theo dõi thư mục gốc
           }
           
           // Kiểm tra xem có phải tệp cốt lõi không
           if (this.isCoreFile(relativeFilePath)) {
-            console.log(`[HotReload] ⚠️ Tệp cốt lõi đã thay đổi: ${relativeFilePath}`);
-            console.log(`[HotReload] 🔄 Vui lòng khởi động lại bot để áp dụng thay đổi!`);
+            logger.core(`[HotReload] ⚠️ Tệp cốt lõi đã thay đổi: ${relativeFilePath}`);
+            logger.core(`[HotReload] 🔄 Vui lòng khởi động lại bot để áp dụng thay đổi!`);
             return;
           }
           
@@ -117,7 +118,7 @@ class HotReloader {
       this.watchers.set(dirPath, { watcher, type: 'directory' });
       
     } catch (error) {
-      console.error(`[HotReload] ❌ Không thể theo dõi thư mục ${dirPath}:`, error.message);
+      logger.error(`[HotReload] ❌ Không thể theo dõi thư mục ${dirPath}:`, error.message);
     }
   }
 
@@ -143,8 +144,8 @@ class HotReloader {
       }
       
     } catch (error) {
-      console.error(`[HotReload] ❌ Lỗi khi xử lý tệp ${filePath}:`, error.message);
-      console.log(`[HotReload] ⚠️ Vui lòng kiểm tra cú pháp trong tệp và thử lại`);
+      logger.error(`[HotReload] ❌ Lỗi khi xử lý tệp ${filePath}:`, error.message);
+      logger.debug(`[HotReload] ⚠️ Vui lòng kiểm tra cú pháp trong tệp và thử lại`);
     }
   }
 
@@ -162,19 +163,22 @@ class HotReloader {
       
       if (changes.length > 0) {
         if (this.currentConfig.debug) {
-          console.log(`[HotReload] 🔄 Config.js đã thay đổi:`, changes);
+          logger.debug(`[HotReload] 🔄 Config.js đã thay đổi:`, changes);
         }
         
         // Cập nhật config hiện tại
         this.currentConfig = { ...newConfig };
+        
+        // Cập nhật debug mode trong logger
+        logger.updateDebugMode();
         
         // Thông báo về các thay đổi
         this.notifyConfigChanges(changes);
       }
       
     } catch (error) {
-      console.error(`[HotReload] ❌ Lỗi khi tải lại cấu hình:`, error.message);
-      console.log(`[HotReload] ⚠️ Vui lòng kiểm tra cú pháp trong config.js`);
+      logger.error(`[HotReload] ❌ Lỗi khi tải lại cấu hình:`, error.message);
+      logger.debug(`[HotReload] ⚠️ Vui lòng kiểm tra cú pháp trong config.js`);
     }
   }
 
@@ -184,7 +188,7 @@ class HotReloader {
       // Kiểm tra xem tệp có tồn tại không
       if (!fs.existsSync(filePath)) {
         if (this.currentConfig.debug) {
-          console.log(`[HotReload] 🗑️ Tệp đã bị xóa: ${displayPath}`);
+          logger.debug(`[HotReload] 🗑️ Tệp đã bị xóa: ${displayPath}`);
         }
         return;
       }
@@ -202,15 +206,15 @@ class HotReloader {
         try {
           require(fullPath);
           if (this.currentConfig.debug) {
-            console.log(`[HotReload] ✅ Đã tải lại: ${displayPath}`);
+            logger.debug(`[HotReload] ✅ Đã tải lại: ${displayPath}`);
           }
         } catch (syntaxError) {
-          console.error(`[HotReload] ❌ Lỗi cú pháp trong ${displayPath}:`, syntaxError.message);
+          logger.error(`[HotReload] ❌ Lỗi cú pháp trong ${displayPath}:`, syntaxError.message);
           return;
         }
       } else {
         if (this.currentConfig.debug) {
-          console.log(`[HotReload] 📄 Tệp đã thay đổi: ${displayPath}`);
+          logger.debug(`[HotReload] 📄 Tệp đã thay đổi: ${displayPath}`);
         }
       }
       
@@ -218,7 +222,7 @@ class HotReloader {
       this.notifyFileChange(displayPath);
       
     } catch (error) {
-      console.error(`[HotReload] ❌ Lỗi khi xử lý ${displayPath}:`, error.message);
+      logger.error(`[HotReload] ❌ Lỗi khi xử lý ${displayPath}:`, error.message);
     }
   }
 
@@ -267,25 +271,25 @@ class HotReloader {
   // Notify about config changes
   notifyConfigChanges(changes) {
     if (this.currentConfig.debug) {
-      console.log(`[HotReload] 📝 Chi tiết thay đổi cấu hình:`);
+      logger.debug(`[HotReload] 📝 Chi tiết thay đổi cấu hình:`);
       
       changes.forEach(change => {
         if (change.type === 'platform') {
           const status = change.newValue ? '✅ BẬT' : '❌ TẮT';
-          console.log(`   • ${change.platform}.${change.feature}: ${change.oldValue} → ${change.newValue} (${status})`);
+          logger.debug(`   • ${change.platform}.${change.feature}: ${change.oldValue} → ${change.newValue} (${status})`);
         } else {
-          console.log(`   • ${change.key}: ${JSON.stringify(change.oldValue)} → ${JSON.stringify(change.newValue)}`);
+          logger.debug(`   • ${change.key}: ${JSON.stringify(change.oldValue)} → ${JSON.stringify(change.newValue)}`);
         }
       });
       
-      console.log(`[HotReload] ✨ Các thay đổi cấu hình đã được áp dụng ngay lập tức!`);
+      logger.debug(`[HotReload] ✨ Các thay đổi cấu hình đã được áp dụng ngay lập tức!`);
     }
   }
 
   // Notify about file changes
   notifyFileChange(filePath) {
     if (this.currentConfig.debug) {
-      console.log(`[HotReload] 🔄 Tệp đã được tải động: ${filePath}`);
+      logger.debug(`[HotReload] 🔄 Tệp đã được tải động: ${filePath}`);
     }
   }
 
@@ -295,14 +299,14 @@ class HotReloader {
       try {
         watcherInfo.watcher.close();
       } catch (error) {
-        console.error(`[HotReload] Lỗi khi dừng theo dõi ${path}:`, error.message);
+        logger.error(`[HotReload] Lỗi khi dừng theo dõi ${path}:`, error.message);
       }
     });
     
     this.watchers.clear();
     this.isWatching = false;
     if (this.currentConfig.debug) {
-      console.log(`[HotReload] 🛑 Đã dừng tất cả trình theo dõi tải động`);
+      logger.debug(`[HotReload] 🛑 Đã dừng tất cả trình theo dõi tải động`);
     }
   }
 
@@ -331,10 +335,10 @@ class HotReloader {
       const fullPath = path.resolve(filePath);
       delete require.cache[fullPath];
       require(fullPath);
-      console.log(`[HotReload] ✅ Đã reload thủ công: ${filePath}`);
+      logger.debug(`[HotReload] ✅ Đã reload thủ công: ${filePath}`);
       return true;
     } catch (error) {
-      console.error(`[HotReload] ❌ Lỗi reload thủ công ${filePath}:`, error.message);
+      logger.error(`[HotReload] ❌ Lỗi reload thủ công ${filePath}:`, error.message);
       return false;
     }
   }

@@ -80,8 +80,23 @@ module.exports = async (client) => {
 
   for (const file of eventFiles) {
     const filePath = path.join(eventsPath, file);
+    
+    // Special handling for DisTube events
+    if (file === 'distubeEvents.js') {
+      const distubeEvents = require(filePath);
+      distubeEvents(client);
+      if (config.debug) {
+        console.log(`[Loader] 🎵 Đã tải DisTube events`);
+      }
+      continue;
+    }
+    
+    // Regular Discord events
     const event = require(filePath);
     const eventName = file.split('.')[0];
     client.on(eventName, (...args) => event(client, ...args));
+    if (config.debug) {
+      console.log(`[Loader] 🎯 Đã tải event: ${eventName}`);
+    }
   }
 };

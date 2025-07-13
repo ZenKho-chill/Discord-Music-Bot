@@ -87,10 +87,8 @@ const userSessionSchema = new mongoose.Schema({
     timestamps: true // Tự động thêm createdAt và updatedAt
 });
 
-// Index để tối ưu hóa query
-userSessionSchema.index({ discordId: 1 });
+// Compound indexes để tối ưu hóa query
 userSessionSchema.index({ tokenExpiry: 1 });
-userSessionSchema.index({ rememberToken: 1 });
 userSessionSchema.index({ 'guildsCache.expiresAt': 1 });
 
 // Methods

@@ -395,6 +395,51 @@ router.get('/server/:serverId', isAuthenticated, async (req, res) => {
       });
     }
     
+    // Get music statistics for this server
+    const MusicTrackService = require('../../database/services/MusicTrackService');
+    let musicStats = null;
+    let platformStats = [];
+    let contentTypeStats = [];
+    
+    try {
+      // Lấy thống kê tổng quan
+      musicStats = await MusicTrackService.getGuildStats(serverId);
+      
+      // Tính toán platform statistics
+      if (musicStats && musicStats.platforms) {
+        const platformCount = {};
+        musicStats.platforms.forEach(platform => {
+          platformCount[platform] = (platformCount[platform] || 0) + 1;
+        });
+        
+        platformStats = Object.entries(platformCount)
+          .map(([platform, count]) => ({
+            platform,
+            count,
+            percentage: ((count / musicStats.totalTracks) * 100).toFixed(1)
+          }))
+          .sort((a, b) => b.count - a.count);
+      }
+      
+      // Tính toán content type statistics
+      if (musicStats && musicStats.contentTypes) {
+        const typeCount = {};
+        musicStats.contentTypes.forEach(type => {
+          typeCount[type] = (typeCount[type] || 0) + 1;
+        });
+        
+        contentTypeStats = Object.entries(typeCount)
+          .map(([type, count]) => ({
+            type,
+            count,
+            percentage: ((count / musicStats.totalTracks) * 100).toFixed(1)
+          }))
+          .sort((a, b) => b.count - a.count);
+      }
+    } catch (error) {
+      console.error('Error fetching music stats:', error);
+    }
+    
     res.render('server', {
       title: `${guild.name} - Quản lý`,
       guild: {
@@ -409,7 +454,11 @@ router.get('/server/:serverId', isAuthenticated, async (req, res) => {
         global_name: user.global_name,
         discriminator: user.discriminator,
         avatar: user.avatar ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png` : null
-      }
+      },
+      musicStats,
+      platformStats,
+      contentTypeStats,
+      debugMode: config.debug
     });
   } catch (error) {
     console.error('Server management error:', error);
@@ -590,6 +639,151 @@ router.get('/test/reset-first-visit', isAuthenticated, async (req, res) => {
         }
     } catch (error) {
         res.json({ error: error.message });
+    }
+});
+
+// Debug route to check music stats
+router.get('/debug/music-stats/:serverId', isAuthenticated, async (req, res) => {
+    try {
+        const serverId = req.params.serverId;
+        const MusicTrackService = require('../../database/services/MusicTrackService');
+        
+        console.log('🔍 Debug: Checking music stats for server:', serverId);
+        
+        const musicStats = await MusicTrackService.getGuildStats(serverId);
+        console.log('📊 Music Stats Result:', musicStats);
+        
+        let platformStats = [];
+        let contentTypeStats = [];
+        
+        if (musicStats && musicStats.platforms) {
+            const platformCount = {};
+            musicStats.platforms.forEach(platform => {
+                platformCount[platform] = (platformCount[platform] || 0) + 1;
+            });
+            
+            platformStats = Object.entries(platformCount)
+                .map(([platform, count]) => ({
+                    platform,
+                    count,
+                    percentage: ((count / musicStats.totalTracks) * 100).toFixed(1)
+                }))
+                .sort((a, b) => b.count - a.count);
+        }
+        
+        if (musicStats && musicStats.contentTypes) {
+            const typeCount = {};
+            musicStats.contentTypes.forEach(type => {
+                typeCount[type] = (typeCount[type] || 0) + 1;
+            });
+            
+            contentTypeStats = Object.entries(typeCount)
+                .map(([type, count]) => ({
+                    type,
+                    count,
+                    percentage: ((count / musicStats.totalTracks) * 100).toFixed(1)
+                }))
+                .sort((a, b) => b.count - a.count);
+        }
+        
+        res.json({
+            serverId,
+            musicStats,
+            platformStats,
+            contentTypeStats
+        });
+    } catch (error) {
+        console.error('Debug music stats error:', error);
+        res.json({ error: error.message, stack: error.stack });
+    }
+});
+
+// Music Statistics Page
+router.get('/music-stats', isAuthenticated, async (req, res) => {
+    try {
+        const user = req.user;
+        const MusicTrackService = require('../../database/services/MusicTrackService');
+        
+        // Lấy danh sách guilds của user
+        const userGuilds = await getUserGuilds(user.accessToken, user.id);
+        const managedGuilds = userGuilds.filter(guild => (guild.permissions & 0x20) === 0x20); // MANAGE_GUILD permission
+        
+        // Lấy guild được chọn (mặc định là guild đầu tiên)
+        const selectedGuildId = req.query.guild || (managedGuilds.length > 0 ? managedGuilds[0].id : null);
+        const selectedGuild = managedGuilds.find(g => g.id === selectedGuildId);
+        
+        let musicStats = null;
+        let platformStats = [];
+        let contentTypeStats = [];
+        let popularTracks = [];
+        let recentTracks = [];
+        
+        if (selectedGuildId) {
+            // Lấy thống kê tổng quan
+            musicStats = await MusicTrackService.getGuildStats(selectedGuildId);
+            
+            // Lấy top tracks
+            popularTracks = await MusicTrackService.getPopularTracks(selectedGuildId, 10);
+            
+            // Lấy lịch sử gần đây
+            recentTracks = await MusicTrackService.getPlayHistory(selectedGuildId, 20);
+            
+            // Tính toán platform statistics
+            if (musicStats && musicStats.platforms) {
+                const platformCount = {};
+                musicStats.platforms.forEach(platform => {
+                    platformCount[platform] = (platformCount[platform] || 0) + 1;
+                });
+                
+                platformStats = Object.entries(platformCount)
+                    .map(([platform, count]) => ({
+                        platform,
+                        count,
+                        percentage: ((count / musicStats.totalTracks) * 100).toFixed(1)
+                    }))
+                    .sort((a, b) => b.count - a.count);
+            }
+            
+            // Tính toán content type statistics
+            if (musicStats && musicStats.contentTypes) {
+                const typeCount = {};
+                musicStats.contentTypes.forEach(type => {
+                    typeCount[type] = (typeCount[type] || 0) + 1;
+                });
+                
+                contentTypeStats = Object.entries(typeCount)
+                    .map(([type, count]) => ({
+                        type,
+                        count,
+                        percentage: ((count / musicStats.totalTracks) * 100).toFixed(1)
+                    }))
+                    .sort((a, b) => b.count - a.count);
+            }
+        }
+        
+        res.render('music-stats', {
+            user: {
+                id: user.id,
+                username: user.username,
+                global_name: user.global_name,
+                discriminator: user.discriminator,
+                avatar: user.avatar ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png` : null
+            },
+            guilds: managedGuilds,
+            selectedGuild,
+            musicStats,
+            platformStats,
+            contentTypeStats,
+            popularTracks,
+            recentTracks,
+            title: 'Music Statistics'
+        });
+    } catch (error) {
+        console.error('[Dashboard] Error in music-stats route:', error);
+        res.status(500).render('error', { 
+            message: 'Internal server error',
+            error: error
+        });
     }
 });
 

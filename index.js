@@ -56,6 +56,9 @@ process.on("uncaughtException", (err) => {
     ],
   });
 
+  // Set max listeners to prevent warning
+  client.distube.setMaxListeners(10);
+
   // Debug plugin và phiên bản
   if (config.debug) {
     console.log('Cấu hình truyền vào SpotifyPlugin:', config.spotify);

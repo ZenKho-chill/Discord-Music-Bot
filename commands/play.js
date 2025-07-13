@@ -137,6 +137,7 @@ module.exports = {
           console.log(`[play.js] Lock key:`, lockKey);
           console.log(`[play.js] Voice channel:`, voiceChannel?.name, voiceChannel?.id);
         }
+        
         await routeToPlatform(client, interaction, query, voiceChannel, lockKey);
         if (config.debug) console.log(`[play.js] routeToPlatform hoàn thành thành công`);
       } catch (err) {
