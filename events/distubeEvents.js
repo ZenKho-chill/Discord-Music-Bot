@@ -1,5 +1,7 @@
 const MusicTrackService = require('../database/services/MusicTrackService');
+const ServerStatsService = require('../database/services/ServerStatsService');
 const config = require('../config/config');
+const logger = require('../utils/logger');
 
 module.exports = (client) => {
   const distube = client.distube;
@@ -8,7 +10,7 @@ module.exports = (client) => {
   distube.on('playSong', async (queue, song) => {
     try {
       if (config.debug) {
-        console.log('🎵 DisTube playSong event:', {
+        logger.debug('🎵 DisTube playSong event:', {
           title: song.name,
           url: song.url,
           duration: song.formattedDuration,
@@ -17,7 +19,7 @@ module.exports = (client) => {
       }
 
       // Log track với thông tin chi tiết từ DisTube
-      await MusicTrackService.logTrack({
+      const trackId = await MusicTrackService.logTrack({
         url: song.url,
         title: song.name,
         guild: queue.textChannel?.guild,
@@ -31,6 +33,16 @@ module.exports = (client) => {
         }
       });
 
+      // Bắt đầu tracking listening session cho user
+      if (song.user && queue.textChannel?.guild) {
+        await ServerStatsService.startListeningSession(
+          song.user.id,
+          queue.textChannel.guild.id,
+          song.user.username,
+          trackId
+        );
+      }
+
       // Embed đã bị xóa theo yêu cầu
     } catch (error) {
       console.error('❌ Error in playSong event:', error);
@@ -41,7 +53,7 @@ module.exports = (client) => {
   distube.on('addSong', async (queue, song) => {
     try {
       if (config.debug) {
-        console.log('➕ DisTube addSong event:', song.name);
+        logger.debug('➕ DisTube addSong event:', song.name);
       }
 
       // Embed thông báo đã bị xóa theo yêu cầu
@@ -54,7 +66,7 @@ module.exports = (client) => {
   distube.on('addList', async (queue, playlist) => {
     try {
       if (config.debug) {
-        console.log('📋 DisTube addList event:', playlist.name);
+        logger.debug('📋 DisTube addList event:', playlist.name);
       }
 
       // Log từng bài trong playlist
@@ -84,7 +96,15 @@ module.exports = (client) => {
   distube.on('finishSong', async (queue, song) => {
     try {
       if (config.debug) {
-        console.log('🏁 DisTube finishSong event:', song.name);
+        logger.debug('🏁 DisTube finishSong event:', song.name);
+      }
+
+      // Kết thúc listening session cho user
+      if (song.user && queue.textChannel?.guild) {
+        await ServerStatsService.endListeningSession(
+          song.user.id,
+          queue.textChannel.guild.id
+        );
       }
 
       // Cập nhật status thành finished
@@ -101,5 +121,5 @@ module.exports = (client) => {
     channel?.send(`❌ Đã xảy ra lỗi: ${error.message}`);
   });
 
-  console.log('🎵 DisTube events loaded with MusicTrackService integration');
+  logger.core('🎵 DisTube events loaded with MusicTrackService and ServerStatsService integration');
 };

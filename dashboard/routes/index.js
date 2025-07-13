@@ -8,6 +8,7 @@ const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fet
 
 // Database services
 const UserSessionService = require('../../database/services/UserSessionService');
+const ServerStatsService = require('../../database/services/ServerStatsService');
 
 // Middleware to check if user is authenticated
 function isAuthenticated(req, res, next) {
@@ -327,7 +328,11 @@ router.get('/dashboard', isAuthenticated, async (req, res) => {
         username: user.username,
         global_name: user.global_name, // Display name/nickname từ Discord
         discriminator: user.discriminator,
-        avatar: user.avatar ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png` : null
+        avatar: user.avatar,
+        email: user.email,
+        accessToken: user.accessToken,
+        refreshToken: user.refreshToken,
+        sessionId: user.sessionId
       },
       servers: allServers, // For backward compatibility
       serversWithBot,
@@ -400,10 +405,15 @@ router.get('/server/:serverId', isAuthenticated, async (req, res) => {
     let musicStats = null;
     let platformStats = [];
     let contentTypeStats = [];
+    let serverStats = null;
     
     try {
+      // Get comprehensive server statistics
+      serverStats = await ServerStatsService.getServerStats(serverId);
+      
       // Lấy thống kê tổng quan
       musicStats = await MusicTrackService.getGuildStats(serverId);
+      console.log('🎵 [DEBUG] Raw musicStats from database:', JSON.stringify(musicStats, null, 2));
       
       // Tính toán platform statistics
       if (musicStats && musicStats.platforms) {
@@ -419,9 +429,11 @@ router.get('/server/:serverId', isAuthenticated, async (req, res) => {
             percentage: ((count / musicStats.totalTracks) * 100).toFixed(1)
           }))
           .sort((a, b) => b.count - a.count);
+        
+        console.log('📊 [DEBUG] Platform stats calculated:', platformStats);
       }
       
-      // Tính toán content type statistics
+      // Tính toán content type statistics  
       if (musicStats && musicStats.contentTypes) {
         const typeCount = {};
         musicStats.contentTypes.forEach(type => {
@@ -435,7 +447,15 @@ router.get('/server/:serverId', isAuthenticated, async (req, res) => {
             percentage: ((count / musicStats.totalTracks) * 100).toFixed(1)
           }))
           .sort((a, b) => b.count - a.count);
+        
+        console.log('📊 [DEBUG] Content type stats calculated:', contentTypeStats);
       }
+      
+      console.log('🎵 [DEBUG] Final musicStats object:', {
+        totalTracks: musicStats ? musicStats.totalTracks : 'undefined',
+        hasPlatforms: musicStats && musicStats.platforms ? musicStats.platforms.length : 0,
+        hasContentTypes: musicStats && musicStats.contentTypes ? musicStats.contentTypes.length : 0
+      });
     } catch (error) {
       console.error('Error fetching music stats:', error);
     }
@@ -456,6 +476,7 @@ router.get('/server/:serverId', isAuthenticated, async (req, res) => {
         avatar: user.avatar ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png` : null
       },
       musicStats,
+      serverStats,
       platformStats,
       contentTypeStats,
       debugMode: config.debug
@@ -465,6 +486,70 @@ router.get('/server/:serverId', isAuthenticated, async (req, res) => {
     res.status(500).render('error', {
       title: 'Lỗi',
       error: 'Không thể tải thông tin server'
+    });
+  }
+});
+
+// Server Statistics Page Route
+router.get('/server/:guildId/stats', isAuthenticated, async (req, res) => {
+  try {
+    const client = req.app.locals.client;
+    const { guildId } = req.params;
+    const user = req.user;
+
+    // Verify user has access to this guild
+    const userGuilds = await getUserGuilds(user.accessToken, user.id);
+    const guild = userGuilds.find(g => g.id === guildId);
+    
+    if (!guild) {
+      return res.status(403).render('error', {
+        title: 'Không có quyền truy cập',
+        error: 'Bạn không có quyền truy cập server này'
+      });
+    }
+
+    // Get bot guild information
+    const botGuild = client.guilds.cache.get(guildId);
+    if (!botGuild) {
+      return res.status(404).render('error', {
+        title: 'Server không tìm thấy',
+        error: 'Bot chưa tham gia server này'
+      });
+    }
+
+    // Get comprehensive server statistics
+    const serverStats = await ServerStatsService.getServerStats(guildId);
+
+    if (!serverStats) {
+      return res.status(500).render('error', {
+        title: 'Lỗi',
+        error: 'Không thể tải thống kê server'
+      });
+    }
+
+    res.render('serverStats', {
+      title: `${botGuild.name} - Thống Kê Server`,
+      guild: {
+        id: botGuild.id,
+        name: botGuild.name,
+        memberCount: botGuild.memberCount,
+        icon: botGuild.iconURL()
+      },
+      user: {
+        id: user.id,
+        username: user.username,
+        global_name: user.global_name,
+        discriminator: user.discriminator,
+        avatar: user.avatar ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png` : null
+      },
+      serverStats,
+      debugMode: config.debug
+    });
+  } catch (error) {
+    console.error('Server statistics error:', error);
+    res.status(500).render('error', {
+      title: 'Lỗi',
+      error: 'Không thể tải thống kê server'
     });
   }
 });

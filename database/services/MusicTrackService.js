@@ -42,16 +42,16 @@ class MusicTrackService {
                 status: 'playing'
             };
             
-            console.log('🔍 [MusicTrackService] Creating track document:', trackDocument);
+            logger.debug('🔍 [MusicTrackService] Creating track document:', trackDocument);
             
             const track = new MusicTrack(trackDocument);
             
-            console.log('🔍 [MusicTrackService] Saving track to database...');
+            logger.debug('🔍 [MusicTrackService] Saving track to database...');
             const savedTrack = await track.save();
-            console.log('✅ [MusicTrackService] Track saved successfully:', savedTrack._id);
+            logger.success('✅ [MusicTrackService] Track saved successfully:', savedTrack._id);
             
-            console.log('🎵 Logged track:', title, '| Platform:', platformInfo.platform, '| Type:', platformInfo.contentType);
-            return savedTrack;
+            logger.info('🎵 Logged track:', title, '| Platform:', platformInfo.platform, '| Type:', platformInfo.contentType);
+            return savedTrack._id; // Return track ID for session tracking
         } catch (error) {
             console.error('❌ [MusicTrackService] Error logging track:', error);
             console.error('❌ [MusicTrackService] Error stack:', error.stack);

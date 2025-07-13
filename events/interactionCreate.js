@@ -1,5 +1,6 @@
 const { StringSelectMenuBuilder, ActionRowBuilder } = require('discord.js');
 const { routeToPlatform } = require('../commands/platforms/platformDetector');
+const ServerStatsService = require('../database/services/ServerStatsService');
 
 module.exports = async(client, interaction) => {
   if (interaction.isAutocomplete()) {
@@ -77,6 +78,16 @@ module.exports = async(client, interaction) => {
   if (!command) return;
 
   try {
+    // Log command usage cho thống kê
+    if (interaction.guild && interaction.user) {
+      await ServerStatsService.logCommandUsage(
+        interaction.user.id,
+        interaction.guild.id,
+        interaction.user.username,
+        interaction.commandName
+      );
+    }
+    
     await command.execute(client, interaction);
   } catch (err) {
     console.error('[interactionCreate.js] Lỗi khi thực thi lệnh:', err);
