@@ -1,0 +1,56 @@
+services:
+  discord-music-bot:
+    build: .
+    platform: linux/amd64
+    container_name: discord-music-bot
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - MONGODB_URI=mongodb://mongodb:27017/discord-music-bot
+    volumes:
+      - ./config:/app/config
+      - bot_logs:/app/logs
+    depends_on:
+      - mongodb
+    networks:
+      - bot-network
+    healthcheck:
+      test: ["CMD", "node", "-e", "const http = require('http'); const options = { host: 'localhost', port: 3000, path: '/', timeout: 2000 }; http.get(options, (res) => { if (res.statusCode == 200) process.exit(0); else process.exit(1); }).on('error', () => process.exit(1));"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  mongodb:
+    image: mongo:7-jammy
+    container_name: discord-music-bot-db
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_DATABASE=discord-music-bot
+    volumes:
+      - mongodb_data:/data/db
+      - mongodb_config:/data/configdb
+    networks:
+      - bot-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  mongodb_data:
+    driver: local
+  mongodb_config:
+    driver: local
+  bot_logs:
+    driver: local
+
+networks:
+  bot-network:
+    driver: bridge
