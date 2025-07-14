@@ -1,3 +1,5 @@
+const logger = require('./logger');
+
 class QueueManager {
   constructor() {
     this.queues = {}; // { guildId: [bài1, bài2, ...] }
@@ -58,7 +60,7 @@ class QueueManager {
       const removedSong = this.queues[guildId][0];
       this.queues[guildId].shift();
       const config = this.getConfig();
-      if (config.debug) console.log(`[QueueManager] Đã xóa bài đầu tiên khỏi guild ${guildId}. Còn lại: ${this.queues[guildId].length}`);
+      if (config.debug) logger.queue(`[QueueManager] Đã xóa bài đầu tiên khỏi guild ${guildId}. Còn lại: ${this.queues[guildId].length}`);
       // KHÔNG cập nhật lại số thứ tự - giữ nguyên số thứ tự ban đầu
     }
   }
@@ -82,7 +84,7 @@ class QueueManager {
 
     const config = this.getConfig();
     if (config.debug) {
-      console.log(`[QueueManager] Đã đồng bộ sau khi bỏ qua: còn lại ${this.queues[guildId].length} bài`);
+      logger.queue(`[QueueManager] Đã đồng bộ sau khi bỏ qua: còn lại ${this.queues[guildId].length} bài`);
     }
   }
 

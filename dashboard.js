@@ -14,10 +14,10 @@ module.exports = async function (client) {
   // Kết nối MongoDB
   try {
     await dbConnection.connect();
-    console.log('🍃 Database connection established');
+    console.log('🍃 Đã thiết lập kết nối cơ sở dữ liệu');
   } catch (error) {
-    console.error('❌ Failed to connect to database:', error);
-    console.log('⚠️ Continuing without database...');
+    console.error('❌ Không thể kết nối cơ sở dữ liệu:', error);
+    console.log('⚠️ Tiếp tục mà không có cơ sở dữ liệu...');
   }
 
   const app = express();
@@ -68,21 +68,21 @@ module.exports = async function (client) {
               refreshToken: userSession.refreshToken
             }, async (err) => {
               if (err) {
-                console.error('❌ Auto-login error:', err);
+                console.error('❌ Lỗi tự động đăng nhập:', err);
                 res.clearCookie(config.dashboard.cookies.rememberToken.name);
                 next();
               } else {
-                console.log('✅ Auto-login successful for:', userSession.username);
+                console.log('✅ Tự động đăng nhập thành công cho:', userSession.username);
                 
-                // Set flag để hiển thị thông báo auto-login
+                // Đặt cờ để hiển thị thông báo tự động đăng nhập
                 try {
                   userSession.lastAutoLogin = true;
                   await userSession.save();
                 } catch (saveError) {
-                  console.error('❌ Error saving auto-login flag:', saveError);
+                  console.error('❌ Lỗi lưu cờ tự động đăng nhập:', saveError);
                 }
                 
-                // Redirect tới dashboard nếu đang ở trang chủ
+                // Chuyển hướng tới dashboard nếu đang ở trang chủ
                 if (req.path === '/' || req.path === '/login') {
                   res.redirect('/dashboard');
                 } else {
@@ -97,7 +97,7 @@ module.exports = async function (client) {
           res.clearCookie(config.dashboard.cookies.rememberToken.name);
         }
       } catch (error) {
-        console.error('❌ Error during auto-login:', error);
+        console.error('❌ Lỗi trong quá trình tự động đăng nhập:', error);
         res.clearCookie(config.dashboard.cookies.rememberToken.name);
       }
     }
@@ -114,9 +114,9 @@ module.exports = async function (client) {
   }, async (accessToken, refreshToken, profile, done) => {
     try {
       // Lưu user session vào database
-      console.log('✅ OAuth Success for user:', profile.username + '#' + profile.discriminator);
-      console.log('🔑 Access token received:', accessToken ? 'Yes' : 'No');
-      console.log('🔄 Refresh token received:', refreshToken ? 'Yes' : 'No');
+      console.log('✅ OAuth thành công cho người dùng:', profile.username + '#' + profile.discriminator);
+      console.log('🔑 Đã nhận access token:', accessToken ? 'Có' : 'Không');
+      console.log('🔄 Đã nhận refresh token:', refreshToken ? 'Có' : 'Không');
       
       // Tạo hoặc cập nhật session trong database
       const userSession = await UserSessionService.createOrUpdateSession(
@@ -132,7 +132,7 @@ module.exports = async function (client) {
       
       return done(null, profile);
     } catch (error) {
-      console.error('❌ Error saving user session:', error);
+      console.error('❌ Lỗi lưu phiên người dùng:', error);
       return done(error, null);
     }
   }));
@@ -148,7 +148,7 @@ module.exports = async function (client) {
       const userSession = await UserSessionService.getSessionByDiscordId(discordId);
       
       if (!userSession) {
-        console.log('⚠️ No valid session found for Discord ID:', discordId);
+        console.log('⚠️ Không tìm thấy phiên hợp lệ cho Discord ID:', discordId);
         return done(null, false);
       }
 
@@ -166,7 +166,7 @@ module.exports = async function (client) {
 
       return done(null, user);
     } catch (error) {
-      console.error('❌ Error deserializing user:', error);
+      console.error('❌ Lỗi deserializing user:', error);
       return done(error, null);
     }
   });
@@ -191,10 +191,10 @@ module.exports = async function (client) {
       try {
         const stats = await UserSessionService.cleanExpiredSessions();
         if (stats.expiredTokens > 0 || stats.expiredCache > 0) {
-          console.log('🧹 Database cleanup completed:', stats);
+          console.log('🧹 Hoàn thành dọn dẹp cơ sở dữ liệu:', stats);
         }
       } catch (error) {
-        console.error('❌ Error during database cleanup:', error);
+        console.error('❌ Lỗi trong quá trình dọn dẹp cơ sở dữ liệu:', error);
       }
     }, 60 * 60 * 1000); // 1 giờ
   });

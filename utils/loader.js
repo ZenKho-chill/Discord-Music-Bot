@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const { REST, Routes } = require('discord.js');
+const logger = require('./logger');
 
 module.exports = async (client) => {
   // Lấy cấu hình hiện tại (hỗ trợ tải động)
@@ -32,7 +33,9 @@ module.exports = async (client) => {
         client.commands.set(command.data.name, command);
         commands.push(command.data.toJSON());
         if (config.debug) {
-          console.log(`[Loader] ✅ Đã tải lệnh: ${command.data.name}`);
+        if (config.debug) {
+          logger.debug(`[Loader] ✅ Đã tải lệnh: ${command.data.name}`);
+        }
         }
       }
     } catch (error) {
@@ -44,17 +47,17 @@ module.exports = async (client) => {
 
   try {
     if (config.registerCommands) {
-      console.log("[⏳] Đăng ký slash command...");
+      logger.core("[⏳] Đăng ký slash command...");
       
       // Xóa tất cả lệnh cũ trước nếu registerCommands là true
-      console.log("[🗑️] Xóa tất cả lệnh cũ...");
+      logger.debug("[🗑️] Xóa tất cả lệnh cũ...");
       await rest.put(
         Routes.applicationCommands(config.clientId),
         { body: [] }
       );
       
       if (config.debug) {
-        console.log(`[Loader] 📋 Tìm thấy ${commands.length} lệnh để đăng ký`);
+        logger.debug(`[Loader] 📋 Tìm thấy ${commands.length} lệnh để đăng ký`);
       }
       
       // Đăng ký lệnh mới
@@ -63,11 +66,11 @@ module.exports = async (client) => {
         { body: commands }
       );
       
-      console.log(`[✔] Đã đăng ký ${commands.length} slash command! Có thể mất vài phút để hiển thị.`);
-      console.log("Nếu không thấy, hãy thử Ctrl + R trong Discord.");
+      logger.core(`[✔] Đã đăng ký ${commands.length} slash command! Có thể mất vài phút để hiển thị.`);
+      logger.core("Nếu không thấy, hãy thử Ctrl + R trong Discord.");
     } else {
       if (config.debug) {
-        console.log("[Loader] ⏭️ Bỏ qua đăng ký lệnh (registerCommands: false)");
+        logger.debug("[Loader] ⏭️ Bỏ qua đăng ký lệnh (registerCommands: false)");
       }
     }
   } catch (err) {
@@ -86,7 +89,7 @@ module.exports = async (client) => {
       const distubeEvents = require(filePath);
       distubeEvents(client);
       if (config.debug) {
-        console.log(`[Loader] 🎵 Đã tải DisTube events`);
+        logger.debug(`[Loader] 🎵 Đã tải DisTube events`);
       }
       continue;
     }
@@ -96,7 +99,7 @@ module.exports = async (client) => {
     const eventName = file.split('.')[0];
     client.on(eventName, (...args) => event(client, ...args));
     if (config.debug) {
-      console.log(`[Loader] 🎯 Đã tải event: ${eventName}`);
+      logger.debug(`[Loader] 🎯 Đã tải event: ${eventName}`);
     }
   }
 };

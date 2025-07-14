@@ -2,11 +2,18 @@ const UserStats = require('../models/UserStats');
 const CommandStats = require('../models/CommandStats');
 const MusicTrack = require('../models/MusicTrack');
 const logger = require('../../utils/logger');
+const dbConnection = require('../connection');
 
 class ServerStatsService {
   // Cập nhật thống kê người dùng khi bắt đầu nghe nhạc
   static async startListeningSession(userId, guildId, username, trackId) {
     try {
+      // Kiểm tra tình trạng khả dụng của cơ sở dữ liệu
+      if (!dbConnection.isAvailable) {
+        logger.database('⚠️ [ServerStatsService] Cơ sở dữ liệu không khả dụng, bỏ qua bắt đầu phiên nghe');
+        return null;
+      }
+
       const userStats = await UserStats.findOneAndUpdate(
         { userId, guildId },
         {
@@ -21,16 +28,31 @@ class ServerStatsService {
         { upsert: true, new: true }
       );
       
-      logger.debug('[ServerStats] Started listening session for user:', username);
+      logger.debug('[ServerStats] Bắt đầu phiên nghe cho người dùng:', username);
       return userStats;
     } catch (error) {
-      logger.error('[ServerStats] Error starting listening session:', error);
+      logger.error('[ServerStats] Lỗi bắt đầu phiên nghe:', error);
+      
+      // Xử lý các lỗi cơ sở dữ liệu cụ thể
+      if (error.code === 13 || error.message.includes('authentication')) {
+        logger.error('❌ [ServerStatsService] Lỗi xác thực cơ sở dữ liệu:', error.message);
+        logger.info('💡 Hãy xem xét kiểm tra cài đặt xác thực MongoDB trong config');
+        dbConnection.isAvailable = false; // Đánh dấu là không khả dụng
+      }
+      
+      return null;
     }
   }
 
   // Kết thúc session nghe nhạc và cập nhật thời gian
   static async endListeningSession(userId, guildId) {
     try {
+      // Kiểm tra tình trạng khả dụng của cơ sở dữ liệu
+      if (!dbConnection.isAvailable) {
+        logger.database('⚠️ [ServerStatsService] Cơ sở dữ liệu không khả dụng, bỏ qua kết thúc phiên nghe');
+        return null;
+      }
+
       const userStats = await UserStats.findOne({ userId, guildId });
       
       if (userStats && userStats.currentSession && userStats.currentSession.isListening) {
@@ -50,17 +72,32 @@ class ServerStatsService {
           }
         );
         
-        logger.debug(`[ServerStats] Ended listening session for user ${userId}, duration: ${sessionDuration}s`);
+        logger.debug(`[ServerStats] Kết thúc phiên nghe cho người dùng ${userId}, thời gian: ${sessionDuration}s`);
         return sessionDuration;
       }
     } catch (error) {
-      logger.error('[ServerStats] Error ending listening session:', error);
+      logger.error('[ServerStats] Lỗi kết thúc phiên nghe:', error);
+      
+      // Xử lý các lỗi cơ sở dữ liệu cụ thể
+      if (error.code === 13 || error.message.includes('authentication')) {
+        logger.error('❌ [ServerStatsService] Lỗi xác thực cơ sở dữ liệu:', error.message);
+        logger.info('💡 Hãy xem xét kiểm tra cài đặt xác thực MongoDB trong config');
+        dbConnection.isAvailable = false; // Đánh dấu là không khả dụng
+      }
+      
+      return null;
     }
   }
 
   // Ghi lại việc sử dụng lệnh
   static async logCommandUsage(userId, guildId, username, commandName) {
     try {
+      // Kiểm tra tình trạng khả dụng của cơ sở dữ liệu
+      if (!dbConnection.isAvailable) {
+        logger.database('⚠️ [ServerStatsService] Cơ sở dữ liệu không khả dụng, bỏ qua ghi log sử dụng lệnh');
+        return null;
+      }
+
       await CommandStats.findOneAndUpdate(
         { userId, guildId, commandName },
         {
@@ -74,9 +111,16 @@ class ServerStatsService {
         { upsert: true }
       );
       
-      logger.debug(`[ServerStats] Logged command usage: ${commandName} by ${username}`);
+      logger.debug(`[ServerStats] Đã ghi log sử dụng lệnh: ${commandName} bởi ${username}`);
     } catch (error) {
-      logger.error('[ServerStats] Error logging command usage:', error);
+      logger.error('[ServerStats] Lỗi ghi log sử dụng lệnh:', error);
+      
+      // Xử lý các lỗi cơ sở dữ liệu cụ thể
+      if (error.code === 13 || error.message.includes('authentication')) {
+        logger.error('❌ [ServerStatsService] Lỗi xác thực cơ sở dữ liệu:', error.message);
+        logger.info('💡 Hãy xem xét kiểm tra cài đặt xác thực MongoDB trong config');
+        dbConnection.isAvailable = false; // Đánh dấu là không khả dụng
+      }
     }
   }
 

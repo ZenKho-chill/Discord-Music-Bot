@@ -2,6 +2,7 @@ const { EmbedBuilder } = require('discord.js');
 const hotReloader = require('../utils/hotReload');
 const queueManager = require('../utils/queueManager');
 const config = require('../config/config');
+const logger = require('../utils/logger');
 
 const DEFAULT_THUMBNAIL = 'https://cdn.discordapp.com/embed/avatars/0.png';
 let nowPlayingMsg = null;
@@ -10,7 +11,7 @@ let currentlyPlaying = {}; // { guildId: songId }
 let processingPlaylist = {}; // { guildId: boolean } - Tạm dừng removeFirst khi đang xử lý playlist
 
 module.exports = async(client) => {
-  console.log(`[✔] Bot đang chạy với tên ${client.user.tag} - HỆ THỐNG TẢI ĐỘNG!`);
+  logger.core(`[✔] Bot đang chạy với tên ${client.user.tag} - HỆ THỐNG TẢI ĐỘNG!`);
   
   // Khởi động trình tải động để theo dõi tất cả tệp
   hotReloader.startWatching();
@@ -21,22 +22,22 @@ module.exports = async(client) => {
       nowPlayingMsg = null;
       // Ghi log liên kết thực tế và nguồn
       const config = hotReloader.getCurrentConfig();
-      if (config.debug) console.log('[DisTube] Đang phát:', song.name, '| Liên kết:', song.url, '| Thời lượng:', song.duration, '| Nguồn:', song.source || song.streamURL || 'không xác định');
+      logger.music('[DisTube] Đang phát:', song.name, '| Liên kết:', song.url, '| Thời lượng:', song.duration, '| Nguồn:', song.source || song.streamURL || 'không xác định');
       
-      // Chỉ xóa bài trước đó nếu KHÔNG đang xử lý danh sách phát và KHÔNG ở repeat mode
+      // Chỉ xóa bài trước đó nếu KHÔNG đang xử lý danh sách phát và KHÔNG ở chế độ lặp lại
       if (currentlyPlaying[queue.id] && !processingPlaylist[queue.id] && queue.repeatMode !== 1 && queue.repeatMode !== 2) {
         queueManager.removeFirst(queue.id);
         const config = hotReloader.getCurrentConfig();
-        if (config.debug) console.log(`[DisTube] Đã xóa bài trước khỏi quản lý hàng đợi cho máy chủ ${queue.id}`);
+        logger.queue(`[DisTube] Đã xóa bài trước khỏi quản lý hàng đợi cho máy chủ ${queue.id}`);
       } else if (processingPlaylist[queue.id]) {
         const config = hotReloader.getCurrentConfig();
-        if (config.debug) console.log(`[DisTube] Bỏ qua removeFirst - đang xử lý danh sách phát cho máy chủ ${queue.id}`);
+        logger.queue(`[DisTube] Bỏ qua removeFirst - đang xử lý danh sách phát cho máy chủ ${queue.id}`);
       } else if (queue.repeatMode === 1) {
         const config = hotReloader.getCurrentConfig();
-        if (config.debug) console.log(`[DisTube] Bỏ qua removeFirst - đang ở chế độ lặp lại bài hát cho máy chủ ${queue.id}`);
+        logger.queue(`[DisTube] Bỏ qua removeFirst - đang ở chế độ lặp lại bài hát cho máy chủ ${queue.id}`);
       } else if (queue.repeatMode === 2) {
         const config = hotReloader.getCurrentConfig();
-        if (config.debug) console.log(`[DisTube] Bỏ qua removeFirst - đang ở chế độ lặp lại hàng đợi cho máy chủ ${queue.id}`);
+        logger.queue(`[DisTube] Bỏ qua removeFirst - đang ở chế độ lặp lại hàng đợi cho máy chủ ${queue.id}`);
       }
       
       // Cập nhật bài đang phát hiện tại
@@ -81,13 +82,13 @@ module.exports = async(client) => {
               
               try {
                 await queue.distube.voices.leave(queue.id);
-                if (config.debug) console.log(`[Tự Rời-Hết Nhạc] Bot đã rời kênh thoại sau khi hết nhạc - ${guild.name}`);
+                logger.autoLeave(`[Tự Rời-Hết Nhạc] Bot đã rời kênh thoại sau khi hết nhạc - ${guild.name}`);
                 
                 // Dọn dẹp bổ sung để ngăn tự động tham gia lại
                 const connection = guild.client.voice?.connections?.get(guild.id);
                 if (connection) {
                   connection.destroy();
-                  if (config.debug) console.log(`[Tự Rời-Hết Nhạc] Đã hủy kết nối thoại - ${guild.name}`);
+                  logger.autoLeave(`[Tự Rời-Hết Nhạc] Đã hủy kết nối thoại - ${guild.name}`);
                 }
               } catch (leaveError) {
                 // Nếu DisTube rời thất bại, thử ngắt kết nối thủ công

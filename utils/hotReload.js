@@ -270,6 +270,13 @@ class HotReloader {
 
   // Notify about config changes
   notifyConfigChanges(changes) {
+    // Check if debug mode changed and update logger
+    const debugChanged = changes.some(change => change.key === 'debug');
+    if (debugChanged) {
+      logger.updateDebugMode();
+      console.log('[HotReload] 🔄 Đã cập nhật chế độ debug cho logger');
+    }
+    
     if (this.currentConfig.debug) {
       logger.debug(`[HotReload] 📝 Chi tiết thay đổi cấu hình:`);
       

@@ -45,7 +45,7 @@ module.exports = (client) => {
 
       // Embed đã bị xóa theo yêu cầu
     } catch (error) {
-      console.error('❌ Error in playSong event:', error);
+      console.error('❌ Lỗi trong sự kiện playSong:', error);
     }
   });
 
@@ -58,7 +58,7 @@ module.exports = (client) => {
 
       // Embed thông báo đã bị xóa theo yêu cầu
     } catch (error) {
-      console.error('❌ Error in addSong event:', error);
+      console.error('❌ Lỗi trong sự kiện addSong:', error);
     }
   });
 
@@ -88,7 +88,7 @@ module.exports = (client) => {
 
       // Embed thông báo playlist đã bị xóa theo yêu cầu
     } catch (error) {
-      console.error('❌ Error in addList event:', error);
+      console.error('❌ Lỗi trong sự kiện addList:', error);
     }
   });
 
@@ -111,15 +111,15 @@ module.exports = (client) => {
       // (Cần tìm track bằng URL và guild để update)
       // TODO: Implement update track status logic
     } catch (error) {
-      console.error('❌ Error in finishSong event:', error);
+      console.error('❌ Lỗi trong sự kiện finishSong:', error);
     }
   });
 
   // Event error
   distube.on('error', (channel, error) => {
-    console.error('❌ DisTube Error:', error);
+    console.error('❌ Lỗi DisTube:', error);
     channel?.send(`❌ Đã xảy ra lỗi: ${error.message}`);
   });
 
-  logger.core('🎵 DisTube events loaded with MusicTrackService and ServerStatsService integration');
+  logger.core('🎵 Đã tải các sự kiện DisTube với tích hợp MusicTrackService và ServerStatsService');
 };

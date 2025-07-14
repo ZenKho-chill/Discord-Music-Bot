@@ -1,5 +1,6 @@
 const hotReloader = require('../utils/hotReload');
 const autoLeaveManager = require('../utils/autoLeaveManager');
+const logger = require('../utils/logger');
 
 // Lưu trữ ID timeout cho mỗi máy chủ
 const leaveTimeouts = new Map();
@@ -11,7 +12,9 @@ module.exports = (client) => {
     // Bỏ qua nếu tự rời khi phòng trống bị tắt
     if (!config.leaveOnEmpty?.empty?.enabled) {
       if (config.debug) {
-      console.log(`[AutoLeave] Tự rời bị tắt trong cấu hình`);
+      if (config.debug) {
+        logger.autoLeave(`[AutoLeave] Tự rời bị tắt trong cấu hình`);
+      }
       }
       return;
     }

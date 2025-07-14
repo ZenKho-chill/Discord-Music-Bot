@@ -1,4 +1,4 @@
-/* Reset and base styles */
+/* Reset và styles cơ bản */
 * {
     margin: 0;
     padding: 0;
@@ -50,7 +50,7 @@ body {
     display: flex;
     list-style: none;
     gap: 2rem;
-    align-items: center; /* Align items vertically */
+    align-items: center; /* Căn chỉnh các mục theo chiều dọc */
 }
 
 .nav-links a {
@@ -66,7 +66,7 @@ body {
     transform: translateY(-2px);
 }
 
-/* User info in navbar */
+/* Thông tin user trong navbar */
 .user-nav-info {
     display: flex;
     align-items: center;
@@ -112,7 +112,7 @@ body {
     padding: 2rem;
 }
 
-/* Login Page */
+/* Trang Đăng nhập */
 .login-container {
     display: flex;
     justify-content: center;
@@ -216,7 +216,7 @@ body {
     background: #c23e41;
 }
 
-/* Server Grid */
+/* Lưới Server */
 .servers-section h3 {
     color: #333;
     margin-bottom: 1.5rem;
@@ -326,7 +326,7 @@ body {
     cursor: not-allowed;
 }
 
-/* Animations */
+/* Hiệu ứng */
 @keyframes fadeIn {
     from {
         opacity: 0;

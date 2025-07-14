@@ -2,7 +2,7 @@ module.exports = {
   token: 'DISCORD_TOKEN_ID',
   clientId: 'DISCORD_CLIEND_ID',
   maxQueue: 30,
-  debug: false,
+  debug: true,
   registerCommands: false,
   maxVolume: 150,
   spotify: {
@@ -47,7 +47,7 @@ module.exports = {
     clientId: 'DISCORD_CLIEND_ID', // Sử dụng cùng clientId với bot
     clientSecret: 'DISCORD_SECRET_ID', // Bạn cần thêm client secret từ Discord Developer Portal
     redirectUri: 'http://localhost:3000/auth/callback',
-    scopes: ['identify', 'guilds'],
+    scopes: ['identify', 'guilds'], // Scope cơ bản, không thêm email để tránh prompt
     sessionSecret: 'music-bot-dashboard-secret-2024', // Thay đổi thành secret phức tạp
     
     // Cookie Configuration
@@ -76,6 +76,69 @@ module.exports = {
     autoLogin: {
       enabled: true,             // Enable/disable auto-login feature
       tokenExpiryDays: 30        // Number of days before remember token expires
-    }
+    },
   },
+  
+  // Cấu hình MongoDB
+  mongodb: {
+    // Thông tin kết nối cơ bản
+    ip: 'localhost',      // IP hoặc hostname của MongoDB server
+    port: 27017,                // Port của MongoDB (mặc định: 27017)
+    database: 'discord-music-bot', // Tên cơ sở dữ liệu
+    
+    // Cài đặt xác thực
+    auth: {
+      enabled: false,            // Bật/tắt xác thực MongoDB
+      username: '',       // Tên đăng nhập
+      password: '',   // Mật khẩu
+      authSource: 'discord-music-bot' // Database để xác thực
+    },
+    
+    // Cấu hình kết nối
+    connection: {
+      serverSelectionTimeoutMS: 10000,  // Timeout chọn server (ms)
+      connectTimeoutMS: 15000,          // Timeout kết nối (ms)
+      socketTimeoutMS: 45000,           // Timeout socket (ms)
+      maxPoolSize: 10,                  // Số kết nối tối đa trong pool
+      minPoolSize: 2,                   // Số kết nối tối thiểu trong pool
+      retryWrites: true,                // Thử lại khi ghi thất bại
+      w: 'majority'                     // Write concern
+    },
+    
+    // Cài đặt kiểm tra sức khỏe
+    healthCheck: {
+      enabled: true,
+      interval: 30000,                  // Kiểm tra mỗi 30 giây
+      timeout: 5000,                    // Timeout cho health check
+      testCollection: 'health_check',
+      testDocument: { test: true, timestamp: new Date() }
+    },
+    
+    // Cài đặt khởi tạo cơ sở dữ liệu
+    initialization: {
+      enabled: true,                    // Bật khởi tạo cơ sở dữ liệu tự động
+      cleanupAuthSource: true,          // Dọn dẹp các bộ sưu tập tạm thời trong nguồn xác thực
+      createRequiredCollections: true,  // Tạo các bộ sưu tập cần thiết nếu chúng không tồn tại
+      createIndexes: true,              // Tạo các chỉ mục hiệu suất
+      
+      // Các bộ sưu tập nên được dọn dẹp từ nguồn xác thực
+      cleanupPatterns: [
+        'temp_',
+        'setup_',
+        'initial_',
+        'auth_temp',
+        'bootstrap_'
+      ]
+    },
+    
+    // Cài đặt logging
+    logging: {
+      enabled: true,                    // Bật logging cho MongoDB
+      level: 'info',                    // Level log: 'error', 'warn', 'info', 'debug'
+      logConnections: true,             // Log kết nối/ngắt kết nối
+      logQueries: false,                // Log các query (chỉ dùng khi debug)
+      logSlowQueries: true,             // Log các query chậm
+      slowQueryThreshold: 1000          // Ngưỡng query chậm (ms)
+    }
+  }
 };

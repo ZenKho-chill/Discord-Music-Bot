@@ -20,9 +20,9 @@ module.exports = {
 
     // Kiểm tra xem có bài hát trong queue không
     if (!queue || !queue.songs || !queue.songs[0]) {
-      return interaction.reply({ 
-        content: '❌ Không có bài hát nào đang phát để điều chỉnh âm lượng!', 
-        ephemeral: true 
+      return interaction.reply({
+        content: '❌ Không có bài hát nào đang phát để điều chỉnh âm lượng!',
+        ephemeral: true
       });
     }
 
@@ -47,10 +47,10 @@ module.exports = {
     try {
       // Lưu âm lượng cũ
       const oldVolume = queue.volume;
-      
+
       // Điều chỉnh âm lượng
       client.distube.setVolume(guildId, volumeValue);
-      
+
       // Tạo emoji tương ứng với âm lượng
       let volumeEmoji = '🔇';
       if (volumeValue === 0) volumeEmoji = '🔇';

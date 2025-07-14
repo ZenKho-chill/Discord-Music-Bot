@@ -33,8 +33,10 @@ function isPlatformFeatureEnabled(platform, type) {
   const isEnabled = platformConfig[type] === true;
   
   if (config.debug) {
-    console.log(`[PlatformDetector] Kiểm tra ${platform}.${type}: ${isEnabled}`);
-    console.log(`[PlatformDetector] Cấu hình nền tảng:`, platformConfig);
+  if (config.debug) {
+    logger.platform(`[PlatformDetector] Kiểm tra ${platform}.${type}: ${isEnabled}`);
+    logger.platform(`[PlatformDetector] Cấu hình nền tảng:`, platformConfig);
+  }
   }
   
   return isEnabled;
@@ -73,7 +75,9 @@ function createFeatureDisabledMessage(platform, type) {
 async function detectPlatform(query) {
   const config = getConfig();
   if (config.debug) {
-    console.log(`[PlatformDetector] ASYNC detectPlatform được gọi với query:`, query, typeof query);
+  if (config.debug) {
+    logger.platform(`[PlatformDetector] ASYNC detectPlatform được gọi với query:`, query, typeof query);
+  }
   }
   
   // Nếu là link rút gọn SoundCloud thì giải quyết sang link gốc
@@ -93,7 +97,7 @@ async function detectPlatform(query) {
       type: 'search',
       query: query
     };
-    if (config.debug) console.log(`[PlatformDetector] ASYNC detectPlatform return (search):`, result);
+    if (config.debug) logger.platform(`[PlatformDetector] ASYNC detectPlatform return (search):`, result);
     return result;
   }
 
@@ -108,7 +112,7 @@ async function detectPlatform(query) {
         type: 'mix',
         query: query
       };
-      if (config.debug) console.log(`[PlatformDetector] ASYNC detectPlatform return (mix):`, result);
+      if (config.debug) logger.platform(`[PlatformDetector] ASYNC detectPlatform return (mix):`, result);
       return result;
     } else if (isYouTubePlaylist) {
       const result = {
@@ -116,7 +120,7 @@ async function detectPlatform(query) {
         type: 'playlist',
         query: query
       };
-      if (config.debug) console.log(`[PlatformDetector] ASYNC detectPlatform return (playlist):`, result);
+      if (config.debug) logger.platform(`[PlatformDetector] ASYNC detectPlatform return (playlist):`, result);
       return result;
     } else {
       const result = {
@@ -124,7 +128,7 @@ async function detectPlatform(query) {
         type: 'single',
         query: query
       };
-      if (config.debug) console.log(`[PlatformDetector] ASYNC detectPlatform return (single):`, result);
+      if (config.debug) logger.platform(`[PlatformDetector] ASYNC detectPlatform return (single):`, result);
       return result;
     }
   }
@@ -189,14 +193,16 @@ async function routeToPlatform(client, interaction, query, voiceChannel, lockKey
   const config = getConfig(); // Sử dụng config hot reload
   
   if (config.debug) {
-    console.log(`[PlatformDetector] Bắt đầu route platform cho query:`, query);
-    console.log(`[PlatformDetector] Voice Channel:`, voiceChannel?.name, voiceChannel?.id);
-    console.log(`[PlatformDetector] Guild:`, interaction.guild?.name, interaction.guild?.id);
+  if (config.debug) {
+    logger.platform(`[PlatformDetector] Bắt đầu route platform cho query:`, query);
+    logger.platform(`[PlatformDetector] Voice Channel:`, voiceChannel?.name, voiceChannel?.id);
+    logger.platform(`[PlatformDetector] Guild:`, interaction.guild?.name, interaction.guild?.id);
+  }
   }
   
   try {
     const detection = await detectPlatform(query);
-    if (config.debug) console.log(`[PlatformDetector] Kết quả detection:`, JSON.stringify(detection, null, 2));
+    if (config.debug) logger.platform(`[PlatformDetector] Kết quả detection:`, JSON.stringify(detection, null, 2));
     
     // Kiểm tra config để xem platform/type có được bật không
     if (!isPlatformFeatureEnabled(detection.platform, detection.type)) {

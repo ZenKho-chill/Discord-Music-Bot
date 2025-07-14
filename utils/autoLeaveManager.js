@@ -1,4 +1,5 @@
 const hotReloader = require('./hotReload');
+const logger = require('./logger');
 
 // Map preventReconnect toàn cục có thể được truy cập bởi các module khác
 const preventReconnect = new Map();
@@ -13,7 +14,7 @@ function blockGuild(guildId) {
     preventReconnect.set(guildId, Date.now());
     const config = hotReloader.getCurrentConfig();
     if (config.debug) {
-        console.log(`[AutoLeaveManager] Đã chặn máy chủ ${guildId} không cho bot tham gia lại`);
+        logger.autoLeave(`[AutoLeaveManager] Đã chặn máy chủ ${guildId} không cho bot tham gia lại`);
     }
 }
 
@@ -23,7 +24,7 @@ function unblockGuild(guildId) {
     preventReconnect.delete(guildId);
     const config = hotReloader.getCurrentConfig();
     if (config.debug && wasBlocked) {
-        console.log(`[AutoLeaveManager] Đã bỏ chặn máy chủ ${guildId} cho bot tham gia`);
+        logger.autoLeave(`[AutoLeaveManager] Đã bỏ chặn máy chủ ${guildId} cho bot tham gia`);
     }
     return wasBlocked;
 }
