@@ -48,16 +48,17 @@ function getPlatformDisplayName(platform) {
     'spotify': 'Spotify', 
     'soundcloud': 'SoundCloud'
   };
+  // Có thể Việt hóa tên nền tảng nếu muốn
   return names[platform] || platform;
 }
 
 function getTypeDisplayName(type) {
   const names = {
-    'single': 'bài hát đơn lẻ',
-    'playlist': 'danh sách phát',
-    'album': 'album',
-    'search': 'tìm kiếm bài hát',
-    'mix': 'mix/radio'
+    'single': 'Bài hát đơn lẻ',
+    'playlist': 'Danh sách phát',
+    'album': 'Album',
+    'search': 'Tìm kiếm bài hát',
+    'mix': 'Mix/Radio'
   };
   return names[type] || type;
 }

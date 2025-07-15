@@ -34,7 +34,7 @@ class Logger {
   // Log tin nhắn warning (chỉ hiển thị khi chế độ debug bật)
   warn(...args) {
     if (this.debugMode) {
-      console.warn(...args);
+      console.warn('[Cảnh báo]', ...args);
     }
   }
 
@@ -51,7 +51,7 @@ class Logger {
   // Log tin nhắn success (chỉ hiển thị khi chế độ debug bật)
   success(...args) {
     if (this.debugMode) {
-      console.log(...args);
+      console.log('[Thành công]', ...args);
     }
   }
 
@@ -114,7 +114,7 @@ class Logger {
   // Log dashboard activities (debug mode)
   dashboard(...args) {
     if (this.debugMode) {
-      console.log(...args);
+      console.log('[Bảng điều khiển]', ...args);
     }
   }
 }

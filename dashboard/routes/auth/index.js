@@ -15,9 +15,13 @@ router.get('/discord', (req, res) => {
   
   // Dyno-style: ALWAYS try prompt=none first for seamless experience
   authUrl.searchParams.set('prompt', 'none');
-  console.log('🔑 Dyno-style OAuth: Always attempting prompt=none for seamless login');
+  if (config.debug) {
+    console.log('🔑 Kiểu Dyno OAuth: Luôn thử prompt=none trước để đăng nhập liền mạch');
+  }
   
-  console.log('🔗 Generated OAuth URL:', authUrl.toString());
+  if (config.debug) {
+    console.log('🔗 URL OAuth đã tạo:', authUrl.toString());
+  }
   res.redirect(authUrl.toString());
 });
 
@@ -28,11 +32,15 @@ router.get('/callback', async (req, res) => {
     
     // Nếu có lỗi từ Discord (ví dụ: prompt=none failed)
     if (error) {
-      console.log('⚠️ OAuth error:', error, error_description);
+      if (config.debug) {
+        console.log('⚠️ Lỗi OAuth:', error, error_description);
+      }
       
       // Nếu lỗi do prompt=none (user chưa authorize), redirect về auth với consent
       if (error === 'consent_required' || error === 'login_required' || error === 'access_denied') {
-        console.log('🔄 prompt=none failed, redirecting to consent authorization (Dyno-style fallback)');
+        if (config.debug) {
+          console.log('🔄 prompt=none thất bại, chuyển hướng đến ủy quyền đồng ý (dự phòng kiểu Dyno)');
+        }
         const authUrl = new URL('https://discord.com/oauth2/authorize');
         authUrl.searchParams.set('response_type', 'code');
         authUrl.searchParams.set('client_id', config.dashboard.clientId);
@@ -48,7 +56,7 @@ router.get('/callback', async (req, res) => {
     }
     
     if (!code) {
-      return res.redirect('/?error=No authorization code received');
+      return res.redirect('/?error=Không nhận được mã ủy quyền');
     }
     
     // Đổi authorization code lấy access token
@@ -68,7 +76,7 @@ router.get('/callback', async (req, res) => {
     
     if (!tokenResponse.ok) {
       const errorText = await tokenResponse.text();
-      console.error('❌ Token exchange failed:', errorText);
+      console.error('❌ Đổi token thất bại:', errorText);
       return res.redirect('/?error=Token exchange failed');
     }
     
@@ -83,12 +91,14 @@ router.get('/callback', async (req, res) => {
     });
     
     if (!userResponse.ok) {
-      console.error('❌ Failed to fetch user profile');
+      console.error('❌ Không thể lấy thông tin hồ sơ người dùng');
       return res.redirect('/?error=Failed to fetch user profile');
     }
     
     const profile = await userResponse.json();
-    console.log('✅ OAuth Success for user:', profile.username + '#' + profile.discriminator);
+    if (config.debug) {
+      console.log('✅ OAuth Success for user:', profile.username + '#' + profile.discriminator);
+    }
     
     // Tạo hoặc cập nhật session trong database
     const userSession = await UserSessionService.createOrUpdateSession(
@@ -110,7 +120,7 @@ router.get('/callback', async (req, res) => {
       sessionId: userSession._id
     }, async (err) => {
       if (err) {
-        console.error('❌ Login error:', err);
+        console.error('❌ Lỗi đăng nhập:', err);
         return res.redirect('/?error=Login failed');
       }
       
@@ -121,18 +131,20 @@ router.get('/callback', async (req, res) => {
         if (rememberToken) {
           // Set cookie với thời hạn từ config
           res.cookie(config.dashboard.cookies.rememberToken.name, rememberToken, config.dashboard.cookies.rememberToken);
-          console.log('🍪 Remember token set for user:', profile.username);
+          if (config.debug) {
+            console.log('🍪 Remember token set for user:', profile.username);
+          }
         }
         
         res.redirect('/dashboard');
       } catch (error) {
-        console.error('❌ Error setting remember token:', error);
+        console.error('❌ Lỗi đặt remember token:', error);
         res.redirect('/dashboard'); // Vẫn redirect dù có lỗi
       }
     });
     
   } catch (error) {
-    console.error('💥 Auth callback error:', error);
+    console.error('💥 Lỗi callback xác thực:', error);
     res.redirect('/?error=Authentication failed');
   }
 });
@@ -145,7 +157,9 @@ router.get('/logout', async (req, res) => {
     // Xóa remember token khỏi database
     if (userId) {
       await UserSessionService.clearRememberToken(userId);
-      console.log('🗑️ Remember token cleared for user:', userId);
+      if (config.debug) {
+        console.log('🗑️ Remember token cleared for user:', userId);
+      }
     }
     
     // Xóa remember token cookie
@@ -154,12 +168,14 @@ router.get('/logout', async (req, res) => {
     // Xóa session khỏi database  
     if (userId) {
       await UserSessionService.deleteSession(userId);
-      console.log('🗑️ Database session deleted for user:', userId);
+      if (config.debug) {
+        console.log('🗑️ Database session deleted for user:', userId);
+      }
     }
     
     req.logout((err) => {
       if (err) {
-        console.error('Logout error:', err);
+        console.error('Lỗi đăng xuất:', err);
       }
       res.redirect('/');
     });

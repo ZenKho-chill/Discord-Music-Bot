@@ -14,10 +14,14 @@ module.exports = async function (client) {
   // Kết nối MongoDB
   try {
     await dbConnection.connect();
-    console.log('🍃 Đã thiết lập kết nối cơ sở dữ liệu');
+    if (config.debug) {
+      console.log('🍃 Đã thiết lập kết nối cơ sở dữ liệu');
+    }
   } catch (error) {
     console.error('❌ Không thể kết nối cơ sở dữ liệu:', error);
-    console.log('⚠️ Tiếp tục mà không có cơ sở dữ liệu...');
+    if (config.debug) {
+      console.log('⚠️ Tiếp tục mà không có cơ sở dữ liệu...');
+    }
   }
 
   const app = express();
@@ -72,7 +76,9 @@ module.exports = async function (client) {
                 res.clearCookie(config.dashboard.cookies.rememberToken.name);
                 next();
               } else {
-                console.log('✅ Tự động đăng nhập thành công cho:', userSession.username);
+                if (config.debug) {
+                  console.log('✅ Tự động đăng nhập thành công cho:', userSession.username);
+                }
                 
                 // Đặt cờ để hiển thị thông báo tự động đăng nhập
                 try {
@@ -114,9 +120,11 @@ module.exports = async function (client) {
   }, async (accessToken, refreshToken, profile, done) => {
     try {
       // Lưu user session vào database
-      console.log('✅ OAuth thành công cho người dùng:', profile.username + '#' + profile.discriminator);
-      console.log('🔑 Đã nhận access token:', accessToken ? 'Có' : 'Không');
-      console.log('🔄 Đã nhận refresh token:', refreshToken ? 'Có' : 'Không');
+      if (config.debug) {
+        console.log('✅ OAuth thành công cho người dùng:', profile.username + '#' + profile.discriminator);
+        console.log('🔑 Đã nhận access token:', accessToken ? 'Có' : 'Không');
+        console.log('🔄 Đã nhận refresh token:', refreshToken ? 'Có' : 'Không');
+      }
       
       // Tạo hoặc cập nhật session trong database
       const userSession = await UserSessionService.createOrUpdateSession(
@@ -148,7 +156,9 @@ module.exports = async function (client) {
       const userSession = await UserSessionService.getSessionByDiscordId(discordId);
       
       if (!userSession) {
-        console.log('⚠️ Không tìm thấy phiên hợp lệ cho Discord ID:', discordId);
+        if (config.debug) {
+          console.log('⚠️ Không tìm thấy phiên hợp lệ cho Discord ID:', discordId);
+        }
         return done(null, false);
       }
 
@@ -191,7 +201,9 @@ module.exports = async function (client) {
       try {
         const stats = await UserSessionService.cleanExpiredSessions();
         if (stats.expiredTokens > 0 || stats.expiredCache > 0) {
-          console.log('🧹 Hoàn thành dọn dẹp cơ sở dữ liệu:', stats);
+          if (config.debug) {
+            console.log('🧹 Hoàn thành dọn dẹp cơ sở dữ liệu:', stats);
+          }
         }
       } catch (error) {
         console.error('❌ Lỗi trong quá trình dọn dẹp cơ sở dữ liệu:', error);

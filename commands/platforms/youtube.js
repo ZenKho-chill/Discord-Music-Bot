@@ -187,10 +187,10 @@ async function handleYouTubePlaylist(client, interaction, query, voiceChannel, l
 
   // Embed ban đầu chỉ báo đang xử lý và queue hiện tại
   let embed = new EmbedBuilder()
-    .setTitle('🔄 Đang xử lý playlist YouTube...')
+    .setTitle('🔄 Đang xử lý danh sách phát YouTube...')
     .setDescription(
-      `Vui lòng chờ trong khi tôi lấy thông tin và thêm bài hát.\n\n` +
-      `Queue hiện tại: **${currentQueueSize}** bài`)
+      `Vui lòng chờ trong khi tôi lấy thông tin và thêm bài hát vào hàng đợi.\n\n` +
+      `Hàng đợi hiện tại: **${currentQueueSize}** bài`)
     .setColor(0xFF0000);
     
   // Gửi reply ephemeral đầu tiên
@@ -238,22 +238,22 @@ async function handleYouTubePlaylist(client, interaction, query, voiceChannel, l
 
     // Cập nhật lại embed sau khi đã resolve playlist
     embed = new EmbedBuilder()
-      .setTitle('🔄 Đang xử lý playlist YouTube...')
+      .setTitle('🔄 Đang xử lý danh sách phát YouTube...')
       .setDescription(
-        `Vui lòng chờ trong khi tôi lấy thông tin và thêm bài hát.\n\n` +
-        `Queue hiện tại: **${currentQueueSize}** bài\n` +
-        `Dự kiến thêm: **${songsToAdd.length}** bài từ playlist`)
+        `Vui lòng chờ trong khi tôi lấy thông tin và thêm bài hát vào hàng đợi.\n\n` +
+        `Hàng đợi hiện tại: **${currentQueueSize}** bài\n` +
+        `Dự kiến thêm: **${songsToAdd.length}** bài từ danh sách phát`)
       .addFields(
         { name: 'Tiến trình', value: `[${getProgressBar(0, songsToAdd.length)}] 0%`, inline: false },
         { name: 'Đã thêm', value: `0`, inline: true },
-        { name: 'Queue', value: `${currentQueueSize}/${MAX_QUEUE_SIZE}`, inline: true }
+        { name: 'Hàng đợi', value: `${currentQueueSize}/${MAX_QUEUE_SIZE}`, inline: true }
       )
       .setColor(0xFF0000);
 
     // Thêm nút dừng
     const stopButton = new ButtonBuilder()
       .setCustomId('stop_add')
-      .setLabel('⏸️ Dừng')
+      .setLabel('⏸️ Dừng thêm')
       .setStyle(ButtonStyle.Secondary);
     const row = new ActionRowBuilder().addComponents(stopButton);
 
@@ -370,7 +370,7 @@ async function handleYouTubeSingle(client, interaction, query, voiceChannel) {
   }
   
   if (playError) {
-    let msg = `❌ Có lỗi xảy ra khi thêm bài hát: ${playError.message}`;
+    let msg = `❌ Có lỗi khi thêm bài hát: ${playError.message}`;
     await interaction.followUp({ content: msg });
     return;
   }
@@ -394,7 +394,7 @@ async function handleYouTubeSingle(client, interaction, query, voiceChannel) {
   }
   
   if (!song || !interaction || !interaction.channel) {
-    await interaction.followUp({ content: '❌ Không thể lấy thông tin bài hát hoặc channel!' });
+    await interaction.followUp({ content: '❌ Không thể lấy thông tin bài hát hoặc kênh!' });
     return;
   }
   
@@ -510,6 +510,7 @@ async function handleYouTubeSingle(client, interaction, query, voiceChannel) {
     }
   } catch (err) {
     console.error('[YouTube Single] Lỗi khi vẽ hoặc gửi ảnh:', err);
+    await interaction.followUp({ content: '❌ Có lỗi khi tạo ảnh bài hát!' });
     await interaction.followUp({ content: '❌ Có lỗi khi tạo ảnh bài hát!' });
   }
   

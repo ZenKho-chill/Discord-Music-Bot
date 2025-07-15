@@ -12,7 +12,8 @@ router.get('/', (req, res) => {
     const error = req.query.error;
     res.render('login', { 
       title: 'ZK Music Bot - Đăng nhập',
-      error: error || null
+      error: error || null,
+      debugMode: config.debug
     });
   }
 });
@@ -20,7 +21,7 @@ router.get('/', (req, res) => {
 // Trang thông tin setup
 router.get('/setup', (req, res) => {
   res.render('setup', {
-    title: 'Dashboard Setup Required',
+    title: 'Cài đặt Dashboard cần thiết',
     clientId: '1381461005158191185',
     redirectUri: 'http://localhost:3000/auth/callback'
   });
@@ -33,8 +34,10 @@ router.get('/dashboard', isAuthenticated, async (req, res) => {
     const userSessionService = req.app.locals.userSessionService;
     const user = req.user;
     
-    console.log('🏠 Dashboard access by user:', user.username + '#' + user.discriminator);
-    console.log('🔑 Access token available:', user.accessToken ? 'Yes' : 'No');
+    if (config.debug) {
+      console.log('🏠 Dashboard access by user:', user.username + '#' + user.discriminator);
+      console.log('🔑 Token truy cập có sẵn:', user.accessToken ? 'Có' : 'Không');
+    }
     
     // Lấy user session để kiểm tra có phải lần đầu ghé thăm
     const userSession = await userSessionService.getSessionByDiscordId(user.id);
@@ -89,7 +92,8 @@ router.get('/dashboard', isAuthenticated, async (req, res) => {
       serversWithoutBot,
       isFirstVisit: isFirstVisit, // Truyền flag cho view
       hasRememberToken: hasRememberToken, // Truyền trạng thái auto-login
-      showAutoLoginMessage: showAutoLoginMessage // Truyền flag thông báo auto-login
+      showAutoLoginMessage: showAutoLoginMessage, // Truyền flag thông báo auto-login
+      debugMode: config.debug
     });
   } catch (error) {
     console.error('💥 Lỗi Dashboard:', error);
@@ -111,7 +115,8 @@ router.get('/dashboard', isAuthenticated, async (req, res) => {
         isFirstVisit: false, // Đặt false khi có lỗi
         hasRememberToken: !!req.cookies[config.dashboard.cookies.rememberToken.name], // Truyền trạng thái auto-login
         showAutoLoginMessage: false, // Không hiển thị thông báo khi có lỗi
-        apiError: 'Không thể tải danh sách server từ Discord. Vui lòng thử lại sau.'
+        apiError: 'Không thể tải danh sách server từ Discord. Vui lòng thử lại sau.',
+        debugMode: config.debug
       });
     } else {
       res.status(500).render('error', { 
@@ -163,7 +168,9 @@ router.get('/server/:serverId', isAuthenticated, async (req, res) => {
       
       // Lấy thống kê tổng quan
       musicStats = await MusicTrackService.getGuildStats(serverId);
-      console.log('🎵 [DEBUG] Raw musicStats from database:', JSON.stringify(musicStats, null, 2));
+      if (config.debug) {
+        console.log('🎵 [DEBUG] Raw musicStats from database:', JSON.stringify(musicStats, null, 2));
+      }
       
       // Tính toán platform statistics
       if (musicStats && musicStats.platforms) {
@@ -180,7 +187,9 @@ router.get('/server/:serverId', isAuthenticated, async (req, res) => {
           }))
           .sort((a, b) => b.count - a.count);
         
-        console.log('📊 [DEBUG] Platform stats calculated:', platformStats);
+        if (config.debug) {
+          console.log('📊 [DEBUG] Platform stats calculated:', platformStats);
+        }
       }
       
       // Tính toán content type statistics  
@@ -198,14 +207,18 @@ router.get('/server/:serverId', isAuthenticated, async (req, res) => {
           }))
           .sort((a, b) => b.count - a.count);
         
-        console.log('📊 [DEBUG] Content type stats calculated:', contentTypeStats);
+        if (config.debug) {
+          console.log('📊 [DEBUG] Content type stats calculated:', contentTypeStats);
+        }
       }
       
-      console.log('🎵 [DEBUG] Final musicStats object:', {
-        totalTracks: musicStats ? musicStats.totalTracks : 'undefined',
-        hasPlatforms: musicStats && musicStats.platforms ? musicStats.platforms.length : 0,
-        hasContentTypes: musicStats && musicStats.contentTypes ? musicStats.contentTypes.length : 0
-      });
+      if (config.debug) {
+        console.log('🎵 [DEBUG] Final musicStats object:', {
+          totalTracks: musicStats ? musicStats.totalTracks : 'undefined',
+          hasPlatforms: musicStats && musicStats.platforms ? musicStats.platforms.length : 0,
+          hasContentTypes: musicStats && musicStats.contentTypes ? musicStats.contentTypes.length : 0
+        });
+      }
     } catch (error) {
       console.error('Lỗi lấy thống kê nhạc:', error);
     }

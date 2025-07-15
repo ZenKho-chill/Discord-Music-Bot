@@ -11,13 +11,13 @@ const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fet
 // ==== BẮT LỖI TOÀN CỤC TRƯỚC ====
 process.on("uncaughtException", (err) => {
   if (err.message.includes("Used disallowed intents")) {
-    console.error("\x1b[31m[❌] Bot đang dùng intents chưa được bật trong Developer Portal.");
+    console.error("\x1b[31m[❌] Bot đang sử dụng intents chưa được bật trong Developer Portal.");
     console.log("→ Truy cập: https://discord.com/developers/applications");
     console.log("→ Bật Message Content Intent, Presence Intent, Server Members Intent");
-    console.log("→ Nhấn Save Changes và chạy lại bot.\x1b[0m");
+    console.log("→ Nhấn Lưu thay đổi (Save Changes) và chạy lại bot.\x1b[0m");
     process.exit(1);
   } else {
-    console.error(err);
+    console.error('[Lỗi]', err);
   }
 });
 
@@ -82,7 +82,7 @@ async function checkIntents(token, clientId) {
   });
 
   if (!response.ok) {
-    console.error('[❌] Không thể truy cập Discord API. Kiểm tra token hoặc clientId.');
+    console.error('[❌] Không thể truy cập Discord API. Vui lòng kiểm tra lại token hoặc clientId.');
     process.exit(1);
   }
 

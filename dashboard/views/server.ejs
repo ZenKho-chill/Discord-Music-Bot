@@ -103,12 +103,12 @@
     </div>
 
     <!-- Server Statistics Overview -->
-    <% if (serverStats) { %>
+    <% if (musicStats && (musicStats.totalTracks > 0)) { %>
     <div class="servers-section fade-in">
       <h3><i class="fas fa-chart-line"></i> Thống Kê Server Trực Tiếp</h3>
-      
       <!-- Statistics Overview Cards -->
       <div class="servers-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 2rem;">
+        <!-- ...các thẻ thống kê... -->
         <div class="server-card" style="background: linear-gradient(135deg, #007bff 0%, #0056b3 100%); color: white;">
           <h4 style="color: white;"><i class="fas fa-users"></i> Người Dùng Hoạt Động</h4>
           <div style="font-size: 2rem; font-weight: bold; text-align: center; margin: 1rem 0;">
@@ -116,7 +116,6 @@
           </div>
           <p style="text-align: center; color: rgba(255,255,255,0.8); margin: 0;">Đã tương tác với bot</p>
         </div>
-
         <div class="server-card" style="background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%); color: white;">
           <h4 style="color: white;"><i class="fas fa-terminal"></i> Lệnh Đã Dùng</h4>
           <div style="font-size: 2rem; font-weight: bold; text-align: center; margin: 1rem 0;">
@@ -124,7 +123,6 @@
           </div>
           <p style="text-align: center; color: rgba(255,255,255,0.8); margin: 0;">Tổng số lệnh</p>
         </div>
-
         <div class="server-card" style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: white;">
           <h4 style="color: white;"><i class="fas fa-music"></i> Bài Đã Phát</h4>
           <div style="font-size: 2rem; font-weight: bold; text-align: center; margin: 1rem 0;">
@@ -132,7 +130,6 @@
           </div>
           <p style="text-align: center; color: rgba(255,255,255,0.8); margin: 0;">Tổng số bài nhạc</p>
         </div>
-
         <div class="server-card" style="background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%); color: white;">
           <h4 style="color: white;"><i class="fas fa-clock"></i> Thời Gian Nghe</h4>
           <div style="font-size: 2rem; font-weight: bold; text-align: center; margin: 1rem 0;">
@@ -141,7 +138,6 @@
           <p style="text-align: center; color: rgba(255,255,255,0.8); margin: 0;">Tổng thời gian</p>
         </div>
       </div>
-
       <!-- Top Users and Recent Activity -->
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">
         <!-- Top Listeners -->
@@ -168,7 +164,6 @@
           <p style="text-align: center; color: #666; margin: 1rem 0;">Chưa có dữ liệu</p>
           <% } %>
         </div>
-
         <!-- Top Commands -->
         <div class="server-card">
           <h4><i class="fas fa-terminal"></i> Lệnh Được Dùng Nhiều</h4>
@@ -194,7 +189,6 @@
           <% } %>
         </div>
       </div>
-
       <!-- Recent Activity -->
       <div class="server-card">
         <h4><i class="fas fa-history"></i> Hoạt Động Gần Đây</h4>
@@ -234,6 +228,8 @@
         <% } %>
       </div>
     </div>
+    <% } else { %>
+    <!-- Không có thống kê server, không hiển thị gì ở đây -->
     <% } %>
 
     <!-- Server Management Sections -->
@@ -404,10 +400,17 @@
     </div>
   </div>
 
+  <!-- Config for JavaScript -->
+  <script>
+    window.config = {
+      debug: <%- JSON.stringify(debugMode || false) %>
+    };
+  </script>
+  
   <script src="/js/dashboard.js"></script>
   <script>
     // Debug Mode Control - get from server config
-    const DEBUG_MODE = <%= JSON.stringify(typeof debugMode !== 'undefined' ? debugMode : true) %>;
+    const DEBUG_MODE = window.config.debug;
     
     // Debug logging function
     function debugLog(...args) {

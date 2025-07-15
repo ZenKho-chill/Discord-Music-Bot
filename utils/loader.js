@@ -34,12 +34,12 @@ module.exports = async (client) => {
         commands.push(command.data.toJSON());
         if (config.debug) {
         if (config.debug) {
-          logger.debug(`[Loader] ✅ Đã tải lệnh: ${command.data.name}`);
+          logger.debug(`[Trình tải] ✅ Đã tải lệnh: ${command.data.name}`);
         }
         }
       }
     } catch (error) {
-      console.error(`[Loader] ❌ Lỗi khi tải lệnh ${file}:`, error.message);
+      console.error(`[Trình tải] ❌ Lỗi khi tải lệnh ${file}:`, error.message);
     }
   }
 
@@ -47,7 +47,7 @@ module.exports = async (client) => {
 
   try {
     if (config.registerCommands) {
-      logger.core("[⏳] Đăng ký slash command...");
+      logger.core("[⏳] Đang đăng ký lệnh slash...");
       
       // Xóa tất cả lệnh cũ trước nếu registerCommands là true
       logger.debug("[🗑️] Xóa tất cả lệnh cũ...");
@@ -57,7 +57,7 @@ module.exports = async (client) => {
       );
       
       if (config.debug) {
-        logger.debug(`[Loader] 📋 Tìm thấy ${commands.length} lệnh để đăng ký`);
+        logger.debug(`[Trình tải] 📋 Tìm thấy ${commands.length} lệnh để đăng ký`);
       }
       
       // Đăng ký lệnh mới
@@ -66,15 +66,15 @@ module.exports = async (client) => {
         { body: commands }
       );
       
-      logger.core(`[✔] Đã đăng ký ${commands.length} slash command! Có thể mất vài phút để hiển thị.`);
+      logger.core(`[✔] Đã đăng ký ${commands.length} lệnh slash! Có thể mất vài phút để hiển thị.`);
       logger.core("Nếu không thấy, hãy thử Ctrl + R trong Discord.");
     } else {
       if (config.debug) {
-        logger.debug("[Loader] ⏭️ Bỏ qua đăng ký lệnh (registerCommands: false)");
+        logger.debug("[Trình tải] ⏭️ Bỏ qua đăng ký lệnh (registerCommands: false)");
       }
     }
   } catch (err) {
-    console.error('[❌] Lỗi khi đăng ký slash command:', err);
+    console.error('[❌] Lỗi khi đăng ký lệnh slash:', err);
   }
 
   // Tải các sự kiện
@@ -89,7 +89,7 @@ module.exports = async (client) => {
       const distubeEvents = require(filePath);
       distubeEvents(client);
       if (config.debug) {
-        logger.debug(`[Loader] 🎵 Đã tải DisTube events`);
+        logger.debug(`[Trình tải] 🎵 Đã tải sự kiện DisTube`);
       }
       continue;
     }
@@ -99,7 +99,7 @@ module.exports = async (client) => {
     const eventName = file.split('.')[0];
     client.on(eventName, (...args) => event(client, ...args));
     if (config.debug) {
-      logger.debug(`[Loader] 🎯 Đã tải event: ${eventName}`);
+      logger.debug(`[Trình tải] 🎯 Đã tải sự kiện: ${eventName}`);
     }
   }
 };

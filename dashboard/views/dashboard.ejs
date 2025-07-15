@@ -33,41 +33,9 @@
   </header>
 
   <div class="container">
-    <% if (isFirstVisit) { %>
-    <div class="welcome-banner fade-in" style="
-            background: linear-gradient(135deg, #5865F2 0%, #7289DA 100%);
-            color: white;
-            padding: 2rem;
-            border-radius: 15px;
-            margin-bottom: 2rem;
-            text-align: center;
-            box-shadow: 0 10px 30px rgba(88, 101, 242, 0.3);
-        ">
-      <i class="fas fa-star" style="font-size: 3rem; margin-bottom: 1rem; color: #FFD700;"></i>
-      <h2 style="margin: 0 0 0.5rem 0; font-size: 2rem;">Chào mừng đến với ZK Music Bot Dashboard! 🎉</h2>
-      <p style="margin: 0; font-size: 1.1rem; opacity: 0.9;">
-        Quản lý Music Bot trên các server Discord của bạn một cách dễ dàng!
-      </p>
-    </div>
-    <% } %>
+    <!-- Đã xóa banner first visit theo yêu cầu -->
 
-    <% if (showAutoLoginMessage) { %>
-    <div class="auto-login-banner fade-in" style="
-            background: linear-gradient(135deg, #57F287 0%, #00D084 100%);
-            color: white;
-            padding: 1.5rem;
-            border-radius: 15px;
-            margin-bottom: 2rem;
-            text-align: center;
-            box-shadow: 0 10px 30px rgba(87, 242, 135, 0.3);
-        ">
-      <i class="fas fa-check-circle" style="font-size: 2rem; margin-bottom: 0.5rem; color: #FFD700;"></i>
-      <h3 style="margin: 0 0 0.5rem 0; font-size: 1.5rem;">Tự động đăng nhập thành công!</h3>
-      <p style="margin: 0; font-size: 1rem; opacity: 0.9;">
-        Bạn đã được tự động đăng nhập từ lần truy cập trước đó.
-      </p>
-    </div>
-    <% } %>
+    <!-- Đã xóa thông báo tự động đăng nhập theo yêu cầu -->
 
     <!-- Servers Section -->
     <div class="servers-section fade-in">
@@ -182,6 +150,13 @@
     </div>
   </div>
 
+  <!-- Config for JavaScript -->
+  <script>
+    window.config = {
+      debug: <%- JSON.stringify(debugMode || false) %>
+    };
+  </script>
+  
   <script src="/js/dashboard.js"></script>
 
   <!-- Server-side data for client-side JavaScript -->
@@ -216,28 +191,7 @@
         });
       });
 
-      // Get server-side data from JSON script
-      console.log('🔍 Dashboard loaded, checking server-side data...');
-      const serverData = JSON.parse(document.getElementById('server-data').textContent);
-      const hasRememberTokenFromServer = serverData.hasRememberToken;
-      console.log('🍪 Has remember token (server-side):', hasRememberTokenFromServer);
-
-      // Show notification based on auto-login status from server
-      if (hasRememberTokenFromServer) {
-        console.log('🔐 Showing auto-login notification');
-        if (window.showNotification) {
-          setTimeout(() => {
-            window.showNotification('🔐 Tự động đăng nhập thành công! Session sẽ tự động gia hạn.', 'success');
-          }, 500);
-        }
-      } else {
-        console.log('🎵 Showing welcome notification');
-        if (window.showNotification) {
-          setTimeout(() => {
-            window.showNotification('🎵 Chào mừng đến với ZK Music Bot Dashboard!', 'success');
-          }, 500);
-        }
-      }
+      // Đã xóa logic thông báo tự động đăng nhập theo yêu cầu
     });
   </script>
 </body>

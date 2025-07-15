@@ -11,7 +11,7 @@ function getSttFromQueueManager(guildId, targetSong, isNewlyAdded = false) {
   const queueManagerSongs = queueManager.getQueue(guildId);
   
   if (!queueManagerSongs || queueManagerSongs.length === 0) {
-    return 1; // Mặc định là 1 nếu không có queue
+    return 1; // Mặc định là 1 nếu không có hàng đợi
   }
   
   // Nếu là bài vừa thêm vào

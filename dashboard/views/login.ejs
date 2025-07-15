@@ -50,6 +50,13 @@
         </div>
     </div>
 
+    <!-- Config for JavaScript -->
+    <script>
+        window.config = {
+            debug: <%- JSON.stringify(typeof debugMode !== 'undefined' ? debugMode : false) %>
+        };
+    </script>
+    
     <script src="/js/dashboard.js"></script>
     <script>
         // Add some interactive effects

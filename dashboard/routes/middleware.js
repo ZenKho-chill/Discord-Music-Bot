@@ -20,11 +20,15 @@ async function getUserGuilds(accessToken, userId) {
     const cachedGuilds = await UserSessionService.getGuildsFromCache(userId);
     
     if (cachedGuilds) {
-      console.log('📋 Using cached guilds from database for user:', userId);
+      if (config.debug) {
+        console.log('📋 Sử dụng guilds đã cache từ database cho user:', userId);
+      }
       return cachedGuilds;
     }
     
-    console.log('🔍 Fetching user guilds from Discord API for user:', userId);
+    if (config.debug) {
+      console.log('🔍 Đang lấy user guilds từ Discord API cho user:', userId);
+    }
     
     const response = await fetch('https://discord.com/api/users/@me/guilds', {
       headers: {
@@ -33,18 +37,24 @@ async function getUserGuilds(accessToken, userId) {
       }
     });
     
-    console.log('📡 Discord API Response status:', response.status, response.statusText);
+    if (config.debug) {
+      console.log('📡 Trạng thái phản hồi Discord API:', response.status, response.statusText);
+    }
     
     if (response.status === 429) {
       // Rate limited, thử sử dụng dữ liệu cache cũ
       const oldCache = await UserSessionService.getGuildsFromCache(userId);
       if (oldCache) {
-        console.log('⚠️ Rate limited, sử dụng dữ liệu cache cũ');
+        if (config.debug) {
+          console.log('⚠️ Rate limited, sử dụng dữ liệu cache cũ');
+        }
         return oldCache;
       }
       
       const retryAfter = response.headers.get('retry-after') || 1;
-      console.log(`⏳ Rate limited, chờ ${retryAfter}s trước khi thử lại`);
+      if (config.debug) {
+        console.log(`⏳ Rate limited, chờ ${retryAfter}s trước khi thử lại`);
+      }
       
       // Chờ và thử lại một lần
       await new Promise(resolve => setTimeout(resolve, retryAfter * 1000));
@@ -62,15 +72,19 @@ async function getUserGuilds(accessToken, userId) {
       // Sử dụng dữ liệu cache cũ nếu có khi gặp lỗi
       const oldCache = await UserSessionService.getGuildsFromCache(userId);
       if (oldCache) {
-        console.log('🔄 Lỗi API, sử dụng dữ liệu cache cũ');
+        if (config.debug) {
+          console.log('🔄 Lỗi API, sử dụng dữ liệu cache cũ');
+        }
         return oldCache;
       }
       
-      throw new Error(`Discord API Error: ${response.status} - ${response.statusText}`);
+      throw new Error(`Lỗi Discord API: ${response.status} - ${response.statusText}`);
     }
     
     const guilds = await response.json();
-    console.log('✅ Đã lấy thành công', guilds.length, 'guilds cho user');
+    if (config.debug) {
+      console.log('✅ Đã lấy thành công', guilds.length, 'guilds cho user');
+    }
     
     // Cache kết quả trong database (cache 5 phút)
     await UserSessionService.updateGuildsCache(userId, guilds, 5);
@@ -82,7 +96,9 @@ async function getUserGuilds(accessToken, userId) {
     // Thử sử dụng dữ liệu cache cũ như phương án dự phòng
     const oldCache = await UserSessionService.getGuildsFromCache(userId);
     if (oldCache) {
-      console.log('🚨 Có lỗi xảy ra, sử dụng dữ liệu cache cũ như phương án dự phòng');
+      if (config.debug) {
+        console.log('🚨 Có lỗi xảy ra, sử dụng dữ liệu cache cũ như phương án dự phòng');
+      }
       return oldCache;
     }
     
