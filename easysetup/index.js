@@ -347,32 +347,47 @@ app.post('/api/save-config-content', requireAuth, (req, res) => {
 });
 
 // API để kiểm tra các trường bắt buộc đã được điền chưa
-app.get('/api/validate-required-config', requireAuth, (req, res) => {
-    delete require.cache[require.resolve('../config/config.js')];
-    const currentConfig = require('../config/config.js');
+app.get('/api/validate-required-config', (req, res) => {
+    let currentConfig;
+    try {
+        delete require.cache[require.resolve('../config/config.js')];
+        currentConfig = require('../config/config.js');
+    } catch (error) {
+        logger.error('[Easysetup] Lỗi khi đọc config.js:', error.message);
+        return res.status(500).json({
+            success: false,
+            message: 'Lỗi cú pháp trong file config.js. Vui lòng kiểm tra lại.',
+            error: error.message
+        });
+    }
 
     const missingFields = [];
+
+    // Kiểm tra các đối tượng cha có tồn tại không
+    const dashboardConf = currentConfig.dashboard || {};
+    const mongodbConf = currentConfig.mongodb || {};
+    const mongoAuthConf = mongodbConf.auth || {};
 
     // Kiểm tra các trường cấp cao nhất
     if (!currentConfig.token) missingFields.push('Discord Bot Token (Discord)');
     if (!currentConfig.clientId) missingFields.push('Discord Bot Client ID (Discord)');
 
     // Kiểm tra trong dashboard
-    if (!currentConfig.dashboard.clientId) missingFields.push('Dashboard Client ID (Discord)');
-    if (!currentConfig.dashboard.clientSecret) missingFields.push('Dashboard Client Secret (Discord)');
-    if (!currentConfig.dashboard.redirectUri || currentConfig.dashboard.redirectUri === 'http://example.com/auth/callback') missingFields.push('Dashboard Redirect URI (Cấu hình chung)');
-    if (!currentConfig.dashboard.sessionSecret) missingFields.push('Dashboard Session Secret (Cấu hình chung)');
+    if (!dashboardConf.clientId) missingFields.push('Dashboard Client ID (Discord)');
+    if (!dashboardConf.clientSecret) missingFields.push('Dashboard Client Secret (Discord)');
+    if (!dashboardConf.redirectUri || dashboardConf.redirectUri === 'http://example.com/auth/callback') missingFields.push('Dashboard Redirect URI (Cấu hình chung)');
+    if (!dashboardConf.sessionSecret) missingFields.push('Dashboard Session Secret (Cấu hình chung)');
 
     // Kiểm tra trong mongodb
-    if (!currentConfig.mongodb.ip) missingFields.push('Database IP (Database)');
-    if (!currentConfig.mongodb.port) missingFields.push('Database Port (Database)');
-    if (!currentConfig.mongodb.database) missingFields.push('Database Name (Database)');
+    if (!mongodbConf.ip) missingFields.push('Database IP (Database)');
+    if (!mongodbConf.port) missingFields.push('Database Port (Database)');
+    if (!mongodbConf.database) missingFields.push('Database Name (Database)');
     
     // Nếu bật xác thực, kiểm tra thêm user/pass/authSource
-    if (currentConfig.mongodb.auth.enabled) {
-        if (!currentConfig.mongodb.auth.username) missingFields.push('Database Username (Database)');
-        if (!currentConfig.mongodb.auth.password) missingFields.push('Database Password (Database)');
-        if (!currentConfig.mongodb.auth.authSource) missingFields.push('Database Auth Source (Database)');
+    if (mongoAuthConf.enabled) {
+        if (!mongoAuthConf.username) missingFields.push('Database Username (Database)');
+        if (!mongoAuthConf.password) missingFields.push('Database Password (Database)');
+        if (!mongoAuthConf.authSource) missingFields.push('Database Auth Source (Database)');
     }
 
     if (missingFields.length > 0) {

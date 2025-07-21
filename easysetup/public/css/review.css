@@ -160,4 +160,44 @@ body {
     to {
         transform: rotate(360deg);
     }
+}
+
+/* Status Message Styles */
+#status-message {
+    padding: 15px;
+    margin: 20px 0;
+    border-radius: 5px;
+    font-size: 0.95em;
+    font-weight: 500;
+    display: none; /* Ẩn mặc định */
+    opacity: 0;
+    transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+    transform: translateY(-20px);
+}
+
+#status-message.show {
+    display: block;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+#status-message.success {
+    background-color: #28a745; /* Xanh lá */
+    color: #fff;
+    border: 1px solid #218838;
+}
+
+#status-message.error {
+    background-color: #dc3545; /* Đỏ */
+    color: #fff;
+    border: 1px solid #c82333;
+}
+
+#status-message ul {
+    margin: 10px 0 0 20px;
+    padding: 0;
+}
+
+#status-message li {
+    list-style-type: disc;
 } 

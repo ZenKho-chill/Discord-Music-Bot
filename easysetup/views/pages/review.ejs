@@ -6,13 +6,10 @@
     <%- include('../partials/navbar') %>
 
     <div class="form-content">
-        <div class="review-container">
-            <div class="review-content" contenteditable="true" spellcheck="false" id="config-editor">
-                <pre><code id="config-content-display" class="language-javascript">Đang tải nội dung...</code></pre>
-            </div>
-            <div class="setup-actions">
-                <button class="btn-save" onclick="saveConfig()">Lưu</button>
-            </div>
+        <textarea id="config-editor" class="review-content" spellcheck="false" style="width:100%;min-height:500px;font-family:monospace;font-size:1em;resize:vertical;">Đang tải nội dung...</textarea>
+        <div id="status-message"></div>
+        <div class="setup-actions">
+            <button class="btn-save" onclick="saveConfig()">Lưu</button>
         </div>
     </div>
 </div>
@@ -20,45 +17,104 @@
 <%- contentFor('script') %>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
 <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const editor = document.getElementById('config-editor');
-        const codeElement = document.getElementById('config-content-display');
-        let saveTimeout;
+let statusMessageTimeout;
+document.addEventListener('DOMContentLoaded', () => {
+    const editor = document.getElementById('config-editor');
+    let saveTimeout;
 
-        // Lấy nội dung config ban đầu
-        fetch('/api/get-config-content')
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    codeElement.textContent = data.content;
-                    hljs.highlightElement(codeElement);
-                } else {
-                    codeElement.textContent = 'Lỗi khi tải nội dung file config.';
-                }
-            })
-            .catch(error => {
-                console.error('Error fetching config content:', error);
-                codeElement.textContent = 'Lỗi khi tải nội dung file config.';
-            });
-
-        // Hàm lưu nội dung
-        const saveContent = async () => {
-            const content = editor.textContent || ""; // Lấy text content của div
-            try {
-                await fetch('/api/save-config-content', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ content: content })
-                });
-            } catch (error) {
-                console.error('Lỗi khi lưu config:', error);
+    // Lấy nội dung config ban đầu
+    fetch('/api/get-config-content')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                editor.value = data.content;
+            } else {
+                editor.value = 'Lỗi khi tải nội dung file config.';
             }
-        };
-
-        // Thêm event listener cho việc chỉnh sửa
-        editor.addEventListener('input', () => {
-            clearTimeout(saveTimeout);
-            saveTimeout = setTimeout(saveContent, 1000); // Lưu sau 1 giây ngừng gõ
+        })
+        .catch(error => {
+            console.error('Error fetching config content:', error);
+            editor.value = 'Lỗi khi tải nội dung file config.';
         });
+
+    // Hàm lưu nội dung (debounced on input)
+    const saveContentOnInput = async () => {
+        const content = editor.value || "";
+        try {
+            await fetch('/api/save-config-content', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content: content })
+            });
+        } catch (error) {
+            console.error('Lỗi khi tự động lưu config:', error);
+        }
+    };
+
+    // Thêm event listener cho việc chỉnh sửa để tự động lưu
+    editor.addEventListener('input', () => {
+        clearTimeout(saveTimeout);
+        saveTimeout = setTimeout(saveContentOnInput, 1000);
     });
+
+    // Hàm hiển thị thông báo trạng thái
+    const showStatusMessage = (message, type = 'error') => {
+        const statusDiv = document.getElementById('status-message');
+        statusDiv.className = ``; // Xóa class cũ
+        statusDiv.innerHTML = message;
+        statusDiv.classList.add(type, 'show');
+        clearTimeout(statusMessageTimeout);
+        statusMessageTimeout = setTimeout(() => {
+            statusDiv.classList.remove('show');
+        }, 7000);
+    };
+
+    // Hàm lưu cấu hình được gọi bởi nút Lưu
+    window.saveConfig = async () => {
+        const content = editor.value || "";
+        const statusDiv = document.getElementById('status-message');
+        statusDiv.classList.remove('show');
+        // Bước 1: Lưu lại nội dung lần cuối
+        try {
+            await fetch('/api/save-config-content', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content: content })
+            });
+        } catch (error) {
+            console.error('Lỗi khi lưu config:', error);
+            showStatusMessage('<strong>Lỗi:</strong> Không thể lưu file cấu hình. Vui lòng kiểm tra console log.');
+            return;
+        }
+        // Bước 2: Kiểm tra các trường bắt buộc
+        try {
+            const validationResponse = await fetch('/api/validate-required-config');
+            if (!validationResponse.ok) {
+                const errorData = await validationResponse.json();
+                // Kiểm tra xem có phải lỗi cú pháp không
+                if (validationResponse.status >= 500) {
+                    showStatusMessage(`<strong>Lỗi Server:</strong> ${errorData.message || 'Không thể đọc file config.'}`, 'error');
+                } else {
+                    // Nếu là lỗi validate (thiếu trường)
+                    const missingList = errorData.missing.map(item => `<li>${item}</li>`).join('');
+                    const errorMessage = `<strong>Cấu hình chưa hoàn tất:</strong> Vui lòng điền đầy đủ các thông tin sau:<ul>${missingList}</ul>`;
+                    showStatusMessage(errorMessage, 'error');
+                }
+                return;
+            }
+        } catch (error) {
+            console.error('Lỗi khi kiểm tra config:', error);
+            showStatusMessage('<strong>Lỗi:</strong> Không thể kết nối đến server để kiểm tra cấu hình. Vui lòng thử lại.', 'error');
+            return;
+        }
+        // Bước 3: Thông báo thành công và hoàn tất
+        try {
+            await fetch('/api/complete-setup', { method: 'POST' });
+            showStatusMessage('<strong>Thành công!</strong> Cấu hình đã được lưu. Easy setup đã tắt, vui lòng khởi động lại bot.', 'success');
+        } catch (error) {
+            console.error('Lỗi khi gửi tín hiệu hoàn tất:', error);
+            showStatusMessage('<strong>Cảnh báo:</strong> Đã lưu cấu hình nhưng không thể gửi tín hiệu hoàn tất.', 'error');
+        }
+    };
+});
 </script>
