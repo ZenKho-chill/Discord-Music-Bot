@@ -2,6 +2,8 @@ const express = require('express');
 const path = require('path');
 const fs = require('fs');
 const config = require('../config/config');
+const { Client, GatewayIntentBits } = require('discord.js'); // Thêm discord.js
+const axios = require('axios'); // Thêm axios
 const expressLayouts = require('express-ejs-layouts');
 const session = require('express-session');
 
@@ -148,11 +150,22 @@ app.get('/setup/database', requireAuth, (req, res) => {
     });
 });
 
+app.get('/setup/general', requireAuth, (req, res) => {
+    res.render('pages/general', {
+        title: 'Cấu hình chung',
+        currentPage: 'general',
+        currentStep: 3,
+        config: config,
+        script: '',
+        style: ''
+    });
+});
+
 app.get('/setup/platforms', requireAuth, (req, res) => {
     res.render('pages/platforms', {
         title: 'Cấu hình nền tảng',
         currentPage: 'platforms',
-        currentStep: 3,
+        currentStep: 4, // Cập nhật số bước
         config: config,
         script: '',
         style: ''
@@ -166,7 +179,7 @@ app.get('/setup/review', requireAuth, (req, res) => {
     res.render('pages/review', {
         title: 'Xem cấu hình',
         currentPage: 'review',
-        currentStep: 4,
+        currentStep: 5, // Cập nhật số bước
         config: config,
         configContent: configContent, // Truyền nội dung file config
         script: '',
@@ -174,7 +187,136 @@ app.get('/setup/review', requireAuth, (req, res) => {
     });
 });
 
-// API để lấy nội dung file config
+// API để kiểm tra Discord Bot Token
+app.post('/api/validate-token', requireAuth, async (req, res) => {
+    const { token } = req.body;
+    if (!token) {
+        return res.status(400).json({ success: false, message: 'Token is required' });
+    }
+
+    const testClient = new Client({ 
+        intents: [GatewayIntentBits.Guilds] // Chỉ cần intent tối thiểu để login
+    });
+
+    try {
+        await testClient.login(token);
+        const botName = testClient.user.username;
+        // Đăng nhập thành công, token hợp lệ
+        res.json({ success: true, message: 'Token hợp lệ', botName: botName });
+    } catch (error) {
+        // Đăng nhập thất bại, token không hợp lệ
+        logger.error('[Easysetup] Lỗi khi xác thực token:', error.message);
+        res.status(401).json({ success: false, message: 'Token không hợp lệ' });
+    } finally {
+        // Hủy client tạm thời để giải phóng tài nguyên
+        testClient.destroy();
+    }
+});
+
+// API để kiểm tra Client ID và Client Secret
+app.post('/api/validate-credentials', requireAuth, async (req, res) => {
+    const { clientId, clientSecret } = req.body;
+    if (!clientId || !clientSecret) {
+        return res.status(400).json({ success: false, message: 'Client ID and Client Secret are required' });
+    }
+
+    const params = new URLSearchParams();
+    params.append('grant_type', 'client_credentials');
+    params.append('scope', 'identify');
+
+    try {
+        const response = await axios.post('https://discord.com/api/oauth2/token', params, {
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'Authorization': `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString('base64')}`
+            }
+        });
+
+        if (response.data.access_token) {
+            res.json({ success: true, message: 'Credentials hợp lệ' });
+        } else {
+            throw new Error('Invalid response from Discord');
+        }
+    } catch (error) {
+        logger.error('[Easysetup] Lỗi khi xác thực credentials:', error.response?.data || error.message);
+        res.status(401).json({ success: false, message: 'Credentials không hợp lệ' });
+    }
+});
+
+// API để lấy cấu hình hiện tại
+app.get('/api/get-config', requireAuth, (req, res) => {
+    // Xóa cache để luôn đọc file mới nhất
+    delete require.cache[require.resolve('../config/config.js')];
+    const currentConfig = require('../config/config.js');
+    res.json(currentConfig);
+});
+
+// API để cập nhật một phần cấu hình
+app.post('/api/update-config', requireAuth, (req, res) => {
+    try {
+        const { key, value } = req.body;
+        if (!key) {
+            return res.status(400).json({ success: false, message: 'Thiếu key' });
+        }
+
+        const configPath = path.join(__dirname, '../config/config.js');
+        let configContent = fs.readFileSync(configPath, 'utf8');
+        let originalContent = configContent;
+
+        const keys = key.split('.');
+        
+        let regex;
+
+        // Phân biệt logic cho kiểu dữ liệu boolean và string
+        if (typeof value === 'boolean') {
+            // Logic cho giá trị boolean (true/false, không có dấu nháy)
+            if (keys.length === 3) {
+                const [p1, p2, p3] = keys;
+                regex = new RegExp(`(${p1}:\\s*{[\\s\\S]*?${p2}:\\s*{[\\s\\S]*?${p3}:\\s*)(true|false)`, 'g');
+            } else if (keys.length === 2) {
+                const [p1, p2] = keys;
+                regex = new RegExp(`(${p1}:\\s*{[\\s\\S]*?${p2}:\\s*)(true|false)`, 'g');
+            } else {
+                const [p1] = keys;
+                regex = new RegExp(`(${p1}:\\s*)(true|false)`, 'g');
+            }
+            // Thay thế bằng giá trị boolean mới
+            configContent = configContent.replace(regex, `$1${value}`);
+        } else {
+            // Logic cũ cho giá trị string (có dấu nháy đơn hoặc kép)
+            let regexSingle, regexDouble;
+            if (keys.length === 3) {
+                const [p1, p2, p3] = keys;
+                regexSingle = new RegExp(`(${p1}:\\s*{[\\s\\S]*?${p2}:\\s*{[\\s\\S]*?${p3}:\\s*')([^']*)(')`, 'g');
+                regexDouble = new RegExp(`(${p1}:\\s*{[\\s\\S]*?${p2}:\\s*{[\\s\\S]*?${p3}:\\s*")([^"]*)(")`, 'g');
+            } else if (keys.length === 2) {
+                const [p1, p2] = keys;
+                regexSingle = new RegExp(`(${p1}:\\s*{[\\s\\S]*?${p2}:\\s*')([^']*)(')`, 'g');
+                regexDouble = new RegExp(`(${p1}:\\s*{[\\s\\S]*?${p2}:\\s*")([^"]*)(")`, 'g');
+            } else {
+                const [p1] = keys;
+                regexSingle = new RegExp(`(${p1}:\\s*')([^']*)(')`, 'g');
+                regexDouble = new RegExp(`(${p1}:\\s*")([^"]*)(")`, 'g');
+            }
+            configContent = configContent.replace(regexSingle, `$1${value}$3`);
+            configContent = configContent.replace(regexDouble, `$1${value}$3`);
+        }
+
+        if (originalContent !== configContent) {
+            fs.writeFileSync(configPath, configContent, 'utf8');
+            res.json({ success: true, message: 'Đã cập nhật cấu hình' });
+        } else {
+            // Không tìm thấy key nào để cập nhật, nhưng vẫn trả về thành công để tránh lỗi phía client
+            res.json({ success: true, message: 'Không tìm thấy key trong config để cập nhật' });
+        }
+    } catch (error) {
+        logger.error('[Easysetup] Lỗi khi cập nhật cấu hình:', error);
+        res.status(500).json({ success: false, message: 'Lỗi máy chủ nội bộ' });
+    }
+});
+
+
+// API để lấy nội dung file config (cho trang review)
 app.get('/api/get-config-content', requireAuth, (req, res) => {
     try {
         const configPath = path.join(__dirname, '../config/config.js');
@@ -186,49 +328,69 @@ app.get('/api/get-config-content', requireAuth, (req, res) => {
     }
 });
 
-// API để lưu cấu hình
-app.post('/save-config', express.json(), (req, res) => {
+// API để lưu toàn bộ nội dung file config (từ trang review)
+app.post('/api/save-config-content', requireAuth, (req, res) => {
     try {
-        const newConfig = req.body;
-        
-        // Validate các trường bắt buộc
-        if (!newConfig.bot?.token || !newConfig.bot?.clientId || 
-            !newConfig.spotify?.clientId || !newConfig.spotify?.clientSecret) {
-            return res.status(400).json({
-                success: false,
-                message: 'Vui lòng điền đầy đủ thông tin bắt buộc'
-            });
+        const { content } = req.body;
+        if (typeof content !== 'string') {
+            return res.status(400).json({ success: false, message: 'Nội dung không hợp lệ' });
         }
 
-        // Đọc nội dung config hiện tại
         const configPath = path.join(__dirname, '../config/config.js');
-        let configContent = fs.readFileSync(configPath, 'utf8');
-
-        // Cập nhật các giá trị trong config
-        configContent = configContent.replace(/'DISCORD_TOKEN_ID'/g, `'${newConfig.bot.token}'`);
-        configContent = configContent.replace(/'DISCORD_CLIEND_ID'/g, `'${newConfig.bot.clientId}'`);
-        configContent = configContent.replace(/'SPOTIFY_CLIENT_ID'/g, `'${newConfig.spotify.clientId}'`);
-        configContent = configContent.replace(/'SPOTIFY_CLIENT_SECRET'/g, `'${newConfig.spotify.clientSecret}'`);
-
-        // Lưu config mới
-        fs.writeFileSync(configPath, configContent);
-        
-        logger.info('[Easysetup] Đã cập nhật cấu hình thành công');
-        res.json({ 
-            success: true, 
-            message: 'Cấu hình đã được lưu. Bot sẽ tự động khởi động lại.',
-            requireRestart: true 
-        });
-
-        // Thoát process sau 2 giây để client kịp nhận response
-        setTimeout(() => {
-            process.exit(0);
-        }, 2000);
+        fs.writeFileSync(configPath, content, 'utf8');
+        res.json({ success: true, message: 'Đã lưu toàn bộ cấu hình' });
 
     } catch (error) {
-        logger.error('[Easysetup] Lỗi khi lưu cấu hình:', error);
-        res.status(500).json({ success: false, message: 'Lỗi khi lưu cấu hình' });
+        logger.error('[Easysetup] Lỗi khi lưu toàn bộ cấu hình:', error);
+        res.status(500).json({ success: false, message: 'Lỗi máy chủ nội bộ' });
     }
+});
+
+// API để kiểm tra các trường bắt buộc đã được điền chưa
+app.get('/api/validate-required-config', requireAuth, (req, res) => {
+    delete require.cache[require.resolve('../config/config.js')];
+    const currentConfig = require('../config/config.js');
+
+    const missingFields = [];
+
+    // Kiểm tra các trường cấp cao nhất
+    if (!currentConfig.token) missingFields.push('Discord Bot Token (Discord)');
+    if (!currentConfig.clientId) missingFields.push('Discord Bot Client ID (Discord)');
+
+    // Kiểm tra trong dashboard
+    if (!currentConfig.dashboard.clientId) missingFields.push('Dashboard Client ID (Discord)');
+    if (!currentConfig.dashboard.clientSecret) missingFields.push('Dashboard Client Secret (Discord)');
+    if (!currentConfig.dashboard.redirectUri || currentConfig.dashboard.redirectUri === 'http://example.com/auth/callback') missingFields.push('Dashboard Redirect URI (Cấu hình chung)');
+    if (!currentConfig.dashboard.sessionSecret) missingFields.push('Dashboard Session Secret (Cấu hình chung)');
+
+    // Kiểm tra trong mongodb
+    if (!currentConfig.mongodb.ip) missingFields.push('Database IP (Database)');
+    if (!currentConfig.mongodb.port) missingFields.push('Database Port (Database)');
+    if (!currentConfig.mongodb.database) missingFields.push('Database Name (Database)');
+    
+    // Nếu bật xác thực, kiểm tra thêm user/pass/authSource
+    if (currentConfig.mongodb.auth.enabled) {
+        if (!currentConfig.mongodb.auth.username) missingFields.push('Database Username (Database)');
+        if (!currentConfig.mongodb.auth.password) missingFields.push('Database Password (Database)');
+        if (!currentConfig.mongodb.auth.authSource) missingFields.push('Database Auth Source (Database)');
+    }
+
+    if (missingFields.length > 0) {
+        return res.status(400).json({
+            success: false,
+            message: 'Vui lòng điền đầy đủ các thông tin bắt buộc.',
+            missing: missingFields
+        });
+    }
+
+    res.json({ success: true, message: 'Tất cả các trường bắt buộc đã được điền.' });
+});
+
+// API để hoàn tất setup và thông báo tắt
+app.post('/api/complete-setup', requireAuth, (req, res) => {
+    logger.info('[Easysetup] Cấu hình hoàn tất. Vui lòng khởi động lại bot.');
+    // Chỉ gửi lại thông báo thành công, không thoát process nữa
+    res.json({ success: true, message: 'Setup completed. Please restart the bot.' });
 });
 
 // Khởi động server trên port 3000

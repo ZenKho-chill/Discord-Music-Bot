@@ -2,7 +2,7 @@
 <div class="sidebar">
   <div class="nav-header">
     <h1 class="logo">ZK MUSIC</h1>
-    <div class="step-text">Step <%= currentStep %>/4</div>
+    <div class="step-text">Step <%= currentStep %>/5</div>
   </div>
   <nav class="nav-menu">
     <a href="/setup/discord" class="nav-item <%= currentStep === 1 ? 'active' : '' %>">
@@ -13,12 +13,16 @@
       <div class="nav-number">2</div>
       <span>Cấu hình Database</span>
     </a>
-    <a href="/setup/platforms" class="nav-item <%= currentStep === 3 ? 'active' : '' %>">
+    <a href="/setup/general" class="nav-item <%= currentStep === 3 ? 'active' : '' %>">
       <div class="nav-number">3</div>
+      <span>Cấu hình chung</span>
+    </a>
+    <a href="/setup/platforms" class="nav-item <%= currentStep === 4 ? 'active' : '' %>">
+      <div class="nav-number">4</div>
       <span>Cấu hình nền tảng</span>
     </a>
-    <a href="/setup/review" class="nav-item <%= currentStep === 4 ? 'active' : '' %>">
-      <div class="nav-number">4</div>
+    <a href="/setup/review" class="nav-item <%= currentStep === 5 ? 'active' : '' %>">
+      <div class="nav-number">5</div>
       <span>Xem cấu hình</span>
     </a>
   </nav>

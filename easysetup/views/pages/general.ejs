@@ -1,0 +1,103 @@
+<%- contentFor('style') %>
+<link rel="stylesheet" href="/easysetup/public/css/general.css">
+
+<div class="container">
+    <%- include('../partials/navbar') %>
+
+    <div class="form-content">
+        <div class="form-section" style="border-top: none;">
+            <h2>Cấu hình Dashboard</h2>
+            <div class="form-group">
+                <label for="redirectUri">Redirect URI</label>
+                <input type="text" id="redirectUri" placeholder="http://localhost:3000/auth/callback">
+            </div>
+            <div class="form-group">
+              <label for="domain">Domain</label>
+              <input type="text" id="domain" placeholder="localhost">
+            </div>
+            <div class="form-group">
+                <label for="sessionSecret">Session Secret</label>
+                <input type="text" id="sessionSecret" placeholder="Một chuỗi bí mật phức tạp">
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h2>Cấu hình Cookie</h2>
+            <div class="toggle-group">
+                <div class="toggle-item">
+                    <span>Cookie an toàn (Secure)</span>
+                    <label class="switch">
+                        <input type="checkbox" id="secure">
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+                <div class="toggle-item">
+                    <span>Chỉ HTTP (HttpOnly)</span>
+                    <label class="switch">
+                        <input type="checkbox" id="httpOnly">
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+            </div>
+        </div>
+        
+        <div class="form-section">
+            <h2>Tự động đăng nhập</h2>
+             <div class="toggle-item">
+                <span>Bật tự động đăng nhập</span>
+                <label class="switch">
+                    <input type="checkbox" id="autoLogin">
+                    <span class="slider round"></span>
+                </label>
+            </div>
+        </div>
+    </div>
+</div>
+
+<%- contentFor('script') %>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const updateConfig = async (key, value) => {
+        try {
+            await fetch('/api/update-config', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ key, value }),
+            });
+        } catch (error) {
+            console.error('Lỗi khi cập nhật config:', error);
+        }
+    };
+
+    const inputs = [
+        { id: 'redirectUri', key: 'dashboard.redirectUri' },
+        { id: 'sessionSecret', key: 'dashboard.sessionSecret' },
+        { id: 'domain', key: 'dashboard.cookies.rememberToken.domain' },
+        { id: 'secure', key: 'dashboard.cookies.session.secure', type: 'checkbox' },
+        { id: 'httpOnly', key: 'dashboard.cookies.session.httpOnly', type: 'checkbox' },
+        { id: 'autoLogin', key: 'dashboard.autoLogin.enabled', type: 'checkbox' },
+        // Lưu ý: autoLoginExpress không tìm thấy, có thể bạn muốn map nó vào một key khác?
+    ];
+
+    fetch('/api/get-config')
+        .then(res => res.json())
+        .then(config => {
+            document.getElementById('redirectUri').value = config.dashboard?.redirectUri || '';
+            document.getElementById('sessionSecret').value = config.dashboard?.sessionSecret || '';
+            document.getElementById('domain').value = config.dashboard?.cookies?.rememberToken?.domain || '';
+            document.getElementById('secure').checked = config.dashboard?.cookies?.session?.secure ?? false;
+            document.getElementById('httpOnly').checked = config.dashboard?.cookies?.session?.httpOnly ?? true;
+            document.getElementById('autoLogin').checked = config.dashboard?.autoLogin?.enabled ?? true;
+        });
+
+    inputs.forEach(({ id, key, type }) => {
+        const element = document.getElementById(id);
+        const event = type === 'checkbox' ? 'change' : 'input';
+        const getValue = () => type === 'checkbox' ? element.checked : element.value;
+        
+        element.addEventListener(event, () => {
+            updateConfig(key, getValue());
+        });
+    });
+});
+</script> 

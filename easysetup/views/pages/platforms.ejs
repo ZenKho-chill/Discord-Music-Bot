@@ -4,7 +4,7 @@
     <%- include('../partials/navbar') %>
     <div class="form-content">
         <div class="form-group">
-            <label for="spotifyClientId">Spotify Client ID của bạn<span class="required">*</span></label>
+            <label for="spotifyClientId">Spotify Client ID của bạn<span class="required"></span></label>
             <div class="input-with-help">
                 <input type="text" id="spotifyClientId" placeholder="Placeholder: Spotify Client ID ở đây...">
                 <a href="https://developer.spotify.com/documentation/web-api/tutorials/getting-started" target="_blank" class="help-link">Xem hướng dẫn <i class="fas fa-external-link-alt"></i></a>
@@ -12,9 +12,9 @@
         </div>
 
         <div class="form-group">
-            <label for="spotifyClientSecret">Spotify Client Secret của bạn<span class="required">*</span></label>
+            <label for="spotifyClientSecret">Spotify Client Secret của bạn<span class="required"></span></label>
             <div class="input-with-help">
-                <input type="password" id="spotifyClientSecret" placeholder="Placeholder: Spotify Client Secret ở đây...">
+                <input type="text" id="spotifyClientSecret" placeholder="Placeholder: Spotify Client Secret ở đây...">
                 <a href="https://developer.spotify.com/documentation/web-api/tutorials/getting-started" target="_blank" class="help-link">Xem hướng dẫn <i class="fas fa-external-link-alt"></i></a>
             </div>
         </div>
@@ -101,29 +101,89 @@
 <script src="/easysetup/public/js/platforms-setup.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-    const spotifyClientId = document.getElementById('spotifyClientId');
-    const spotifyClientSecret = document.getElementById('spotifyClientSecret');
+    // === Logic vô hiệu hóa switch của Spotify ===
+    const spotifyClientIdInput = document.getElementById('spotifyClientId');
+    const spotifyClientSecretInput = document.getElementById('spotifyClientSecret');
     const spotifySingleSwitch = document.getElementById('spotifySingle');
     const spotifyPlaylistSwitch = document.getElementById('spotifyPlaylist');
 
     function toggleSpotifySwitches() {
-        const disabled = !spotifyClientId.value || !spotifyClientSecret.value;
-        
+        const disabled = !spotifyClientIdInput.value || !spotifyClientSecretInput.value;
         spotifySingleSwitch.disabled = disabled;
         spotifyPlaylistSwitch.disabled = disabled;
-
-        // Nếu bị vô hiệu hóa, đảm bảo chúng cũng ở trạng thái "tắt"
         if (disabled) {
             spotifySingleSwitch.checked = false;
             spotifyPlaylistSwitch.checked = false;
         }
     }
 
-    // Kiểm tra trạng thái khi tải trang
-    toggleSpotifySwitches();
+    const updateConfig = async (key, value) => {
+        try {
+            await fetch('/api/update-config', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ key, value }),
+            });
+        } catch (error) {
+            console.error('Lỗi khi cập nhật config:', error);
+        }
+    };
 
-    // Thêm listener để kiểm tra mỗi khi người dùng nhập liệu
-    spotifyClientId.addEventListener('input', toggleSpotifySwitches);
-    spotifyClientSecret.addEventListener('input', toggleSpotifySwitches);
+    const inputs = [
+        { id: 'spotifyClientId', key: 'spotify.clientId' },
+        { id: 'spotifyClientSecret', key: 'spotify.clientSecret' },
+        { id: 'ytSingle', key: 'platform.youtube.single', type: 'checkbox' },
+        { id: 'ytPlaylist', key: 'platform.youtube.playlist', type: 'checkbox' },
+        { id: 'spotifySingle', key: 'platform.spotify.single', type: 'checkbox' },
+        { id: 'spotifyPlaylist', key: 'platform.spotify.playlist', type: 'checkbox' },
+        { id: 'scSingle', key: 'platform.soundcloud.single', type: 'checkbox' },
+        { id: 'scPlaylist', key: 'platform.soundcloud.playlist', type: 'checkbox' }
+    ];
+
+    // Lấy config và điền vào form
+    fetch('/api/get-config')
+        .then(res => res.json())
+        .then(config => {
+            inputs.forEach(({ id, key, type }) => {
+                const element = document.getElementById(id);
+                if (!element) return;
+
+                const keys = key.split('.');
+                // Dùng reduce để lấy giá trị lồng nhau một cách an toàn
+                const value = keys.reduce((obj, k) => obj?.[k], config);
+
+                if (type === 'checkbox') {
+                    element.checked = value ?? true; // Mặc định là true nếu không tồn tại
+                } else {
+                    element.value = value || ''; // Giá trị rỗng nếu không tồn tại
+                }
+            });
+
+            // Sau khi điền xong, kiểm tra lại trạng thái các switch
+            toggleSpotifySwitches();
+        });
+
+    // Thêm event listener
+    inputs.forEach(({ id, key, type }) => {
+        const element = document.getElementById(id);
+        if (!element) return;
+        
+        const event = type === 'checkbox' ? 'change' : 'input';
+        const getValue = () => type === 'checkbox' ? element.checked : element.value;
+
+        element.addEventListener(event, () => {
+            const value = getValue();
+            updateConfig(key, value);
+
+            // Xử lý logic đặc biệt cho Spotify Playlist
+            if (id === 'spotifyPlaylist') {
+                updateConfig('platform.spotify.album', value);
+            }
+
+            if (id.startsWith('spotifyClient')) {
+                toggleSpotifySwitches();
+            }
+        });
+    });
 });
 </script>

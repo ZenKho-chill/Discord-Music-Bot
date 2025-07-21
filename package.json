@@ -27,6 +27,7 @@
     "@distube/spotify": "^2.0.2",
     "@distube/yt-dlp": "^2.0.1",
     "@distube/ytpl": "^1.2.3",
+    "axios": "^1.10.0",
     "canvas": "^3.1.2",
     "cookie-parser": "^1.4.7",
     "discord.js": "^14.21.0",

@@ -1,13 +1,13 @@
 module.exports = {
-  token: 'DISCORD_TOKEN_ID',
-  clientId: 'DISCORD_CLIEND_ID',
+  token: '',
+  clientId: '',
   maxQueue: 30,
   debug: true,
   registerCommands: false,
   maxVolume: 150,
   spotify: {
-    clientId: 'SPOTIFY_CLIENT_ID',
-    clientSecret: 'SPOTIFY_CLIENT_SECRET'
+    clientId: '',
+    clientSecret: ''
   },
   platform: {
     youtube: {
@@ -15,9 +15,9 @@ module.exports = {
       playlist: true,
     },
     spotify: {
-      single: true,
-      album: true,
-      playlist: true
+      single: false,
+      album: false,
+      playlist: false
     },
     soundcloud: {
       single: true,
@@ -44,11 +44,11 @@ module.exports = {
   },
   // Dashboard OAuth Configuration
   dashboard: {
-    clientId: 'DISCORD_CLIEND_ID', // Sử dụng cùng clientId với bot
-    clientSecret: 'DISCORD_SECRET_ID', // Bạn cần thêm client secret từ Discord Developer Portal
-    redirectUri: 'http://localhost:3000/auth/callback',
+    clientId: '', // Sử dụng cùng clientId với bot
+    clientSecret: '', // Bạn cần thêm client secret từ Discord Developer Portal
+    redirectUri: 'http://example.com/auth/callback',
     scopes: ['identify', 'guilds'], // Scope cơ bản, không thêm email để tránh prompt
-    sessionSecret: 'music-bot-dashboard-secret-2024', // Thay đổi thành secret phức tạp
+    sessionSecret: '', // Thay đổi thành secret phức tạp
     
     // Cookie Configuration
     cookies: {
@@ -82,16 +82,16 @@ module.exports = {
   // Cấu hình MongoDB
   mongodb: {
     // Thông tin kết nối cơ bản
-    ip: 'localhost',      // IP hoặc hostname của MongoDB server
-    port: 27017,                // Port của MongoDB (mặc định: 27017)
-    database: 'discord-music-bot', // Tên cơ sở dữ liệu
+    ip: '',      // IP hoặc hostname của MongoDB server
+    port: ,                // Port của MongoDB (mặc định: 27017)
+    database: '', // Tên cơ sở dữ liệu
     
     // Cài đặt xác thực
     auth: {
       enabled: false,            // Bật/tắt xác thực MongoDB
       username: '',       // Tên đăng nhập
       password: '',   // Mật khẩu
-      authSource: 'discord-music-bot' // Database để xác thực
+      authSource: '' // Database để xác thực
     },
     
     // Cấu hình kết nối

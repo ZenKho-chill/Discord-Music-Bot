@@ -1,6 +1,141 @@
 <%- include('../partials/header') %>
 <%- contentFor('style') %>
 <link rel="stylesheet" href="/easysetup/public/css/discord.css">
+<%- contentFor('script') %>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // Hàm update config chung
+    const updateConfig = async (key, value) => {
+        try {
+            await fetch('/api/update-config', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ key, value }),
+            });
+        } catch (error) {
+            console.error('Lỗi khi cập nhật config:', error);
+        }
+    };
+
+    // Ánh xạ ID của input tới key trong config
+    const configMapping = {
+        'discordId': 'masterAdmin',
+        'botToken': 'token',
+        'clientId': 'clientId',
+        'clientSecret': 'clientSecret', // Cần chắc chắn key này tồn tại trong object dashboard
+    };
+
+    // Lấy config và điền vào form
+    fetch('/api/get-config')
+        .then(res => res.json())
+        .then(config => {
+            document.getElementById('discordId').value = config.masterAdmin || '';
+            document.getElementById('botToken').value = config.token || '';
+            document.getElementById('clientId').value = config.clientId || '';
+            // Giả sử clientSecret nằm trong dashboard object
+            document.getElementById('clientSecret').value = config.dashboard.clientSecret || '';
+        });
+
+    const botTokenInput = document.getElementById('botToken');
+    const tokenStatusIcon = document.getElementById('token-status');
+    const botNameDisplay = document.getElementById('bot-name');
+    const clientIdInput = document.getElementById('clientId');
+    const clientSecretInput = document.getElementById('clientSecret');
+    const credentialStatusIcon = document.getElementById('credential-status');
+    let validationTimeout;
+    let credentialTimeout;
+
+    // Hàm kiểm tra token
+    const validateToken = async (token) => {
+        botNameDisplay.textContent = ''; // Xóa tên bot cũ
+        if (!token) {
+            tokenStatusIcon.style.display = 'none';
+            return;
+        }
+
+        tokenStatusIcon.style.display = 'block';
+        tokenStatusIcon.className = 'token-status-icon loading';
+
+        try {
+            const response = await fetch('/api/validate-token', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token }),
+            });
+            
+            const data = await response.json();
+
+            if (response.ok) {
+                tokenStatusIcon.className = 'token-status-icon valid';
+                botNameDisplay.textContent = data.botName; // Hiển thị tên bot
+            } else {
+                tokenStatusIcon.className = 'token-status-icon invalid';
+            }
+        } catch (error) {
+            console.error('Lỗi khi kiểm tra token:', error);
+            tokenStatusIcon.className = 'token-status-icon invalid';
+        }
+    };
+    
+    // Hàm kiểm tra Client ID và Secret
+    const validateCredentials = async () => {
+        const clientId = clientIdInput.value;
+        const clientSecret = clientSecretInput.value;
+
+        if (!clientId || !clientSecret) {
+            credentialStatusIcon.style.display = 'none';
+            return;
+        }
+
+        credentialStatusIcon.style.display = 'block';
+        credentialStatusIcon.className = 'token-status-icon loading';
+
+        try {
+            const response = await fetch('/api/validate-credentials', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ clientId, clientSecret }),
+            });
+
+            if (response.ok) {
+                credentialStatusIcon.className = 'token-status-icon valid';
+            } else {
+                credentialStatusIcon.className = 'token-status-icon invalid';
+            }
+        } catch (error) {
+            console.error('Lỗi khi kiểm tra credentials:', error);
+            credentialStatusIcon.className = 'token-status-icon invalid';
+        }
+    };
+
+    // Thêm event listener cho các input
+    Object.keys(configMapping).forEach(id => {
+        const input = document.getElementById(id);
+        input.addEventListener('input', (e) => {
+            let key = configMapping[id];
+            // Xử lý key đặc biệt
+            if (id === 'clientSecret') {
+                key = 'dashboard.clientSecret';
+            }
+            updateConfig(key, e.target.value);
+
+            // Xử lý kiểm tra token
+            if (id === 'botToken') {
+                clearTimeout(validationTimeout);
+                validationTimeout = setTimeout(() => validateToken(e.target.value), 800); // Chờ 800ms sau khi ngừng gõ
+            }
+
+            // Xử lý kiểm tra credentials
+            if (id === 'clientId' || id === 'clientSecret') {
+                clearTimeout(credentialTimeout);
+                credentialTimeout = setTimeout(validateCredentials, 800);
+            }
+        });
+    });
+});
+</script>
 <div class="container">
   <%- include('../partials/navbar', { currentStep: 1 }) %>
   <div class="form-content">
@@ -21,9 +156,11 @@
         <label>
           Discord Bot Token của bạn
           <span class="required">*</span>
+          <span id="token-status" class="token-status-icon"></span>
+          <span id="bot-name" class="bot-name-display"></span>
         </label>
         <div class="input-with-help">
-          <input type="password" id="botToken" placeholder="Discord Bot Token ở đây..." required>
+          <input type="text" id="botToken" placeholder="Discord Bot Token ở đây..." required>
           <a href="https://discord.com/developers/applications" target="_blank" class="help-link">
             Xem hướng dẫn ↗
           </a>
@@ -45,9 +182,10 @@
         <label>
           Discord Bot Client Secret của bạn
           <span class="required">*</span>
+          <span id="credential-status" class="token-status-icon"></span>
         </label>
         <div class="input-with-help">
-          <input type="password" id="clientSecret" placeholder="Discord Bot Client Secret ở đây..." required>
+          <input type="text" id="clientSecret" placeholder="Discord Bot Client Secret ở đây..." required>
           <a href="https://discord.com/developers/applications" target="_blank" class="help-link">
             Xem hướng dẫn ↗
           </a>
