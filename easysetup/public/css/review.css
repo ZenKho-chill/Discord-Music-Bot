@@ -1,0 +1,120 @@
+:root {
+  --primary: #5865F2;
+  --primary-hover: #4752C4;
+  --background: #2B2D31;
+  --surface: #313338;
+  --surface-dark: #1E1F22;
+  --input-bg: #1E1F22;
+  --text: #FFFFFF;
+  --text-secondary: #B5BAC1;
+  --error: #F23F42;
+  --link: #00A8FC;
+  --border-color: rgba(255, 255, 255, 0.1);
+  --yellow: #FEE75C;
+}
+
+html, body {
+  padding: 0;
+  margin: 0;
+  width: 100%;
+  height: 100%;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--text);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2vh 2vw;
+  box-sizing: border-box;
+  min-height: 100vh;
+}
+
+.container {
+  width: 100%;
+  background: var(--surface-dark);
+  border-radius: 12px;
+  display: flex;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  animation: fadeIn 0.4s ease-out;
+  height: 100%;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.form-content {
+  width: 100%;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+}
+
+.review-container {
+    position: relative;
+    flex-grow: 1; /* Cho phép container này lấp đầy không gian */
+}
+
+.review-content {
+    background-color: var(--input-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    overflow-y: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    
+    /* Dùng position absolute để lấp đầy container cha */
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+}
+
+.review-content::-webkit-scrollbar {
+    display: none;
+}
+
+.review-content pre {
+    margin: 0;
+}
+
+.review-content code {
+    font-family: 'Fira Code', 'Courier New', monospace;
+    font-size: 14px;
+    white-space: pre-wrap; /* Wrap text */
+}
+
+.setup-actions {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    z-index: 10; /* Đảm bảo nút luôn nổi lên trên */
+}
+
+.btn-save {
+    background-color: #4CAF50;
+    color: white;
+    padding: 12px 24px;
+    font-size: 16px;
+    font-weight: bold;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.btn-save:hover {
+    background-color: #45a049;
+} 

@@ -1,31 +1,47 @@
+
+// Khai báo các thư viện cần thiết
 const { Client, GatewayIntentBits, Collection } = require('discord.js');
-const config = require('./config/config');
+const fs = require('fs');
+const path = require('path');
+const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
+let config;
+try {
+  config = require('./config/config');
+} catch (err) {
+  console.error('[Lỗi] Không tìm thấy file config.js, khởi động easy setup...');
+  return startEasySetup();
+}
+
+// Hàm kiểm tra thông tin cấu hình bắt buộc
+function thieuThongTinConfig(cfg) {
+  // Kiểm tra các trường bắt buộc
+  if (!cfg.token || !cfg.clientId || !cfg.masterAdmin || !cfg.spotify?.clientSecret) return true;
+  if (!cfg.mongodb || !cfg.mongodb.ip || !cfg.mongodb.port || !cfg.mongodb.database) return true;
+  return false;
+}
+
+if (thieuThongTinConfig(config)) {
+  console.error('[Lỗi] Thiếu thông tin cấu hình quan trọng, khởi động easy setup...');
+  return startEasySetup();
+}
+
+
+// ==== BẮT LỖI TOÀN CỤC TRƯỚC ====
+process.on("uncaughtException", (err) => {
+  console.error('[Lỗi toàn cục]', err);
+});
+
+// ==== KIỂM TRA INTENT BẰNG API (hiển thị ngay) ====
+
+// ==== KHỞI ĐỘNG BOT CHÍNH ====
 const { DisTube } = require('distube');
 const { SpotifyPlugin } = require('@distube/spotify');
 const { SoundCloudPlugin } = require('@distube/soundcloud');
 const { YtDlpPlugin } = require('@distube/yt-dlp');
-const fs = require('fs');
-const path = require('path');
-const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 
-// ==== BẮT LỖI TOÀN CỤC TRƯỚC ====
-process.on("uncaughtException", (err) => {
-  if (err.message.includes("Used disallowed intents")) {
-    console.error("\x1b[31m[❌] Bot đang sử dụng intents chưa được bật trong Developer Portal.");
-    console.log("→ Truy cập: https://discord.com/developers/applications");
-    console.log("→ Bật Message Content Intent, Presence Intent, Server Members Intent");
-    console.log("→ Nhấn Lưu thay đổi (Save Changes) và chạy lại bot.\x1b[0m");
-    process.exit(1);
-  } else {
-    console.error('[Lỗi]', err);
-  }
-});
-
-// ==== KIỂM TRA INTENT BẰNG API (hiển thị ngay) ====
 (async () => {
   await checkIntents(config.token, config.clientId);
 
-  // === Tạo bot sau khi kiểm tra intent ===
   const client = new Client({
     intents: [
       GatewayIntentBits.Guilds,
@@ -56,7 +72,6 @@ process.on("uncaughtException", (err) => {
     ],
   });
 
-  // Set max listeners to prevent warning
   client.distube.setMaxListeners(10);
 
   // Debug plugin và phiên bản
@@ -66,14 +81,14 @@ process.on("uncaughtException", (err) => {
   }
 
   require('./utils/loader')(client);
-  
-  // Start dashboard after client is ready
+
   client.once('ready', () => {
     require('./dashboard')(client);
   });
-  
+
   client.login(config.token);
 })();
+
 
 // ==== HÀM KIỂM TRA INTENT ====
 async function checkIntents(token, clientId) {
@@ -107,4 +122,10 @@ async function checkIntents(token, clientId) {
       console.warn(`\x1b[36m[ℹ] ${intent}: ${status}\x1b[0m`);
     }
   }
+}
+
+// ==== EASY SETUP WEB ====
+// Khởi động easy setup giao diện lấy admin ID qua Discord login
+function startEasySetup() {
+  require('./easysetup/index');
 }

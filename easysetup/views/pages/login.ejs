@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZK Easy Setup</title>
+    <style>
+        :root {
+            --background: #0D0F10;
+            --surface: #1E2124;
+            --text: #FFFFFF;
+            --text-secondary: #72767D;
+            --primary: #5865F2;
+            --input-bg: #2B2D31;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        }
+
+        body {
+            background-color: var(--background);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 480px;
+        }
+
+        .login-box {
+            background-color: var(--surface);
+            padding: 32px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.25);
+        }
+
+        .title {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: var(--text);
+            line-height: 38px;
+        }
+
+        .subtitle {
+            font-size: 16px;
+            font-weight: 400;
+            color: var(--text-secondary);
+            margin-bottom: 32px;
+            line-height: 19px;
+        }
+
+        .pin-container {
+            margin: 0 0 32px;
+        }
+
+        .pin-label {
+            font-size: 16px;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+            font-weight: 400;
+            line-height: 19px;
+        }
+
+        .pin-inputs {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            margin-bottom: 24px;
+        }
+
+        .pin-input {
+            width: 64px;
+            height: 64px;
+            background-color: var(--input-bg);
+            border: none;
+            border-radius: 8px;
+            font-size: 32px;
+            font-weight: 400;
+            color: var(--text);
+            text-align: center;
+            transition: all 0.2s ease;
+        }
+
+        .pin-input:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px var(--primary);
+        }
+
+        .btn-connect {
+            background-color: var(--primary);
+            color: var(--text);
+            border: none;
+            padding: 12px 0;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            line-height: 19px;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.2s ease;
+        }
+
+        .btn-connect:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-connect:not(:disabled):hover {
+            filter: brightness(1.1);
+        }
+
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="login-box">
+            <h1 class="title">ZK Easy Setup</h1>
+            <p class="subtitle">Cấu hình thật dễ dàng</p>
+            
+            <div class="pin-container">
+                <p class="pin-label">Nhập mã PIN từ CMD</p>
+                <div class="pin-inputs">
+                    <input 
+                        type="text" 
+                        maxlength="1" 
+                        class="pin-input" 
+                        data-index="0" 
+                        autocomplete="off"
+                        inputmode="numeric"
+                        pattern="[0-9]*"
+                        autofocus
+                    >
+                    <input 
+                        type="text" 
+                        maxlength="1" 
+                        class="pin-input" 
+                        data-index="1"
+                        autocomplete="off"
+                        inputmode="numeric"
+                        pattern="[0-9]*"
+                    >
+                    <input 
+                        type="text" 
+                        maxlength="1" 
+                        class="pin-input" 
+                        data-index="2"
+                        autocomplete="off"
+                        inputmode="numeric"
+                        pattern="[0-9]*"
+                    >
+                    <input 
+                        type="text" 
+                        maxlength="1" 
+                        class="pin-input" 
+                        data-index="3"
+                        autocomplete="off"
+                        inputmode="numeric"
+                        pattern="[0-9]*"
+                    >
+                </div>
+            </div>
+            <button class="btn-connect" disabled>Liên kết tài khoản</button>
+        </div>
+    </div>
+
+    <script>
+        document.querySelectorAll('.pin-input').forEach(input => {
+            // Chỉ cho phép nhập số
+            input.addEventListener('beforeinput', (e) => {
+                // Chặn nếu không phải số
+                if (!/^[0-9]$/.test(e.data)) {
+                    e.preventDefault();
+                }
+            });
+
+            input.addEventListener('input', (e) => {
+                const value = e.target.value;
+                const index = parseInt(e.target.dataset.index);
+                
+                if (value && value.length === 1) {
+                    // Cập nhật trạng thái nút trước
+                    updateButtonState();
+                    
+                    // Nếu là ô cuối
+                    if (index === 3) {
+                        // Kiểm tra tất cả các ô có giá trị
+                        const allInputs = document.querySelectorAll('.pin-input');
+                        const allFilled = Array.from(allInputs).every(input => input.value.length === 1);
+                        if (allFilled) {
+                            document.querySelector('.btn-connect').click();
+                        }
+                    } else if (index < 3) {
+                        // Focus ô tiếp theo nếu không phải ô cuối
+                        document.querySelector(`[data-index="${index + 1}"]`).focus();
+                    }
+                } else {
+                    updateButtonState();
+                }
+            });
+
+            // Thêm xử lý phím Enter
+            input.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const allInputs = document.querySelectorAll('.pin-input');
+                    const pin = Array.from(allInputs).map(input => input.value).join('');
+                    if (pin.length === 4) {
+                        document.querySelector('.btn-connect').click();
+                    }
+                }
+            });
+
+            input.addEventListener('keydown', (e) => {
+                const index = parseInt(e.target.dataset.index);
+                
+                // Xử lý phím Backspace
+                if (e.key === 'Backspace') {
+                    if (!e.target.value && index > 0) {
+                        const prevInput = document.querySelector(`[data-index="${index - 1}"]`);
+                        prevInput.focus();
+                        prevInput.value = ''; // Xóa giá trị ô trước
+                        updateButtonState();
+                    }
+                }
+
+                // Ngăn paste nhiều ký tự
+                if (e.key === 'v' && e.ctrlKey) {
+                    e.preventDefault();
+                }
+            });
+
+            // Ngăn kéo thả text vào input
+            input.addEventListener('drop', (e) => {
+                e.preventDefault();
+            });
+        });
+
+        function updateButtonState() {
+            const allInputs = document.querySelectorAll('.pin-input');
+            const pin = Array.from(allInputs).map(input => input.value).join('');
+            const btnConnect = document.querySelector('.btn-connect');
+            btnConnect.disabled = pin.length !== 4;
+        }
+
+        document.querySelector('.btn-connect').addEventListener('click', async () => {
+            const pin = Array.from(document.querySelectorAll('.pin-input'))
+                        .map(input => input.value)
+                        .join('');
+            
+            try {
+                const response = await fetch('/auth', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ pin })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    window.location.href = '/setup/discord';
+                } else {
+                    alert(data.message || 'Mã PIN không đúng');
+                    document.querySelectorAll('.pin-input').forEach(input => {
+                        input.value = '';
+                    });
+                    document.querySelector('[data-index="0"]').focus();
+                }
+            } catch (error) {
+                console.error('Lỗi:', error);
+                alert('Có lỗi xảy ra khi xác thực');
+            }
+        });
+    </script>
+</body>
+</html>

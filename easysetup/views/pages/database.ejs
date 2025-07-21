@@ -1,0 +1,58 @@
+<%- include('../partials/header', {title: 'Cấu hình Database'}) %>
+
+<div class="container">
+    <%- include('../partials/navbar') %>
+
+    <div class="form-content">
+        <div class="form-group">
+            <label>IP Database của bạn<span class="required">*</span></label>
+            <input type="text" id="dbHost" placeholder="IP Database ở đây..." required>
+        </div>
+
+        <div class="form-group">
+            <label>Tên database của bạn<span class="required">*</span></label>
+            <input type="text" id="dbName" placeholder="Database name ở đây..." required>
+        </div>
+
+        <div class="auth-toggle">
+            <label class="switch">
+                <input type="checkbox" id="useAuth">
+                <span class="slider"></span>
+            </label>
+            <span class="toggle-label">Bật nếu database của bạn sử dụng xác thực</span>
+        </div>
+
+        <div id="authFields" class="auth-fields hidden">
+            <div class="form-group">
+                <label>Tên người dùng của bạn<span class="required">*</span></label>
+                <input type="text" id="dbUsername" placeholder="Tên người dùng Database ở đây...">
+            </div>
+
+            <div class="form-group">
+                <label>Mật khẩu của bạn<span class="required">*</span></label>
+                <input type="password" id="dbPassword" placeholder="Mật khẩu Database ở đây...">
+            </div>
+        </div>
+    </div>
+</div>
+
+<%- contentFor('style') %>
+<link rel="stylesheet" href="/easysetup/public/css/database.css">
+
+<%- contentFor('script') %>
+<script src="/js/database-setup.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const useAuthCheckbox = document.getElementById('useAuth');
+        const authFields = document.getElementById('authFields');
+        const dbUsername = document.getElementById('dbUsername');
+        const dbPassword = document.getElementById('dbPassword');
+
+        useAuthCheckbox.addEventListener('change', function() {
+            const isAuthEnabled = this.checked;
+            authFields.classList.toggle('hidden', !isAuthEnabled);
+            dbUsername.required = isAuthEnabled;
+            dbPassword.required = isAuthEnabled;
+        });
+    });
+</script>

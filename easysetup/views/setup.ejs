@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cài đặt Discord Music Bot</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Cài đặt Discord Music Bot</h1>
+        <p class="setup-info">Vui lòng điền đầy đủ thông tin để khởi động bot</p>
+        
+        <form id="setupForm">
+            <div class="form-section">
+                <h2>Cấu hình Discord Bot</h2>
+                <div class="form-group">
+                    <label for="bot.token">Token Bot Discord: *</label>
+                    <input type="password" name="bot.token" id="bot.token" required 
+                           placeholder="Nhập Discord Bot Token">
+                    <small>Lấy token tại: <a href="https://discord.com/developers/applications" target="_blank">Discord Developer Portal</a></small>
+                </div>
+
+                <div class="form-group">
+                    <label for="bot.clientId">Client ID: *</label>
+                    <input type="text" name="bot.clientId" id="bot.clientId" required
+                           placeholder="Nhập Client ID của bot">
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h2>Cấu hình Spotify</h2>
+                <div class="form-group">
+                    <label for="spotify.clientId">Spotify Client ID: *</label>
+                    <input type="text" name="spotify.clientId" id="spotify.clientId" required
+                           placeholder="Nhập Spotify Client ID">
+                </div>
+
+                <div class="form-group">
+                    <label for="spotify.clientSecret">Spotify Client Secret: *</label>
+                    <input type="password" name="spotify.clientSecret" id="spotify.clientSecret" required
+                           placeholder="Nhập Spotify Client Secret">
+                    <small>Lấy credentials tại: <a href="https://developer.spotify.com/dashboard" target="_blank">Spotify Developer Dashboard</a></small>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-save">Lưu cấu hình</button>
+        </form>
+    </div>
+
+    <script src="/js/setup.js"></script>
+</body>
+</html>

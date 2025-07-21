@@ -1,0 +1,40 @@
+
+<%- contentFor('style') %>
+<link rel="stylesheet" href="/easysetup/public/css/review.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/atom-one-dark.min.css">
+<div class="container">
+    <%- include('../partials/navbar') %>
+
+    <div class="form-content">
+        <div class="review-container">
+            <div class="review-content">
+                <pre><code id="config-content-display" class="language-javascript">Đang tải nội dung...</code></pre>
+            </div>
+            <div class="setup-actions">
+                <button class="btn-save" onclick="saveConfig()">Lưu</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<%- contentFor('script') %>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        fetch('/api/get-config-content')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const codeElement = document.getElementById('config-content-display');
+                    codeElement.textContent = data.content;
+                    hljs.highlightElement(codeElement);
+                } else {
+                    document.getElementById('config-content-display').textContent = 'Lỗi khi tải nội dung file config.';
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching config content:', error);
+                document.getElementById('config-content-display').textContent = 'Lỗi khi tải nội dung file config.';
+            });
+    });
+</script>

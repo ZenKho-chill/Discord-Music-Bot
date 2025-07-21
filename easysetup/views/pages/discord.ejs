@@ -1,0 +1,63 @@
+<%- include('../partials/header') %>
+<%- contentFor('style') %>
+<link rel="stylesheet" href="/easysetup/public/css/discord.css">
+<div class="container">
+  <%- include('../partials/navbar', { currentStep: 1 }) %>
+  <div class="form-content">
+    <form id="discordForm">
+      <div class="form-group">
+        <label>
+          Discord ID của bạn
+          <span class="required">*</span>
+        </label>
+        <div class="input-with-help">
+          <input type="text" id="discordId" placeholder="Discord ID ở đây..." required>
+          <a href="https://support.discord.com/hc/en-us/articles/206346498-Where-can-I-find-my-User-Server-Message-ID-" target="_blank" class="help-link">
+            Xem hướng dẫn ↗
+          </a>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>
+          Discord Bot Token của bạn
+          <span class="required">*</span>
+        </label>
+        <div class="input-with-help">
+          <input type="password" id="botToken" placeholder="Discord Bot Token ở đây..." required>
+          <a href="https://discord.com/developers/applications" target="_blank" class="help-link">
+            Xem hướng dẫn ↗
+          </a>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>
+          Discord Bot Client ID của bạn
+          <span class="required">*</span>
+        </label>
+        <div class="input-with-help">
+          <input type="text" id="clientId" placeholder="Discord Bot Client ID ở đây..." pattern="[0-9]+" required>
+          <a href="https://discord.com/developers/applications" target="_blank" class="help-link">
+            Xem hướng dẫn ↗
+          </a>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>
+          Discord Bot Client Secret của bạn
+          <span class="required">*</span>
+        </label>
+        <div class="input-with-help">
+          <input type="password" id="clientSecret" placeholder="Discord Bot Client Secret ở đây..." required>
+          <a href="https://discord.com/developers/applications" target="_blank" class="help-link">
+            Xem hướng dẫn ↗
+          </a>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+<%- include('../partials/footer') %>
+<script src="/easysetup/public/js/setup.js"></script>
+<script>
+  setupForm('discordForm', ['discordId', 'botToken', 'clientId', 'clientSecret'], '/setup/discord');
+</script>

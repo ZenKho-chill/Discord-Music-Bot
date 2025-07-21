@@ -1,0 +1,113 @@
+<!-- Navbar -->
+<div class="sidebar">
+  <div class="nav-header">
+    <h1 class="logo">ZK MUSIC</h1>
+    <div class="step-text">Step <%= currentStep %>/4</div>
+  </div>
+  <nav class="nav-menu">
+    <a href="/setup/discord" class="nav-item <%= currentStep === 1 ? 'active' : '' %>">
+      <div class="nav-number">1</div>
+      <span>Cấu hình Discord</span>
+    </a>
+    <a href="/setup/database" class="nav-item <%= currentStep === 2 ? 'active' : '' %>">
+      <div class="nav-number">2</div>
+      <span>Cấu hình Database</span>
+    </a>
+    <a href="/setup/platforms" class="nav-item <%= currentStep === 3 ? 'active' : '' %>">
+      <div class="nav-number">3</div>
+      <span>Cấu hình nền tảng</span>
+    </a>
+    <a href="/setup/review" class="nav-item <%= currentStep === 4 ? 'active' : '' %>">
+      <div class="nav-number">4</div>
+      <span>Xem cấu hình</span>
+    </a>
+  </nav>
+</div>
+
+<style>
+  .sidebar {
+    width: 25%;
+    min-width: 240px;
+    max-width: 280px;
+    display: flex;
+    flex-direction: column;
+    background-color: #121214;
+    border-right: 1px solid var(--border-color);
+  }
+
+  .nav-header {
+    padding: 16px;
+    background-color: #121214;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 4px;
+  }
+
+  .logo {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text);
+    margin: 0 0 4px 0;
+    text-align: center;
+  }
+
+  .step-text {
+    font-size: 14px;
+    color: var(--text-secondary);
+    text-align: center;
+  }
+
+  .nav-menu {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 24px 8px;
+    height: calc(100% - 85px);
+    justify-content: center;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 14px;
+    transition: all 0.2s ease;
+    position: relative;
+    border-radius: 8px;
+  }
+
+  .nav-item:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: var(--text);
+  }
+
+  .nav-item.active {
+    color: var(--yellow);
+    background-color: var(--primary);
+    font-weight: 500;
+  }
+
+  .nav-item.active .nav-number {
+    background: rgba(255, 255, 255, 0.2);
+    color: var(--yellow);
+  }
+
+  .nav-number {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  .nav-item.active .nav-number {
+    background-color: rgba(255, 255, 255, 0.2);
+  }
+</style>

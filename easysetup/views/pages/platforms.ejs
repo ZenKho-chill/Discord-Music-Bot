@@ -1,0 +1,129 @@
+<%- include('../partials/header', {title: 'Cấu hình nền tảng'}) %>
+
+<div class="container">
+    <%- include('../partials/navbar') %>
+    <div class="form-content">
+        <div class="form-group">
+            <label for="spotifyClientId">Spotify Client ID của bạn<span class="required">*</span></label>
+            <div class="input-with-help">
+                <input type="text" id="spotifyClientId" placeholder="Placeholder: Spotify Client ID ở đây...">
+                <a href="https://developer.spotify.com/documentation/web-api/tutorials/getting-started" target="_blank" class="help-link">Xem hướng dẫn <i class="fas fa-external-link-alt"></i></a>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="spotifyClientSecret">Spotify Client Secret của bạn<span class="required">*</span></label>
+            <div class="input-with-help">
+                <input type="password" id="spotifyClientSecret" placeholder="Placeholder: Spotify Client Secret ở đây...">
+                <a href="https://developer.spotify.com/documentation/web-api/tutorials/getting-started" target="_blank" class="help-link">Xem hướng dẫn <i class="fas fa-external-link-alt"></i></a>
+            </div>
+        </div>
+
+        <div class="platforms-grid">
+            <!-- YouTube -->
+            <div class="platform-card">
+                <div class="platform-header">
+                    <img src="https://img.icons8.com/color/48/000000/youtube-play.png" alt="YouTube">
+                    <span>YouTube</span>
+                </div>
+                <div class="platform-toggles">
+                    <div class="toggle-item">
+                        <span>Bài hát đơn lẻ</span>
+                        <label class="switch">
+                            <input type="checkbox" id="ytSingle" checked>
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                    <div class="toggle-item">
+                        <span>Danh sách phát</span>
+                        <label class="switch">
+                            <input type="checkbox" id="ytPlaylist" checked>
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <!-- Spotify -->
+            <div class="platform-card">
+                <div class="platform-header">
+                    <img src="https://img.icons8.com/color/48/000000/spotify.png" alt="Spotify">
+                    <span>Spotify</span>
+                </div>
+                <div class="platform-toggles">
+                    <div class="toggle-item">
+                        <span>Bài hát đơn lẻ</span>
+                        <label class="switch">
+                            <input type="checkbox" id="spotifySingle" checked>
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                    <div class="toggle-item">
+                        <span>Danh sách phát</span>
+                        <label class="switch">
+                            <input type="checkbox" id="spotifyPlaylist" checked>
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <!-- SoundCloud -->
+            <div class="platform-card">
+                <div class="platform-header">
+                    <img src="https://img.icons8.com/color/48/000000/soundcloud.png" alt="SoundCloud">
+                    <span>SoundCloud</span>
+                </div>
+                <div class="platform-toggles">
+                    <div class="toggle-item">
+                        <span>Bài hát đơn lẻ</span>
+                        <label class="switch">
+                            <input type="checkbox" id="scSingle" checked>
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                    <div class="toggle-item">
+                        <span>Danh sách phát</span>
+                        <label class="switch">
+                            <input type="checkbox" id="scPlaylist" checked>
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<%- contentFor('style') %>
+<link rel="stylesheet" href="/easysetup/public/css/platforms.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
+<%- contentFor('script') %>
+<script src="/easysetup/public/js/platforms-setup.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const spotifyClientId = document.getElementById('spotifyClientId');
+    const spotifyClientSecret = document.getElementById('spotifyClientSecret');
+    const spotifySingleSwitch = document.getElementById('spotifySingle');
+    const spotifyPlaylistSwitch = document.getElementById('spotifyPlaylist');
+
+    function toggleSpotifySwitches() {
+        const disabled = !spotifyClientId.value || !spotifyClientSecret.value;
+        
+        spotifySingleSwitch.disabled = disabled;
+        spotifyPlaylistSwitch.disabled = disabled;
+
+        // Nếu bị vô hiệu hóa, đảm bảo chúng cũng ở trạng thái "tắt"
+        if (disabled) {
+            spotifySingleSwitch.checked = false;
+            spotifyPlaylistSwitch.checked = false;
+        }
+    }
+
+    // Kiểm tra trạng thái khi tải trang
+    toggleSpotifySwitches();
+
+    // Thêm listener để kiểm tra mỗi khi người dùng nhập liệu
+    spotifyClientId.addEventListener('input', toggleSpotifySwitches);
+    spotifyClientSecret.addEventListener('input', toggleSpotifySwitches);
+});
+</script>
