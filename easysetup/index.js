@@ -243,6 +243,37 @@ app.post('/api/validate-credentials', requireAuth, async (req, res) => {
     }
 });
 
+// API để kiểm tra Spotify Client ID và Client Secret
+app.post('/api/validate-spotify', requireAuth, async (req, res) => {
+    const { clientId, clientSecret } = req.body;
+    if (!clientId || !clientSecret) {
+        return res.status(400).json({ success: false, message: 'Thiếu Client ID hoặc Client Secret' });
+    }
+    try {
+        const params = new URLSearchParams();
+        params.append('grant_type', 'client_credentials');
+        const response = await axios.post('https://accounts.spotify.com/api/token', params, {
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'Authorization': 'Basic ' + Buffer.from(clientId + ':' + clientSecret).toString('base64')
+            },
+            timeout: 5000
+        });
+        if (response.data && response.data.access_token) {
+            if (debugMode) {
+                logger.debug('✅ Spotify: Thông tin hợp lệ');
+            }
+            return res.json({ success: true, message: 'Thông tin hợp lệ' });
+        }
+        return res.status(401).json({ success: false, message: 'Không lấy được access token' });
+    } catch (error) {
+        if (debugMode) {
+            logger.error('❌ Spotify: Thông tin không hợp lệ hoặc lỗi mạng');
+        }
+        res.status(401).json({ success: false, message: 'Thông tin không hợp lệ hoặc lỗi mạng' });
+    }
+});
+
 // API để lấy cấu hình hiện tại
 app.get('/api/get-config', requireAuth, (req, res) => {
     // Xóa cache để luôn đọc file mới nhất
