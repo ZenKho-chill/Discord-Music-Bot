@@ -1,48 +1,47 @@
 <%- include('../partials/header', {title: 'Cấu hình Database'}) %>
 
 <div class="container">
-    <%- include('../partials/navbar') %>
+  <%- include('../partials/navbar') %>
 
-    <div class="form-content">
-        <div class="form-group">
-            <label>IP Database của bạn<span class="required">*</span></label>
-            <input type="text" id="dbHost" placeholder="IP Database ở đây..." required>
-        </div>
-
-        <div class="form-group">
-            <label>Tên database của bạn<span class="required">*</span></label>
-            <input type="text" id="dbName" placeholder="Database name ở đây..." required>
-        </div>
-
-        <div class="auth-toggle">
-            <label class="switch">
-                <input type="checkbox" id="useAuth">
-                <span class="slider"></span>
-            </label>
-            <span class="toggle-label">Bật nếu database của bạn sử dụng xác thực</span>
-        </div>
-
-        <div id="authFields" class="auth-fields hidden">
-            <div class="form-group">
-                <label>Tên người dùng của bạn<span class="required">*</span></label>
-                <input type="text" id="dbUsername" placeholder="Tên người dùng Database ở đây...">
-            </div>
-
-            <div class="form-group">
-                <label>Mật khẩu của bạn<span class="required">*</span></label>
-                <input type="password" id="dbPassword" placeholder="Mật khẩu Database ở đây...">
-            </div>
-        </div>
+  <div class="form-content">
+    <div class="form-group">
+      <label>IP Database của bạn<span class="required">*</span></label>
+      <input type="text" id="dbHost" placeholder="IP Database ở đây..." required>
     </div>
+
+    <div class="form-group">
+      <label>Tên database của bạn<span class="required">*</span></label>
+      <input type="text" id="dbName" placeholder="Database name ở đây..." required>
+    </div>
+
+    <div class="auth-toggle">
+      <label class="switch">
+        <input type="checkbox" id="useAuth">
+        <span class="slider"></span>
+      </label>
+      <span class="toggle-label">Bật nếu database của bạn sử dụng xác thực</span>
+    </div>
+
+    <div id="authFields" class="auth-fields hidden">
+      <div class="form-group">
+        <label>Tên người dùng của bạn<span class="required">*</span></label>
+        <input type="text" id="dbUsername" placeholder="Tên người dùng Database ở đây...">
+      </div>
+
+      <div class="form-group">
+        <label>Mật khẩu của bạn<span class="required">*</span></label>
+        <input type="password" id="dbPassword" placeholder="Mật khẩu Database ở đây...">
+      </div>
+    </div>
+  </div>
 </div>
 
 <%- contentFor('style') %>
 <link rel="stylesheet" href="/easysetup/public/css/database.css">
 
 <%- contentFor('script') %>
-<script src="/easysetup/public/js/database-setup.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded', () => {
+  document.addEventListener('DOMContentLoaded', () => {
     // === Logic ẩn/hiện trường xác thực ===
     const useAuthCheckbox = document.getElementById('useAuth');
     const authFields = document.getElementById('authFields');
@@ -50,73 +49,97 @@ document.addEventListener('DOMContentLoaded', () => {
     const dbPasswordInput = document.getElementById('dbPassword');
 
     function toggleAuthFields() {
-        const isAuthEnabled = useAuthCheckbox.checked;
-        authFields.classList.toggle('hidden', !isAuthEnabled);
-        dbUsernameInput.required = isAuthEnabled;
-        dbPasswordInput.required = isAuthEnabled;
-        if (!isAuthEnabled) {
-            dbUsernameInput.value = '';
-            dbPasswordInput.value = '';
-            // Cập nhật giá trị rỗng vào config
-            updateConfig('mongodb.auth.username', '');
-            updateConfig('mongodb.auth.password', '');
-        }
+      const isAuthEnabled = useAuthCheckbox.checked;
+      authFields.classList.toggle('hidden', !isAuthEnabled);
+      dbUsernameInput.required = isAuthEnabled;
+      dbPasswordInput.required = isAuthEnabled;
+      if (!isAuthEnabled) {
+        dbUsernameInput.value = '';
+        dbPasswordInput.value = '';
+        // Cập nhật giá trị rỗng vào config
+        updateConfig('mongodb.auth.username', '');
+        updateConfig('mongodb.auth.password', '');
+      }
     }
 
     // === Logic Dynamic Save ===
     const updateConfig = async (key, value) => {
-        try {
-            await fetch('/api/update-config', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ key, value }),
-            });
-        } catch (error) {
-            console.error('Lỗi khi cập nhật config:', error);
-        }
+      try {
+        await fetch('/api/update-config', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            key,
+            value
+          }),
+        });
+      } catch (error) {
+        console.error('Lỗi khi cập nhật config:', error);
+      }
     };
 
-    const inputs = [
-        { id: 'dbHost', key: 'mongodb.ip' },
-        { id: 'dbName', key: 'mongodb.database' },
-        { id: 'useAuth', key: 'mongodb.auth.enabled', type: 'checkbox' },
-        { id: 'dbUsername', key: 'mongodb.auth.username' },
-        { id: 'dbPassword', key: 'mongodb.auth.password' },
+    const inputs = [{
+        id: 'dbHost',
+        key: 'mongodb.ip'
+      },
+      {
+        id: 'dbName',
+        key: 'mongodb.database'
+      },
+      {
+        id: 'useAuth',
+        key: 'mongodb.auth.enabled',
+        type: 'checkbox'
+      },
+      {
+        id: 'dbUsername',
+        key: 'mongodb.auth.username'
+      },
+      {
+        id: 'dbPassword',
+        key: 'mongodb.auth.password'
+      },
     ];
 
     // Lấy config và điền vào form
     fetch('/api/get-config')
-        .then(res => res.json())
-        .then(config => {
-            document.getElementById('dbHost').value = config.mongodb?.ip || '';
-            document.getElementById('dbName').value = config.mongodb?.database || '';
-            useAuthCheckbox.checked = config.mongodb?.auth?.enabled ?? false;
-            dbUsernameInput.value = config.mongodb?.auth?.username || '';
-            dbPasswordInput.value = config.mongodb?.auth?.password || '';
+      .then(res => res.json())
+      .then(config => {
+        document.getElementById('dbHost').value = config.mongodb?.ip || '';
+        document.getElementById('dbName').value = config.mongodb?.database || '';
+        useAuthCheckbox.checked = config.mongodb?.auth?.enabled ?? false;
+        dbUsernameInput.value = config.mongodb?.auth?.username || '';
+        dbPasswordInput.value = config.mongodb?.auth?.password || '';
 
-            // Cập nhật trạng thái hiển thị của trường xác thực
-            toggleAuthFields();
-        });
+        // Cập nhật trạng thái hiển thị của trường xác thực
+        toggleAuthFields();
+      });
 
     // Thêm event listener
-    inputs.forEach(({ id, key, type }) => {
-        const element = document.getElementById(id);
-        const event = type === 'checkbox' ? 'change' : 'input';
-        const getValue = () => type === 'checkbox' ? element.checked : element.value;
+    inputs.forEach(({
+      id,
+      key,
+      type
+    }) => {
+      const element = document.getElementById(id);
+      const event = type === 'checkbox' ? 'change' : 'input';
+      const getValue = () => type === 'checkbox' ? element.checked : element.value;
 
-        element.addEventListener(event, () => {
-            const value = getValue();
-            updateConfig(key, value);
+      element.addEventListener(event, () => {
+        const value = getValue();
+        updateConfig(key, value);
 
-            // Xử lý logic đặc biệt cho Tên database
-            if (id === 'dbName') {
-                updateConfig('mongodb.auth.authSource', value);
-            }
-            
-            if (id === 'useAuth') {
-                toggleAuthFields();
-            }
-        });
+        // Xử lý logic đặc biệt cho Tên database
+        if (id === 'dbName') {
+          updateConfig('mongodb.auth.authSource', value);
+        }
+
+        if (id === 'useAuth') {
+          toggleAuthFields();
+        }
+      });
     });
-});
+  });
 </script>

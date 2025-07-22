@@ -1,64 +1,67 @@
-
 <%- contentFor('style') %>
 <link rel="stylesheet" href="/easysetup/public/css/review.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/atom-one-dark.min.css">
 <div class="container">
-    <%- include('../partials/navbar') %>
+  <%- include('../partials/navbar') %>
 
-    <div class="form-content">
-        <div class="review-container">
-            <div class="review-content" contenteditable="true" spellcheck="false" id="config-editor">
-                <pre><code id="config-content-display" class="language-javascript">Đang tải nội dung...</code></pre>
-            </div>
-            <div class="setup-actions">
-                <button class="btn-save" onclick="saveConfig()">Lưu</button>
-            </div>
-        </div>
+  <div class="form-content">
+    <div class="review-container">
+      <div class="review-content" contenteditable="true" spellcheck="false" id="config-editor">
+        <pre><code id="config-content-display" class="language-javascript">Đang tải nội dung...</code></pre>
+      </div>
+      <div class="setup-actions">
+        <button class="btn-save" onclick="saveConfig()">Lưu</button>
+      </div>
     </div>
+  </div>
 </div>
 
 <%- contentFor('script') %>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
 <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const editor = document.getElementById('config-editor');
-        const codeElement = document.getElementById('config-content-display');
-        let saveTimeout;
+  document.addEventListener('DOMContentLoaded', () => {
+    const editor = document.getElementById('config-editor');
+    const codeElement = document.getElementById('config-content-display');
+    let saveTimeout;
 
-        // Lấy nội dung config ban đầu
-        fetch('/api/get-config-content')
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    codeElement.textContent = data.content;
-                    hljs.highlightElement(codeElement);
-                } else {
-                    codeElement.textContent = 'Lỗi khi tải nội dung file config.';
-                }
-            })
-            .catch(error => {
-                console.error('Error fetching config content:', error);
-                codeElement.textContent = 'Lỗi khi tải nội dung file config.';
-            });
+    // Lấy nội dung config ban đầu
+    fetch('/api/get-config-content')
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          codeElement.textContent = data.content;
+          hljs.highlightElement(codeElement);
+        } else {
+          codeElement.textContent = 'Lỗi khi tải nội dung file config.';
+        }
+      })
+      .catch(error => {
+        console.error('Error fetching config content:', error);
+        codeElement.textContent = 'Lỗi khi tải nội dung file config.';
+      });
 
-        // Hàm lưu nội dung
-        const saveContent = async () => {
-            const content = editor.textContent || ""; // Lấy text content của div
-            try {
-                await fetch('/api/save-config-content', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ content: content })
-                });
-            } catch (error) {
-                console.error('Lỗi khi lưu config:', error);
-            }
-        };
-
-        // Thêm event listener cho việc chỉnh sửa
-        editor.addEventListener('input', () => {
-            clearTimeout(saveTimeout);
-            saveTimeout = setTimeout(saveContent, 1000); // Lưu sau 1 giây ngừng gõ
+    // Hàm lưu nội dung
+    const saveContent = async () => {
+      const content = editor.textContent || ""; // Lấy text content của div
+      try {
+        await fetch('/api/save-config-content', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            content: content
+          })
         });
+      } catch (error) {
+        console.error('Lỗi khi lưu config:', error);
+      }
+    };
+
+    // Thêm event listener cho việc chỉnh sửa
+    editor.addEventListener('input', () => {
+      clearTimeout(saveTimeout);
+      saveTimeout = setTimeout(saveContent, 1000); // Lưu sau 1 giây ngừng gõ
     });
+  });
 </script>

@@ -1,19 +1,20 @@
 :root {
-  --primary: #5865F2;
-  --primary-hover: #4752C4;
-  --background: #2B2D31;
+  --primary: #5865f2;
+  --primary-hover: #4752c4;
+  --background: #2b2d31;
   --surface: #313338;
-  --surface-dark: #1E1F22;
-  --input-bg: #1E1F22;
-  --text: #FFFFFF;
-  --text-secondary: #B5BAC1;
-  --error: #F23F42;
-  --link: #00A8FC;
+  --surface-dark: #1e1f22;
+  --input-bg: #1e1f22;
+  --text: #ffffff;
+  --text-secondary: #b5bac1;
+  --error: #f23f42;
+  --link: #00a8fc;
   --border-color: rgba(255, 255, 255, 0.1);
-  --yellow: #FEE75C;
+  --yellow: #fee75c;
 }
 
-html, body {
+html,
+body {
   padding: 0;
   margin: 0;
   width: 100%;
@@ -23,7 +24,7 @@ html, body {
 body {
   background-color: var(--background);
   color: var(--text);
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -90,60 +91,61 @@ body {
 }
 
 .token-status-icon {
-    /* Bỏ hết position absolute */
-    width: 20px;
-    height: 20px;
-    display: none; /* Mặc định ẩn */
+  /* Bỏ hết position absolute */
+  width: 20px;
+  height: 20px;
+  display: none; /* Mặc định ẩn */
 }
 
 .token-status-icon.loading::before {
-    content: '';
-    display: block;
-    width: 16px;
-    height: 16px;
-    border: 2px solid #fff;
-    border-top-color: var(--primary);
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
+  content: "";
+  display: block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid #fff;
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
 }
 
 .token-status-icon.valid::before {
-    content: '✔';
-    color: #4CAF50;
-    font-size: 20px;
+  content: "✔";
+  color: #4caf50;
+  font-size: 20px;
 }
 
 .token-status-icon.invalid::before {
-    content: '✖';
-    color: var(--error);
-    font-size: 20px;
+  content: "✖";
+  color: var(--error);
+  font-size: 20px;
 }
 
 .bot-name-display {
-    font-weight: bold;
-    color: var(--text);
-    margin-left: 5px;
+  font-weight: bold;
+  color: var(--text);
+  margin-left: 5px;
 }
 
 @keyframes spin {
-    to {
-        transform: rotate(360deg);
-    }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
-  .form-group input {
-     width: 100%;
-     height: 40px;
-     padding: 0 16px;
-     padding-right: 120px;
-     background-color: #222327;
-     border: 1px solid transparent;
-     border-radius: 3px;
-     color: var(--text);
-     font-size: 14px;
-     box-sizing: border-box;
-     transition: all 0.2s ease;
-   }.form-group input:focus {
+.form-group input {
+  width: 100%;
+  height: 40px;
+  padding: 0 16px;
+  padding-right: 120px;
+  background-color: #222327;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  color: var(--text);
+  font-size: 14px;
+  box-sizing: border-box;
+  transition: all 0.2s ease;
+}
+.form-group input:focus {
   outline: none;
   border-color: var(--primary);
   background-color: var(--surface-dark);
@@ -195,4 +197,4 @@ body {
 .btn-next:disabled {
   opacity: 0.5;
   cursor: not-allowed;
-} 
+}

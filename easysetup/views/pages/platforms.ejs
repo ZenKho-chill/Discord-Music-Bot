@@ -1,98 +1,98 @@
 <%- include('../partials/header', {title: 'Cấu hình nền tảng'}) %>
 
 <div class="container">
-    <%- include('../partials/navbar') %>
-    <div class="form-content">
-        <div class="form-group">
-            <label for="spotifyClientId">Spotify Client ID của bạn<span class="required"></span></label>
-            <div class="input-with-help">
-                <input type="text" id="spotifyClientId" placeholder="Placeholder: Spotify Client ID ở đây...">
-                <a href="https://developer.spotify.com/documentation/web-api/tutorials/getting-started" target="_blank" class="help-link">Xem hướng dẫn <i class="fas fa-external-link-alt"></i></a>
-            </div>
-        </div>
-
-
-        <div class="form-group">
-            <label for="spotifyClientSecret">Spotify Client Secret của bạn<span class="required"></span></label>
-            <div class="input-with-help">
-                <input type="text" id="spotifyClientSecret" placeholder="Placeholder: Spotify Client Secret ở đây...">
-                <a href="https://developer.spotify.com/documentation/web-api/tutorials/getting-started" target="_blank" class="help-link">Xem hướng dẫn <i class="fas fa-external-link-alt"></i></a>
-            </div>
-        </div>
-        <div id="spotifyCheckResult" style="margin-top:8px;"></div>
-
-        <div class="platforms-grid">
-            <!-- YouTube -->
-            <div class="platform-card">
-                <div class="platform-header">
-                    <img src="https://img.icons8.com/color/48/000000/youtube-play.png" alt="YouTube">
-                    <span>YouTube</span>
-                </div>
-                <div class="platform-toggles">
-                    <div class="toggle-item">
-                        <span>Bài hát đơn lẻ</span>
-                        <label class="switch">
-                            <input type="checkbox" id="ytSingle" checked>
-                            <span class="slider round"></span>
-                        </label>
-                    </div>
-                    <div class="toggle-item">
-                        <span>Danh sách phát</span>
-                        <label class="switch">
-                            <input type="checkbox" id="ytPlaylist" checked>
-                            <span class="slider round"></span>
-                        </label>
-                    </div>
-                </div>
-            </div>
-            <!-- Spotify -->
-            <div class="platform-card">
-                <div class="platform-header">
-                    <img src="https://img.icons8.com/color/48/000000/spotify.png" alt="Spotify">
-                    <span>Spotify</span>
-                </div>
-                <div class="platform-toggles">
-                    <div class="toggle-item">
-                        <span>Bài hát đơn lẻ</span>
-                        <label class="switch">
-                            <input type="checkbox" id="spotifySingle" checked>
-                            <span class="slider round"></span>
-                        </label>
-                    </div>
-                    <div class="toggle-item">
-                        <span>Danh sách phát</span>
-                        <label class="switch">
-                            <input type="checkbox" id="spotifyPlaylist" checked>
-                            <span class="slider round"></span>
-                        </label>
-                    </div>
-                </div>
-            </div>
-            <!-- SoundCloud -->
-            <div class="platform-card">
-                <div class="platform-header">
-                    <img src="https://img.icons8.com/color/48/000000/soundcloud.png" alt="SoundCloud">
-                    <span>SoundCloud</span>
-                </div>
-                <div class="platform-toggles">
-                    <div class="toggle-item">
-                        <span>Bài hát đơn lẻ</span>
-                        <label class="switch">
-                            <input type="checkbox" id="scSingle" checked>
-                            <span class="slider round"></span>
-                        </label>
-                    </div>
-                    <div class="toggle-item">
-                        <span>Danh sách phát</span>
-                        <label class="switch">
-                            <input type="checkbox" id="scPlaylist" checked>
-                            <span class="slider round"></span>
-                        </label>
-                    </div>
-                </div>
-            </div>
-        </div>
+  <%- include('../partials/navbar') %>
+  <div class="form-content">
+    <div class="form-group">
+      <label for="spotifyClientId">Spotify Client ID của bạn<span class="required"></span></label>
+      <div class="input-with-help">
+        <input type="text" id="spotifyClientId" placeholder="Placeholder: Spotify Client ID ở đây...">
+        <a href="https://developer.spotify.com/documentation/web-api/tutorials/getting-started" target="_blank" class="help-link">Xem hướng dẫn <i class="fas fa-external-link-alt"></i></a>
+      </div>
     </div>
+
+
+    <div class="form-group">
+      <label for="spotifyClientSecret">Spotify Client Secret của bạn<span class="required"></span></label>
+      <div class="input-with-help">
+        <input type="text" id="spotifyClientSecret" placeholder="Placeholder: Spotify Client Secret ở đây...">
+        <a href="https://developer.spotify.com/documentation/web-api/tutorials/getting-started" target="_blank" class="help-link">Xem hướng dẫn <i class="fas fa-external-link-alt"></i></a>
+      </div>
+    </div>
+    <div id="spotifyCheckResult" style="margin-top:8px;"></div>
+
+    <div class="platforms-grid">
+      <!-- YouTube -->
+      <div class="platform-card">
+        <div class="platform-header">
+          <img src="https://img.icons8.com/color/48/000000/youtube-play.png" alt="YouTube">
+          <span>YouTube</span>
+        </div>
+        <div class="platform-toggles">
+          <div class="toggle-item">
+            <span>Bài hát đơn lẻ</span>
+            <label class="switch">
+              <input type="checkbox" id="ytSingle" checked>
+              <span class="slider round"></span>
+            </label>
+          </div>
+          <div class="toggle-item">
+            <span>Danh sách phát</span>
+            <label class="switch">
+              <input type="checkbox" id="ytPlaylist" checked>
+              <span class="slider round"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+      <!-- Spotify -->
+      <div class="platform-card">
+        <div class="platform-header">
+          <img src="https://img.icons8.com/color/48/000000/spotify.png" alt="Spotify">
+          <span>Spotify</span>
+        </div>
+        <div class="platform-toggles">
+          <div class="toggle-item">
+            <span>Bài hát đơn lẻ</span>
+            <label class="switch">
+              <input type="checkbox" id="spotifySingle" checked>
+              <span class="slider round"></span>
+            </label>
+          </div>
+          <div class="toggle-item">
+            <span>Danh sách phát</span>
+            <label class="switch">
+              <input type="checkbox" id="spotifyPlaylist" checked>
+              <span class="slider round"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+      <!-- SoundCloud -->
+      <div class="platform-card">
+        <div class="platform-header">
+          <img src="https://img.icons8.com/color/48/000000/soundcloud.png" alt="SoundCloud">
+          <span>SoundCloud</span>
+        </div>
+        <div class="platform-toggles">
+          <div class="toggle-item">
+            <span>Bài hát đơn lẻ</span>
+            <label class="switch">
+              <input type="checkbox" id="scSingle" checked>
+              <span class="slider round"></span>
+            </label>
+          </div>
+          <div class="toggle-item">
+            <span>Danh sách phát</span>
+            <label class="switch">
+              <input type="checkbox" id="scPlaylist" checked>
+              <span class="slider round"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <%- contentFor('style') %>
@@ -101,92 +101,103 @@
 
 <%- contentFor('script') %>
 <script>
-// === Logic vô hiệu hóa switch của Spotify ===
-document.addEventListener('DOMContentLoaded', () => {
+  // === Logic vô hiệu hóa switch của Spotify ===
+  document.addEventListener('DOMContentLoaded', () => {
     const spotifyClientIdInput = document.getElementById('spotifyClientId');
     const spotifyClientSecretInput = document.getElementById('spotifyClientSecret');
     const spotifySingleSwitch = document.getElementById('spotifySingle');
     const spotifyPlaylistSwitch = document.getElementById('spotifyPlaylist');
 
     function toggleSpotifySwitches() {
-        const disabled = !spotifyClientIdInput.value || !spotifyClientSecretInput.value;
-        spotifySingleSwitch.disabled = disabled;
-        spotifyPlaylistSwitch.disabled = disabled;
-        if (disabled) {
-            spotifySingleSwitch.checked = false;
-            spotifyPlaylistSwitch.checked = false;
-        }
+      const disabled = !spotifyClientIdInput.value || !spotifyClientSecretInput.value;
+      spotifySingleSwitch.disabled = disabled;
+      spotifyPlaylistSwitch.disabled = disabled;
+      if (disabled) {
+        spotifySingleSwitch.checked = false;
+        spotifyPlaylistSwitch.checked = false;
+      }
     }
 
 
     // Dynamic check Spotify credentials
     const resultDiv = document.getElementById('spotifyCheckResult');
     let debounceTimeout = null;
-    let lastChecked = { clientId: '', clientSecret: '' };
+    let lastChecked = {
+      clientId: '',
+      clientSecret: ''
+    };
 
     async function checkSpotifyDynamic() {
-        const clientId = spotifyClientIdInput.value.trim();
-        const clientSecret = spotifyClientSecretInput.value.trim();
-        if (!clientId && !clientSecret) {
-            resultDiv.textContent = '';
-            spotifySingleSwitch.disabled = true;
-            spotifyPlaylistSwitch.disabled = true;
-            spotifySingleSwitch.checked = false;
-            spotifyPlaylistSwitch.checked = false;
-            return;
-        }
-        if (!clientId || !clientSecret) {
-            resultDiv.textContent = 'Vui lòng nhập đầy đủ Client ID và Client Secret';
-            resultDiv.style.color = 'red';
-            spotifySingleSwitch.disabled = true;
-            spotifyPlaylistSwitch.disabled = true;
-            spotifySingleSwitch.checked = false;
-            spotifyPlaylistSwitch.checked = false;
-            return;
-        }
-        if (lastChecked.clientId === clientId && lastChecked.clientSecret === clientSecret) return;
-        lastChecked = { clientId, clientSecret };
-        resultDiv.textContent = 'Đang kiểm tra...';
-        resultDiv.style.color = '#888';
+      const clientId = spotifyClientIdInput.value.trim();
+      const clientSecret = spotifyClientSecretInput.value.trim();
+      if (!clientId && !clientSecret) {
+        resultDiv.textContent = '';
         spotifySingleSwitch.disabled = true;
         spotifyPlaylistSwitch.disabled = true;
         spotifySingleSwitch.checked = false;
         spotifyPlaylistSwitch.checked = false;
-        try {
-            const res = await fetch('/api/validate-spotify', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ clientId, clientSecret })
-            });
-            const data = await res.json();
-            if (data.success) {
-                resultDiv.textContent = 'Thông tin Spotify hợp lệ!';
-                resultDiv.style.color = 'green';
-                spotifySingleSwitch.disabled = false;
-                spotifyPlaylistSwitch.disabled = false;
-                spotifySingleSwitch.checked = true;
-                spotifyPlaylistSwitch.checked = true;
-            } else {
-                resultDiv.textContent = '❌ ' + (data.message || 'Thông tin không hợp lệ!');
-                resultDiv.style.color = 'red';
-                spotifySingleSwitch.disabled = true;
-                spotifyPlaylistSwitch.disabled = true;
-                spotifySingleSwitch.checked = false;
-                spotifyPlaylistSwitch.checked = false;
-            }
-        } catch (err) {
-            resultDiv.textContent = 'Lỗi kết nối máy chủ!';
-            resultDiv.style.color = 'red';
-            spotifySingleSwitch.disabled = true;
-            spotifyPlaylistSwitch.disabled = true;
-            spotifySingleSwitch.checked = false;
-            spotifyPlaylistSwitch.checked = false;
+        return;
+      }
+      if (!clientId || !clientSecret) {
+        resultDiv.textContent = 'Vui lòng nhập đầy đủ Client ID và Client Secret';
+        resultDiv.style.color = 'red';
+        spotifySingleSwitch.disabled = true;
+        spotifyPlaylistSwitch.disabled = true;
+        spotifySingleSwitch.checked = false;
+        spotifyPlaylistSwitch.checked = false;
+        return;
+      }
+      if (lastChecked.clientId === clientId && lastChecked.clientSecret === clientSecret) return;
+      lastChecked = {
+        clientId,
+        clientSecret
+      };
+      resultDiv.textContent = 'Đang kiểm tra...';
+      resultDiv.style.color = '#888';
+      spotifySingleSwitch.disabled = true;
+      spotifyPlaylistSwitch.disabled = true;
+      spotifySingleSwitch.checked = false;
+      spotifyPlaylistSwitch.checked = false;
+      try {
+        const res = await fetch('/api/validate-spotify', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            clientId,
+            clientSecret
+          })
+        });
+        const data = await res.json();
+        if (data.success) {
+          resultDiv.textContent = 'Thông tin Spotify hợp lệ!';
+          resultDiv.style.color = 'green';
+          spotifySingleSwitch.disabled = false;
+          spotifyPlaylistSwitch.disabled = false;
+          spotifySingleSwitch.checked = true;
+          spotifyPlaylistSwitch.checked = true;
+        } else {
+          resultDiv.textContent = '❌ ' + (data.message || 'Thông tin không hợp lệ!');
+          resultDiv.style.color = 'red';
+          spotifySingleSwitch.disabled = true;
+          spotifyPlaylistSwitch.disabled = true;
+          spotifySingleSwitch.checked = false;
+          spotifyPlaylistSwitch.checked = false;
         }
+      } catch (err) {
+        resultDiv.textContent = 'Lỗi kết nối máy chủ!';
+        resultDiv.style.color = 'red';
+        spotifySingleSwitch.disabled = true;
+        spotifyPlaylistSwitch.disabled = true;
+        spotifySingleSwitch.checked = false;
+        spotifyPlaylistSwitch.checked = false;
+      }
     }
 
     function debounceCheck() {
-        clearTimeout(debounceTimeout);
-        debounceTimeout = setTimeout(checkSpotifyDynamic, 600);
+      clearTimeout(debounceTimeout);
+      debounceTimeout = setTimeout(checkSpotifyDynamic, 600);
     }
 
     spotifyClientIdInput.addEventListener('input', debounceCheck);
@@ -194,72 +205,114 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Logic cũ: tự động điền config và toggle switch
     const updateConfig = async (key, value) => {
-        try {
-            await fetch('/api/update-config', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ key, value }),
-            });
-        } catch (error) {
-            console.error('Lỗi khi cập nhật config:', error);
-        }
+      try {
+        await fetch('/api/update-config', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            key,
+            value
+          }),
+        });
+      } catch (error) {
+        console.error('Lỗi khi cập nhật config:', error);
+      }
     };
 
-    const inputs = [
-        { id: 'spotifyClientId', key: 'spotify.clientId' },
-        { id: 'spotifyClientSecret', key: 'spotify.clientSecret' },
-        { id: 'ytSingle', key: 'platform.youtube.single', type: 'checkbox' },
-        { id: 'ytPlaylist', key: 'platform.youtube.playlist', type: 'checkbox' },
-        { id: 'spotifySingle', key: 'platform.spotify.single', type: 'checkbox' },
-        { id: 'spotifyPlaylist', key: 'platform.spotify.playlist', type: 'checkbox' },
-        { id: 'scSingle', key: 'platform.soundcloud.single', type: 'checkbox' },
-        { id: 'scPlaylist', key: 'platform.soundcloud.playlist', type: 'checkbox' }
+    const inputs = [{
+        id: 'spotifyClientId',
+        key: 'spotify.clientId'
+      },
+      {
+        id: 'spotifyClientSecret',
+        key: 'spotify.clientSecret'
+      },
+      {
+        id: 'ytSingle',
+        key: 'platform.youtube.single',
+        type: 'checkbox'
+      },
+      {
+        id: 'ytPlaylist',
+        key: 'platform.youtube.playlist',
+        type: 'checkbox'
+      },
+      {
+        id: 'spotifySingle',
+        key: 'platform.spotify.single',
+        type: 'checkbox'
+      },
+      {
+        id: 'spotifyPlaylist',
+        key: 'platform.spotify.playlist',
+        type: 'checkbox'
+      },
+      {
+        id: 'scSingle',
+        key: 'platform.soundcloud.single',
+        type: 'checkbox'
+      },
+      {
+        id: 'scPlaylist',
+        key: 'platform.soundcloud.playlist',
+        type: 'checkbox'
+      }
     ];
 
     // Lấy config và điền vào form
     fetch('/api/get-config')
-        .then(res => res.json())
-        .then(config => {
-            inputs.forEach(({ id, key, type }) => {
-                const element = document.getElementById(id);
-                if (!element) return;
+      .then(res => res.json())
+      .then(config => {
+        inputs.forEach(({
+          id,
+          key,
+          type
+        }) => {
+          const element = document.getElementById(id);
+          if (!element) return;
 
-                const keys = key.split('.');
-                // Dùng reduce để lấy giá trị lồng nhau một cách an toàn
-                const value = keys.reduce((obj, k) => obj?.[k], config);
+          const keys = key.split('.');
+          // Dùng reduce để lấy giá trị lồng nhau một cách an toàn
+          const value = keys.reduce((obj, k) => obj?.[k], config);
 
-                if (type === 'checkbox') {
-                    element.checked = value ?? true; // Mặc định là true nếu không tồn tại
-                } else {
-                    element.value = value || ''; // Giá trị rỗng nếu không tồn tại
-                }
-            });
-
-            // Sau khi điền xong, kiểm tra lại trạng thái các switch
-            toggleSpotifySwitches();
+          if (type === 'checkbox') {
+            element.checked = value ?? true; // Mặc định là true nếu không tồn tại
+          } else {
+            element.value = value || ''; // Giá trị rỗng nếu không tồn tại
+          }
         });
+
+        // Sau khi điền xong, kiểm tra lại trạng thái các switch
+        toggleSpotifySwitches();
+      });
 
     // Thêm event listener
-    inputs.forEach(({ id, key, type }) => {
-        const element = document.getElementById(id);
-        if (!element) return;
-        
-        const event = type === 'checkbox' ? 'change' : 'input';
-        const getValue = () => type === 'checkbox' ? element.checked : element.value;
+    inputs.forEach(({
+      id,
+      key,
+      type
+    }) => {
+      const element = document.getElementById(id);
+      if (!element) return;
 
-        element.addEventListener(event, () => {
-            const value = getValue();
-            updateConfig(key, value);
+      const event = type === 'checkbox' ? 'change' : 'input';
+      const getValue = () => type === 'checkbox' ? element.checked : element.value;
 
-            // Xử lý logic đặc biệt cho Spotify Playlist
-            if (id === 'spotifyPlaylist') {
-                updateConfig('platform.spotify.album', value);
-            }
+      element.addEventListener(event, () => {
+        const value = getValue();
+        updateConfig(key, value);
 
-            if (id.startsWith('spotifyClient')) {
-                toggleSpotifySwitches();
-            }
-        });
+        // Xử lý logic đặc biệt cho Spotify Playlist
+        if (id === 'spotifyPlaylist') {
+          updateConfig('platform.spotify.album', value);
+        }
+
+        if (id.startsWith('spotifyClient')) {
+          toggleSpotifySwitches();
+        }
+      });
     });
-});
+  });
 </script>

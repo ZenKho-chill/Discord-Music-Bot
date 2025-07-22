@@ -1,20 +1,20 @@
 /* Thêm font Space Grotesk từ Google Fonts */
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap");
 
 /* Reset CSS */
 :root {
-  --primary: #5865F2;
-  --primary-hover: #4752C4;
-  --background: #2B2D31;
+  --primary: #5865f2;
+  --primary-hover: #4752c4;
+  --background: #2b2d31;
   --surface: #313338;
-  --surface-dark: #1E1F22;
+  --surface-dark: #1e1f22;
   --input-bg: #222327;
-  --text: #FFFFFF;
-  --text-secondary: #B5BAC1;
-  --error: #F23F42;
-  --link: #00A8FC;
+  --text: #ffffff;
+  --text-secondary: #b5bac1;
+  --error: #f23f42;
+  --link: #00a8fc;
   --border-color: rgba(255, 255, 255, 0.1);
-  --yellow: #FEE75C;
+  --yellow: #fee75c;
 }
 
 body {
@@ -23,7 +23,7 @@ body {
   min-height: 100vh;
   background-color: var(--background);
   color: var(--text);
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
   display: flex;
   flex-direction: column;
 }

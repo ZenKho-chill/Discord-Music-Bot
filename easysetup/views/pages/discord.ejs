@@ -3,40 +3,43 @@
 <link rel="stylesheet" href="/easysetup/public/css/discord.css">
 <%- contentFor('script') %>
 <script>
-document.addEventListener('DOMContentLoaded', () => {
+  document.addEventListener('DOMContentLoaded', () => {
     // Hàm update config chung
     const updateConfig = async (key, value) => {
-        try {
-            await fetch('/api/update-config', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ key, value }),
-            });
-        } catch (error) {
-            console.error('Lỗi khi cập nhật config:', error);
-        }
+      try {
+        await fetch('/api/update-config', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            key,
+            value
+          }),
+        });
+      } catch (error) {
+        console.error('Lỗi khi cập nhật config:', error);
+      }
     };
 
     // Ánh xạ ID của input tới key trong config
     const configMapping = {
-        'discordId': 'masterAdmin',
-        'botToken': 'token',
-        'clientId': 'clientId',
-        'clientSecret': 'clientSecret', // Cần chắc chắn key này tồn tại trong object dashboard
+      'discordId': 'masterAdmin',
+      'botToken': 'token',
+      'clientId': 'clientId',
+      'clientSecret': 'clientSecret', // Cần chắc chắn key này tồn tại trong object dashboard
     };
 
     // Lấy config và điền vào form
     fetch('/api/get-config')
-        .then(res => res.json())
-        .then(config => {
-            document.getElementById('discordId').value = config.masterAdmin || '';
-            document.getElementById('botToken').value = config.token || '';
-            document.getElementById('clientId').value = config.clientId || '';
-            // Giả sử clientSecret nằm trong dashboard object
-            document.getElementById('clientSecret').value = config.dashboard.clientSecret || '';
-        });
+      .then(res => res.json())
+      .then(config => {
+        document.getElementById('discordId').value = config.masterAdmin || '';
+        document.getElementById('botToken').value = config.token || '';
+        document.getElementById('clientId').value = config.clientId || '';
+        // Giả sử clientSecret nằm trong dashboard object
+        document.getElementById('clientSecret').value = config.dashboard.clientSecret || '';
+      });
 
     const botTokenInput = document.getElementById('botToken');
     const tokenStatusIcon = document.getElementById('token-status');
@@ -49,92 +52,167 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Hàm kiểm tra token
     const validateToken = async (token) => {
-        botNameDisplay.textContent = ''; // Xóa tên bot cũ
-        if (!token) {
-            tokenStatusIcon.style.display = 'none';
-            return;
+      botNameDisplay.textContent = ''; // Xóa tên bot cũ
+      if (!token) {
+        tokenStatusIcon.style.display = 'none';
+        return;
+      }
+
+      tokenStatusIcon.style.display = 'block';
+      tokenStatusIcon.className = 'token-status-icon loading';
+
+      try {
+        const response = await fetch('/api/validate-token', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            token
+          }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          tokenStatusIcon.className = 'token-status-icon valid';
+          botNameDisplay.textContent = data.botName; // Hiển thị tên bot
+        } else {
+          tokenStatusIcon.className = 'token-status-icon invalid';
         }
-
-        tokenStatusIcon.style.display = 'block';
-        tokenStatusIcon.className = 'token-status-icon loading';
-
-        try {
-            const response = await fetch('/api/validate-token', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ token }),
-            });
-            
-            const data = await response.json();
-
-            if (response.ok) {
-                tokenStatusIcon.className = 'token-status-icon valid';
-                botNameDisplay.textContent = data.botName; // Hiển thị tên bot
-            } else {
-                tokenStatusIcon.className = 'token-status-icon invalid';
-            }
-        } catch (error) {
-            console.error('Lỗi khi kiểm tra token:', error);
-            tokenStatusIcon.className = 'token-status-icon invalid';
-        }
+      } catch (error) {
+        console.error('Lỗi khi kiểm tra token:', error);
+        tokenStatusIcon.className = 'token-status-icon invalid';
+      }
     };
-    
+
     // Hàm kiểm tra Client ID và Secret
     const validateCredentials = async () => {
-        const clientId = clientIdInput.value;
-        const clientSecret = clientSecretInput.value;
+      const clientId = clientIdInput.value;
+      const clientSecret = clientSecretInput.value;
 
-        if (!clientId || !clientSecret) {
-            credentialStatusIcon.style.display = 'none';
-            return;
+      if (!clientId || !clientSecret) {
+        credentialStatusIcon.style.display = 'none';
+        return;
+      }
+
+      credentialStatusIcon.style.display = 'block';
+      credentialStatusIcon.className = 'token-status-icon loading';
+
+      try {
+        const response = await fetch('/api/validate-credentials', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            clientId,
+            clientSecret
+          }),
+        });
+
+        if (response.ok) {
+          credentialStatusIcon.className = 'token-status-icon valid';
+        } else {
+          credentialStatusIcon.className = 'token-status-icon invalid';
         }
-
-        credentialStatusIcon.style.display = 'block';
-        credentialStatusIcon.className = 'token-status-icon loading';
-
-        try {
-            const response = await fetch('/api/validate-credentials', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ clientId, clientSecret }),
-            });
-
-            if (response.ok) {
-                credentialStatusIcon.className = 'token-status-icon valid';
-            } else {
-                credentialStatusIcon.className = 'token-status-icon invalid';
-            }
-        } catch (error) {
-            console.error('Lỗi khi kiểm tra credentials:', error);
-            credentialStatusIcon.className = 'token-status-icon invalid';
-        }
+      } catch (error) {
+        console.error('Lỗi khi kiểm tra credentials:', error);
+        credentialStatusIcon.className = 'token-status-icon invalid';
+      }
     };
 
     // Thêm event listener cho các input
     Object.keys(configMapping).forEach(id => {
-        const input = document.getElementById(id);
-        input.addEventListener('input', (e) => {
-            let key = configMapping[id];
-            // Xử lý key đặc biệt
-            if (id === 'clientSecret') {
-                key = 'dashboard.clientSecret';
-            }
-            updateConfig(key, e.target.value);
+      const input = document.getElementById(id);
+      input.addEventListener('input', (e) => {
+        let key = configMapping[id];
+        // Xử lý key đặc biệt
+        if (id === 'clientSecret') {
+          key = 'dashboard.clientSecret';
+        }
+        updateConfig(key, e.target.value);
 
-            // Xử lý kiểm tra token
-            if (id === 'botToken') {
-                clearTimeout(validationTimeout);
-                validationTimeout = setTimeout(() => validateToken(e.target.value), 800); // Chờ 800ms sau khi ngừng gõ
-            }
+        // Xử lý kiểm tra token
+        if (id === 'botToken') {
+          clearTimeout(validationTimeout);
+          validationTimeout = setTimeout(() => validateToken(e.target.value), 800); // Chờ 800ms sau khi ngừng gõ
+        }
 
-            // Xử lý kiểm tra credentials
-            if (id === 'clientId' || id === 'clientSecret') {
-                clearTimeout(credentialTimeout);
-                credentialTimeout = setTimeout(validateCredentials, 800);
-            }
-        });
+        // Xử lý kiểm tra credentials
+        if (id === 'clientId' || id === 'clientSecret') {
+          clearTimeout(credentialTimeout);
+          credentialTimeout = setTimeout(validateCredentials, 800);
+        }
+      });
     });
-});
+  });
+</script>
+<script>
+  // Lưu trữ dữ liệu form tạm thời
+  let formData = JSON.parse(sessionStorage.getItem('setupData') || '{}');
+
+  // Khôi phục dữ liệu đã nhập
+  function restoreFormData() {
+    const fields = ['discordId', 'botToken', 'clientId', 'clientSecret'];
+    fields.forEach(field => {
+      const input = document.getElementById(field);
+      if (input && formData[field]) {
+        input.value = formData[field];
+      }
+    });
+  }
+
+  // Lưu dữ liệu form
+  function saveFormData() {
+    const fields = ['discordId', 'botToken', 'clientId', 'clientSecret'];
+    fields.forEach(field => {
+      const input = document.getElementById(field);
+      if (input) {
+        formData[field] = input.value;
+      }
+    });
+    sessionStorage.setItem('setupData', JSON.stringify(formData));
+  }
+
+  // Validate form
+  function validateForm() {
+    const fields = ['discordId', 'botToken', 'clientId', 'clientSecret'];
+    let isValid = true;
+    fields.forEach(field => {
+      const input = document.getElementById(field);
+      if (!input.value.trim()) {
+        input.classList.add('error');
+        isValid = false;
+      } else {
+        input.classList.remove('error');
+      }
+    });
+    return isValid;
+  }
+
+  // Chuyển đến bước tiếp theo
+  async function saveAndNext() {
+    if (!validateForm()) {
+      alert('Vui lòng điền đầy đủ thông tin bắt buộc');
+      return;
+    }
+
+    saveFormData();
+    window.location.href = '/setup/database';
+  }
+
+  // Khôi phục dữ liệu khi trang được tải
+  document.addEventListener('DOMContentLoaded', restoreFormData);
+
+  // Xử lý các link hướng dẫn
+  document.querySelectorAll('.help-link').forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      // TODO: Implement help modal or redirect to documentation
+      alert('Chức năng hướng dẫn đang được phát triển');
+    });
+  });
 </script>
 <div class="container">
   <%- include('../partials/navbar', { currentStep: 1 }) %>
@@ -196,6 +274,3 @@ document.addEventListener('DOMContentLoaded', () => {
 </div>
 <%- include('../partials/footer') %>
 <script src="/easysetup/public/js/setup.js"></script>
-<script>
-  setupForm('discordForm', ['discordId', 'botToken', 'clientId', 'clientSecret'], '/setup/discord');
-</script>
