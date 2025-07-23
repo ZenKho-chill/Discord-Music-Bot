@@ -1,7 +1,8 @@
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
-const config = require('../config/config');
+// Định nghĩa biến config, sẽ require sau khi chắc chắn file tồn tại
+let config;
 const { Client, GatewayIntentBits } = require('discord.js'); // Thêm discord.js
 const axios = require('axios'); // Thêm axios
 const expressLayouts = require('express-ejs-layouts');
@@ -14,6 +15,35 @@ const logger = {
   info: console.log,
   warn: console.warn
 };
+
+// Nếu config.js không tồn tại thì tự động tải từ github và lưu lại
+const configPath = path.join(__dirname, '../config/config.js');
+if (!fs.existsSync(configPath)) {
+  logger.info('[Easysetup] Không tìm thấy config.js, đang tải file mẫu từ Github...');
+  const https = require('https');
+  const exampleUrl = 'https://raw.githubusercontent.com/ZenKho-chill/Discord-Music-Bot/refs/heads/main/config/config.js.example';
+  const file = fs.createWriteStream(configPath);
+  https.get(exampleUrl, (response) => {
+    if (response.statusCode !== 200) {
+      logger.error(`[Easysetup] Không thể tải file config.js.example từ Github. Status: ${response.statusCode}`);
+      process.exit(1);
+    }
+    response.pipe(file);
+    file.on('finish', () => {
+      file.close();
+      logger.info('[Easysetup] Đã tải config.js từ Github thành công. Vui lòng cấu hình lại.');
+      process.exit(0);
+    });
+  }).on('error', (err) => {
+    logger.error('[Easysetup] Lỗi khi tải file config.js.example:', err);
+    process.exit(1);
+  });
+  // Dừng thực thi script tại đây để tránh require lỗi
+  return;
+}
+
+// Chỉ require config sau khi chắc chắn file đã tồn tại
+config = require('../config/config');
 
 // Tạo mã PIN 4 số ngẫu nhiên
 let currentPin = '';
@@ -495,6 +525,30 @@ app.post('/api/update-discord', requireAuth, (req, res) => {
     }
   } catch (err) {
     logger.error('[Easysetup] Lỗi cập nhật Discord:', err);
+    res.status(500).json({ success: false, message: 'Lỗi máy chủ.' });
+  }
+});
+
+// API cập nhật đồng thời mongodb.ip và mongodb.port
+app.post('/api/update-db-ip-port', requireAuth, (req, res) => {
+  try {
+    const { ip, port } = req.body;
+    if (typeof ip !== 'string' || typeof port !== 'number') {
+      return res.status(400).json({ success: false, message: 'Thiếu ip hoặc port' });
+    }
+    const configPath = path.join(__dirname, '../config/config.js');
+    let configContent = fs.readFileSync(configPath, 'utf8');
+    let originalContent = configContent;
+    configContent = configContent.replace(/(ip:\s*)['\"][^'\"]*['\"]/, `$1'${ip}'`);
+    configContent = configContent.replace(/(port:\s*)[0-9]+/, `$1${port}`);
+    if (originalContent !== configContent) {
+      fs.writeFileSync(configPath, configContent, 'utf8');
+      res.json({ success: true, message: 'Đã cập nhật ip và port' });
+    } else {
+      res.json({ success: true, message: 'Không có thay đổi để cập nhật' });
+    }
+  } catch (err) {
+    logger.error('[Easysetup] Lỗi cập nhật ip/port:', err);
     res.status(500).json({ success: false, message: 'Lỗi máy chủ.' });
   }
 });

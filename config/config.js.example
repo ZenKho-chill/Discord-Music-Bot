@@ -83,7 +83,7 @@ module.exports = {
   mongodb: {
     // Thông tin kết nối cơ bản
     ip: '',      // IP hoặc hostname của MongoDB server
-    port: ,                // Port của MongoDB (mặc định: 27017)
+    port: 27017,                // Port của MongoDB (mặc định: 27017)
     database: '', // Tên cơ sở dữ liệu
     
     // Cài đặt xác thực
