@@ -552,3 +552,42 @@ app.post('/api/update-db-ip-port', requireAuth, (req, res) => {
     res.status(500).json({ success: false, message: 'Lỗi máy chủ.' });
   }
 });
+
+// API kiểm tra kết nối MongoDB và xác định có cần xác thực không
+app.post('/api/check-mongo', requireAuth, async (req, res) => {
+  const { ip, port, dbName, username, password } = req.body;
+  if (!ip || !dbName) return res.json({ success: false, message: 'Thiếu thông tin IP hoặc database' });
+  let needAuth = false;
+  let success = false;
+  let message = '';
+  const { MongoClient } = require('mongodb');
+  let uri = `mongodb://${ip}:${port || 27017}`;
+  if (username && password) {
+    uri = `mongodb://${encodeURIComponent(username)}:${encodeURIComponent(password)}@${ip}:${port || 27017}`;
+  }
+  const client = new MongoClient(uri, { serverSelectionTimeoutMS: 3000 });
+  try {
+    await client.connect();
+    // Luôn check connect trước bằng ping
+    await client.db(dbName).command({ ping: 1 });
+    // Sau khi ping thành công, luôn thử listCollections để check quyền/auth
+    try {
+      await client.db(dbName).listCollections().toArray();
+      success = true;
+      needAuth = false;
+      message = 'Kết nối + xác thực thành công (có quyền listCollections)';
+    } catch (authErr) {
+      success = false;
+      needAuth = true;
+    }
+  } catch (err) {
+    if (err.message && /Authentication failed|auth failed|requires authentication|Unauthorized/i.test(err.message)) {
+      needAuth = true;
+      message = 'Database yêu cầu xác thực';
+    } else {
+      message = err.message || 'Kết nối thất bại';
+    }
+  }
+  try { await client.close(); } catch(e) {}
+  res.json({ success, needAuth, message });
+});

@@ -30,7 +30,7 @@
 
       <div class="form-group">
         <label>Mật khẩu của bạn<span class="required">*</span></label>
-        <input type="password" id="dbPassword" placeholder="Mật khẩu Database ở đây...">
+        <input type="text" id="dbPassword" placeholder="Mật khẩu Database ở đây...">
       </div>
     </div>
   </div>
@@ -41,66 +41,55 @@
 
 <%- contentFor('script') %>
 <script>
-  document.addEventListener('DOMContentLoaded', () => {
-    // === Logic ẩn/hiện trường xác thực ===
-    const useAuthCheckbox = document.getElementById('useAuth');
-    const authFields = document.getElementById('authFields');
-    const dbUsernameInput = document.getElementById('dbUsername');
-    const dbPasswordInput = document.getElementById('dbPassword');
-
-    function toggleAuthFields() {
-      const isAuthEnabled = useAuthCheckbox.checked;
-      authFields.classList.toggle('hidden', !isAuthEnabled);
-      dbUsernameInput.required = isAuthEnabled;
-      dbPasswordInput.required = isAuthEnabled;
-      if (!isAuthEnabled) {
-        dbUsernameInput.value = '';
-        dbPasswordInput.value = '';
-        // Cập nhật giá trị rỗng vào config
-        updateConfig('mongodb.auth.username', '');
-        updateConfig('mongodb.auth.password', '');
-      }
+  let useAuthCheckbox, authFields, dbUsernameInput, dbPasswordInput;
+  // === Logic ẩn/hiện trường xác thực ===
+  // Hàm này cần ở scope toàn cục để các hàm khác gọi được
+  function toggleAuthFields() {
+    const isAuthEnabled = useAuthCheckbox.checked;
+    authFields.classList.toggle('hidden', !isAuthEnabled);
+    dbUsernameInput.required = isAuthEnabled;
+    dbPasswordInput.required = isAuthEnabled;
+    if (!isAuthEnabled) {
+      dbUsernameInput.value = '';
+      dbPasswordInput.value = '';
+      // Cập nhật giá trị rỗng vào config
+      updateConfig('mongodb.auth.username', '');
+      updateConfig('mongodb.auth.password', '');
     }
+  }
 
-    // === Logic Dynamic Save ===
-    const updateConfig = async (key, value) => {
-      try {
-        await fetch('/api/update-config', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            key,
-            value
-          }),
-        });
-      } catch (error) {
-        console.error('Lỗi khi cập nhật config:', error);
-      }
-    };
+  // Hàm cập nhật config, cũng cần ở scope toàn cục
+  const updateConfig = async (key, value) => {
+    try {
+      await fetch('/api/update-config', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          key,
+          value
+        }),
+      });
+    } catch (error) {
+      console.error('Lỗi khi cập nhật config:', error);
+    }
+  };
 
-    const inputs = [{
-        id: 'dbHost',
-        key: 'mongodb.ip'
-      },
-      {
-        id: 'dbName',
-        key: 'mongodb.database'
-      },
-      {
-        id: 'useAuth',
-        key: 'mongodb.auth.enabled',
-        type: 'checkbox'
-      },
-      {
-        id: 'dbUsername',
-        key: 'mongodb.auth.username'
-      },
-      {
-        id: 'dbPassword',
-        key: 'mongodb.auth.password'
-      },
+  document.addEventListener('DOMContentLoaded', () => {
+    // Gán biến toàn cục cho các trường input
+    useAuthCheckbox = document.getElementById('useAuth');
+    authFields = document.getElementById('authFields');
+    dbUsernameInput = document.getElementById('dbUsername');
+    dbPasswordInput = document.getElementById('dbPassword');
+
+    // Danh sách các trường input và key tương ứng
+    const inputs = [
+      { id: 'dbHost', key: 'mongodb.ip' },
+      { id: 'dbName', key: 'mongodb.database' },
+      { id: 'useAuth', key: 'mongodb.auth.enabled', type: 'checkbox' },
+      { id: 'dbUsername', key: 'mongodb.auth.username' },
+      { id: 'dbPassword', key: 'mongodb.auth.password' },
     ];
 
     // Lấy config và điền vào form
@@ -124,12 +113,8 @@
         toggleAuthFields();
       });
 
-    // Thêm event listener
-    inputs.forEach(({
-      id,
-      key,
-      type
-    }) => {
+    // Thêm event listener cho các trường input
+    inputs.forEach(({ id, key, type }) => {
       const element = document.getElementById(id);
       const event = type === 'checkbox' ? 'change' : 'input';
       const getValue = () => type === 'checkbox' ? element.checked : element.value;
@@ -142,17 +127,32 @@
           if (ipPortMatch) {
             fetch('/api/update-db-ip-port', {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ ip: ipPortMatch[1], port: parseInt(ipPortMatch[2], 10) })
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                ip: ipPortMatch[1],
+                port: parseInt(ipPortMatch[2], 10)
+              })
             });
+            // Debounce kiểm tra kết nối
+            clearTimeout(window._mongoDebounce);
+            window._mongoDebounce = setTimeout(() => checkMongoConnectionRetry(0), 800);
             return;
           } else if (value) {
             // Nếu chỉ nhập IP, tự động set port về mặc định 27017
             fetch('/api/update-db-ip-port', {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ ip: value, port: 27017 })
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                ip: value,
+                port: 27017
+              })
             });
+            clearTimeout(window._mongoDebounce);
+            window._mongoDebounce = setTimeout(() => checkMongoConnectionRetry(0), 800);
             return;
           }
         }
@@ -161,12 +161,145 @@
         // Xử lý logic đặc biệt cho Tên database
         if (id === 'dbName') {
           updateConfig('mongodb.auth.authSource', value);
+          clearTimeout(window._mongoDebounce);
+          window._mongoDebounce = setTimeout(() => checkMongoConnectionRetry(0), 800);
         }
 
         if (id === 'useAuth') {
           toggleAuthFields();
         }
+
+        // Khi nhập username/password thì chỉ kiểm tra xác thực
+        if (id === 'dbUsername' || id === 'dbPassword') {
+          clearTimeout(window._mongoDebounce);
+          window._mongoDebounce = setTimeout(() => checkMongoAuthRetry(0), 800);
+        }
       });
     });
   });
+
+  // Hiển thị thông báo kết nối
+  const dbCheckResult = document.createElement('div');
+  dbCheckResult.id = 'dbCheckResult';
+  dbCheckResult.style.marginTop = '8px';
+  document.querySelector('.form-content').appendChild(dbCheckResult);
+
+  // Hàm retry kiểm tra kết nối MongoDB (dùng cho dbHost/dbName)
+  async function checkMongoConnectionRetry(retry = 0) {
+    const ipValue = document.getElementById('dbHost').value.trim();
+    const dbNameValue = document.getElementById('dbName').value.trim();
+    let ip = ipValue;
+    let port = 27017;
+    const ipPortMatch = ipValue.match(/^(.+?):(\d{2,5})$/);
+    if (ipPortMatch) {
+      ip = ipPortMatch[1];
+      port = parseInt(ipPortMatch[2], 10);
+    }
+    dbCheckResult.textContent = 'Đang kiểm tra kết nối...';
+    dbCheckResult.style.color = '#888';
+    try {
+      const res = await fetch('/api/check-mongo', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          ip,
+          port,
+          dbName: dbNameValue
+        })
+      });
+      const text = await res.text();
+      console.log('[DEBUG] Response text:', text);
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (e) {
+        console.error('[DEBUG] Lỗi parse JSON:', text);
+        throw e;
+      }
+      console.log('[DEBUG] Parsed data:', data);
+      // Luôn bật switch nếu needAuth true, kể cả khi success false
+      if (data.needAuth) {
+        if (!useAuthCheckbox.checked) {
+          useAuthCheckbox.checked = true;
+          toggleAuthFields();
+          updateConfig('mongodb.auth.enabled', true);
+        } else {
+          toggleAuthFields();
+        }
+        dbCheckResult.textContent += ' Database yêu cầu xác thực, đã tự động bật xác thực.';
+      }
+      if (data.success) {
+        dbCheckResult.textContent = 'Kết nối thành công!' + (data.needAuth ? ' Database yêu cầu xác thực, đã tự động bật xác thực.' : '');
+        dbCheckResult.style.color = 'green';
+      } else {
+        dbCheckResult.textContent = '❌ ' + (data.message || 'Kết nối thất bại!') + (data.needAuth ? ' Database yêu cầu xác thực, đã tự động bật xác thực.' : '');
+        dbCheckResult.style.color = 'red';
+        if (retry < 2) {
+          dbCheckResult.textContent += `\nTự động thử lại lần ${retry + 2} sau 5 giây...`;
+          setTimeout(() => checkMongoConnectionRetry(retry + 1), 5000);
+        }
+      }
+    } catch (err) {
+      console.error('[DEBUG] Lỗi catch:', err);
+      dbCheckResult.textContent = 'Lỗi kiểm tra kết nối!';
+      dbCheckResult.style.color = 'red';
+      if (retry < 2) {
+        dbCheckResult.textContent += `\nTự động thử lại lần ${retry + 2} sau 5 giây...`;
+        setTimeout(() => checkMongoConnectionRetry(retry + 1), 5000);
+      }
+    }
+  }
+
+  // Hàm retry kiểm tra xác thực MongoDB (dùng cho dbUsername/dbPassword)
+  async function checkMongoAuthRetry(retry = 0) {
+    const ipValue = document.getElementById('dbHost').value.trim();
+    const dbNameValue = document.getElementById('dbName').value.trim();
+    const username = dbUsernameInput.value.trim();
+    const password = dbPasswordInput.value.trim();
+    let ip = ipValue;
+    let port = 27017;
+    const ipPortMatch = ipValue.match(/^(.+?):(\d{2,5})$/);
+    if (ipPortMatch) {
+      ip = ipPortMatch[1];
+      port = parseInt(ipPortMatch[2], 10);
+    }
+    dbCheckResult.textContent = 'Đang kiểm tra xác thực...';
+    dbCheckResult.style.color = '#888';
+    try {
+      const res = await fetch('/api/check-mongo', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          ip,
+          port,
+          dbName: dbNameValue,
+          username,
+          password
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        dbCheckResult.textContent = 'Xác thực thành công!';
+        dbCheckResult.style.color = 'green';
+      } else {
+        dbCheckResult.textContent = '❌ ' + (data.message || 'Xác thực thất bại!');
+        dbCheckResult.style.color = 'red';
+        if (retry < 2) {
+          dbCheckResult.textContent += `\nTự động thử lại lần ${retry + 2} sau 5 giây...`;
+          setTimeout(() => checkMongoAuthRetry(retry + 1), 5000);
+        }
+      }
+    } catch (err) {
+      dbCheckResult.textContent = 'Lỗi kiểm tra xác thực!';
+      dbCheckResult.style.color = 'red';
+      if (retry < 2) {
+        dbCheckResult.textContent += `\nTự động thử lại lần ${retry + 2} sau 5 giây...`;
+        setTimeout(() => checkMongoAuthRetry(retry + 1), 5000);
+      }
+    }
+  }
 </script>
