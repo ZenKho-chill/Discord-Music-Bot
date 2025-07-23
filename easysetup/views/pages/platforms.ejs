@@ -177,6 +177,10 @@
           spotifyPlaylistSwitch.disabled = false;
           spotifySingleSwitch.checked = true;
           spotifyPlaylistSwitch.checked = true;
+          // Cập nhật config khi hợp lệ
+          updateConfig('platform.spotify.single', true);
+          updateConfig('platform.spotify.playlist', true);
+          updateConfig('platform.spotify.album', true);
         } else {
           resultDiv.textContent = '❌ ' + (data.message || 'Thông tin không hợp lệ!');
           resultDiv.style.color = 'red';
@@ -184,6 +188,10 @@
           spotifyPlaylistSwitch.disabled = true;
           spotifySingleSwitch.checked = false;
           spotifyPlaylistSwitch.checked = false;
+          // Đảm bảo config cũng false khi không hợp lệ
+          updateConfig('platform.spotify.single', false);
+          updateConfig('platform.spotify.playlist', false);
+          updateConfig('platform.spotify.album', false);
         }
       } catch (err) {
         resultDiv.textContent = 'Lỗi kết nối máy chủ!';
@@ -192,6 +200,9 @@
         spotifyPlaylistSwitch.disabled = true;
         spotifySingleSwitch.checked = false;
         spotifyPlaylistSwitch.checked = false;
+        updateConfig('platform.spotify.single', false);
+        updateConfig('platform.spotify.playlist', false);
+        updateConfig('platform.spotify.album', false);
       }
     }
 
