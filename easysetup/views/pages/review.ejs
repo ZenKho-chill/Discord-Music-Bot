@@ -1,19 +1,27 @@
 <%- contentFor('style') %>
 <link rel="stylesheet" href="/easysetup/public/css/review.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/atom-one-dark.min.css">
+<script src="https://cdn.tailwindcss.com"></script>
 <div class="container">
   <%- include('../partials/navbar') %>
 
   <div class="form-content">
     <div class="review-container">
-      <div class="review-content" contenteditable="true" spellcheck="false" id="config-editor">
-        <pre><code id="config-content-display" class="language-javascript">Đang tải nội dung...</code></pre>
+      <div class="review-content relative" id="config-editor">
+        <div id="review-alert" style="display:none; position:absolute; top:16px; right:16px; z-index:50; min-width:320px; max-width:400px;"></div>
+        <div class="code-wrapper" style="min-height:200px; max-height:85vh; overflow:auto; position:relative; background:#282c34; border-radius:4px; display:flex;">
+          <div class="line-numbers" id="line-numbers" style="background:#282c34;color:#636d83;padding:16px 8px 16px 16px;font-family:'Monaco','Menlo','Ubuntu Mono',monospace;font-size:14px;line-height:1.5;text-align:right;user-select:none;min-width:50px;white-space:pre;"></div>
+          <div class="code-content" style="flex:1;position:relative;">
+            <pre style="margin:0;padding:16px;overflow:visible;"><code id="config-content-display" class="language-javascript" contenteditable="true" spellcheck="false" style="display:block;font-family:'Monaco','Menlo','Ubuntu Mono',monospace;font-size:14px;line-height:1.5;color:#abb2bf;background:transparent;border:none;outline:none;resize:none;white-space:pre;word-wrap:break-word;overflow-wrap:break-word;padding:0;min-height:auto;">Đang tải nội dung...</code></pre>
+          </div>
+        </div>
       </div>
       <div class="setup-actions">
-        <button class="btn-save" onclick="saveConfig()">Lưu</button>
+        <button class="btn-save" id="btn-save-review">Lưu</button>
       </div>
     </div>
   </div>
+</div>
 </div>
 
 <%- contentFor('script') %>
@@ -22,7 +30,51 @@
   document.addEventListener('DOMContentLoaded', () => {
     const editor = document.getElementById('config-editor');
     const codeElement = document.getElementById('config-content-display');
+    const lineNumbers = document.getElementById('line-numbers');
+    const btnSave = document.getElementById('btn-save-review');
+    const alertDiv = document.getElementById('review-alert');
     let saveTimeout;
+
+    // Hàm cập nhật số dòng
+    function updateLineNumbers() {
+      const content = codeElement.textContent || '';
+      const lines = content.split('\n');
+      const lineCount = lines.length;
+      let lineNumbersHtml = '';
+      for (let i = 1; i <= lineCount; i++) {
+        lineNumbersHtml += i + '\n';
+      }
+      lineNumbers.textContent = lineNumbersHtml;
+    }
+
+    // Hàm lấy dòng hiện tại của con trỏ
+    function getCurrentLine() {
+      const selection = window.getSelection();
+      if (selection.rangeCount === 0) return 1;
+      const range = selection.getRangeAt(0);
+      const preCaretRange = range.cloneRange();
+      preCaretRange.selectNodeContents(codeElement);
+      preCaretRange.setEnd(range.endContainer, range.endOffset);
+      const textBeforeCaret = preCaretRange.toString();
+      return textBeforeCaret.split('\n').length;
+    }
+
+    // Hàm highlight dòng hiện tại
+    function highlightCurrentLine() {
+      const currentLine = getCurrentLine();
+      const lines = lineNumbers.textContent.split('\n');
+      let highlightedHtml = '';
+      for (let i = 0; i < lines.length; i++) {
+        if (lines[i].trim() === '') continue;
+        const lineNum = i + 1;
+        if (lineNum === currentLine) {
+          highlightedHtml += `<span style="background:#2c323c;color:#abb2bf;font-weight:bold;">${lines[i]}</span>\n`;
+        } else {
+          highlightedHtml += lines[i] + '\n';
+        }
+      }
+      lineNumbers.innerHTML = highlightedHtml;
+    }
 
     // Lấy nội dung config ban đầu
     fetch('/api/get-config-content')
@@ -31,18 +83,21 @@
         if (data.success) {
           codeElement.textContent = data.content;
           hljs.highlightElement(codeElement);
+          updateLineNumbers();
         } else {
           codeElement.textContent = 'Lỗi khi tải nội dung file config.';
+          updateLineNumbers();
         }
       })
       .catch(error => {
         console.error('Error fetching config content:', error);
         codeElement.textContent = 'Lỗi khi tải nội dung file config.';
+        updateLineNumbers();
       });
 
     // Hàm lưu nội dung
     const saveContent = async () => {
-      const content = editor.textContent || ""; // Lấy text content của div
+      const content = codeElement.textContent || "";
       try {
         await fetch('/api/save-config-content', {
           method: 'POST',
@@ -50,7 +105,7 @@
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            content: content
+            content
           })
         });
       } catch (error) {
@@ -58,10 +113,71 @@
       }
     };
 
-    // Thêm event listener cho việc chỉnh sửa
-    editor.addEventListener('input', () => {
+    // Cập nhật số dòng khi chỉnh sửa
+    codeElement.addEventListener('input', () => {
+      updateLineNumbers();
       clearTimeout(saveTimeout);
-      saveTimeout = setTimeout(saveContent, 1000); // Lưu sau 1 giây ngừng gõ
+      saveTimeout = setTimeout(saveContent, 1000);
+    });
+
+    // Highlight dòng hiện tại khi di chuyển con trỏ
+    codeElement.addEventListener('click', highlightCurrentLine);
+    codeElement.addEventListener('keyup', highlightCurrentLine);
+    codeElement.addEventListener('focus', highlightCurrentLine);
+
+    // Khi bấm nút Lưu, kiểm tra các trường bắt buộc
+    btnSave.addEventListener('click', async () => {
+      alertDiv.style.display = 'none';
+      await saveContent();
+      // Gọi API validate-required-config
+      try {
+        const res = await fetch('/api/validate-required-config');
+        const data = await res.json();
+        if (!data.success) {
+          // Hiển thị alert vàng nếu thiếu trường bắt buộc
+          alertDiv.style.display = 'block';
+          alertDiv.innerHTML = `
+            <div class="flex p-4 mb-4 text-sm text-yellow-800 rounded-lg bg-yellow-50 dark:bg-gray-800 dark:text-yellow-300" role="alert">
+              <svg class="shrink-0 inline w-4 h-4 me-3 mt-[2px]" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"/>
+              </svg>
+              <span class="sr-only">Cảnh báo</span>
+              <div>
+                <span class="font-medium">${data.message || 'Thiếu trường bắt buộc:'}</span>
+                ${data.missing ? `<ul class="mt-1.5 list-disc list-inside">${data.missing.map(f=>`<li>${f}</li>`).join('')}</ul>` : ''}
+              </div>
+            </div>
+          `;
+        } else {
+          // Hiển thị alert xanh khi hợp lệ và hướng dẫn khởi động lại bot
+          alertDiv.style.display = 'block';
+          alertDiv.innerHTML = `
+            <div class="flex p-4 mb-4 text-sm text-green-800 rounded-lg bg-green-50 dark:bg-gray-800 dark:text-green-400" role="alert">
+              <svg class="shrink-0 inline w-4 h-4 me-3 mt-[2px]" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M16.707 5.293a1 1 0 0 0-1.414 0L9 11.586 6.707 9.293a1 1 0 0 0-1.414 1.414l3 3a1 1 0 0 0 1.414 0l7-7a1 1 0 0 0-1.414-1.414z"/>
+              </svg>
+              <span class="sr-only">Thành công</span>
+              <div>
+                <span class="font-medium">✔ Lưu cấu hình thành công!</span><br>
+                Vui lòng khởi động lại bot để áp dụng cấu hình mới.
+              </div>
+            </div>
+          `;
+        }
+      } catch (err) {
+        alertDiv.style.display = 'block';
+        alertDiv.innerHTML = `
+          <div class="flex p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400" role="alert">
+            <svg class="shrink-0 inline w-4 h-4 me-3 mt-[2px]" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"/>
+            </svg>
+            <span class="sr-only">Lỗi</span>
+            <div>
+              <span class="font-medium">Lỗi khi kiểm tra cấu hình!</span>
+            </div>
+          </div>
+        `;
+      }
     });
   });
 </script>

@@ -27,7 +27,7 @@
       'discordId': 'masterAdmin',
       'botToken': 'token',
       'clientId': 'clientId',
-      'clientSecret': 'clientSecret', // Cần chắc chắn key này tồn tại trong object dashboard
+      'clientSecret': 'dashboard.clientSecret', // Đảm bảo chỉ cập nhật đúng dashboard.clientSecret
     };
 
     // Lấy config và điền vào form
@@ -125,13 +125,21 @@
     // Thêm event listener cho các input
     Object.keys(configMapping).forEach(id => {
       const input = document.getElementById(id);
-      input.addEventListener('input', (e) => {
-        let key = configMapping[id];
-        // Xử lý key đặc biệt
-        if (id === 'clientSecret') {
-          key = 'dashboard.clientSecret';
+      input.addEventListener('input', async (e) => {
+        // Lấy giá trị hiện tại của tất cả các trường liên quan Discord
+        const masterAdmin = document.getElementById('discordId').value;
+        const token = document.getElementById('botToken').value;
+        const clientId = document.getElementById('clientId').value;
+        const clientSecret = document.getElementById('clientSecret').value;
+        try {
+          await fetch('/api/update-discord', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ masterAdmin, token, clientId, clientSecret })
+          });
+        } catch (err) {
+          console.error('Lỗi khi cập nhật Discord:', err);
         }
-        updateConfig(key, e.target.value);
 
         // Xử lý kiểm tra token
         if (id === 'botToken') {

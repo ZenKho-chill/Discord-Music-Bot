@@ -101,14 +101,14 @@ body {
 .setup-actions {
   position: absolute;
   bottom: 20px;
-  right: 20px;
+  right: 25px;
   z-index: 10; /* Đảm bảo nút luôn nổi lên trên */
 }
 
 .btn-save {
   background-color: #4caf50;
   color: white;
-  padding: 12px 24px;
+  padding: 12px 34px;
   font-size: 16px;
   font-weight: bold;
   border: none;
@@ -201,4 +201,55 @@ body {
 
 #status-message li {
   list-style-type: disc;
+}
+
+.code-wrapper {
+  min-height: 200px;
+  max-height: 85vh;
+  overflow: auto;
+  position: relative;
+  background: #282c34;
+  border-radius: 4px;
+}
+
+.code-wrapper pre {
+  margin: 0;
+  padding: 16px;
+  overflow: visible;
+  border-left: 1px solid;
+}
+
+.code-wrapper code {
+  display: block;
+  min-height: auto;
+  font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #abb2bf;
+  background: transparent;
+  border: none;
+  outline: none;
+  resize: none;
+  white-space: pre;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  padding: 0;
+}
+
+.code-wrapper::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.code-wrapper::-webkit-scrollbar-track {
+  background: #21252b;
+}
+
+.code-wrapper::-webkit-scrollbar-thumb {
+  background: #4b5563;
+  border-radius: 4px;
+}
+
+.code-wrapper::-webkit-scrollbar-thumb:hover {
+  background: #6b7280;
 }

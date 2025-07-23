@@ -223,11 +223,13 @@
 
     const inputs = [{
         id: 'spotifyClientId',
-        key: 'spotify.clientId'
+        key: 'spotify.clientId',
+        skipDashboard: true // Không cập nhật dashboard.clientId
       },
       {
         id: 'spotifyClientSecret',
-        key: 'spotify.clientSecret'
+        key: 'spotify.clientSecret',
+        skipDashboard: true // Không cập nhật dashboard.clientSecret
       },
       {
         id: 'ytSingle',
@@ -300,9 +302,30 @@
       const event = type === 'checkbox' ? 'change' : 'input';
       const getValue = () => type === 'checkbox' ? element.checked : element.value;
 
-      element.addEventListener(event, () => {
+      element.addEventListener(event, async () => {
         const value = getValue();
-        updateConfig(key, value);
+        // Nếu là trường Spotify Client ID/Secret thì gọi API riêng
+        if (
+          (id === 'spotifyClientId' && key === 'spotify.clientId') ||
+          (id === 'spotifyClientSecret' && key === 'spotify.clientSecret')
+        ) {
+          const clientId = document.getElementById('spotifyClientId').value;
+          const clientSecret = document.getElementById('spotifyClientSecret').value;
+          try {
+            await fetch('/api/update-spotify', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ clientId, clientSecret })
+            });
+          } catch (err) {
+            console.error('Lỗi khi cập nhật Spotify:', err);
+          }
+        } else if (key.startsWith('dashboard.')) {
+          // Không cập nhật bất kỳ key dashboard nào từ form này
+          return;
+        } else {
+          updateConfig(key, value);
+        }
 
         // Xử lý logic đặc biệt cho Spotify Playlist
         if (id === 'spotifyPlaylist') {

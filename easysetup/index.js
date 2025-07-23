@@ -295,12 +295,10 @@ app.post('/api/update-config', requireAuth, (req, res) => {
     let originalContent = configContent;
 
     const keys = key.split('.');
-
     let regex;
 
     // Phân biệt logic cho kiểu dữ liệu boolean và string
     if (typeof value === 'boolean') {
-      // Logic cho giá trị boolean (true/false, không có dấu nháy)
       if (keys.length === 3) {
         const [p1, p2, p3] = keys;
         regex = new RegExp(`(${p1}:\\s*{[\\s\\S]*?${p2}:\\s*{[\\s\\S]*?${p3}:\\s*)(true|false)`, 'g');
@@ -311,10 +309,8 @@ app.post('/api/update-config', requireAuth, (req, res) => {
         const [p1] = keys;
         regex = new RegExp(`(${p1}:\\s*)(true|false)`, 'g');
       }
-      // Thay thế bằng giá trị boolean mới
       configContent = configContent.replace(regex, `$1${value}`);
     } else {
-      // Logic cũ cho giá trị string (có dấu nháy đơn hoặc kép)
       let regexSingle, regexDouble;
       if (keys.length === 3) {
         const [p1, p2, p3] = keys;
@@ -337,7 +333,6 @@ app.post('/api/update-config', requireAuth, (req, res) => {
       fs.writeFileSync(configPath, configContent, 'utf8');
       res.json({ success: true, message: 'Đã cập nhật cấu hình' });
     } else {
-      // Không tìm thấy key nào để cập nhật, nhưng vẫn trả về thành công để tránh lỗi phía client
       res.json({ success: true, message: 'Không tìm thấy key trong config để cập nhật' });
     }
   } catch (error) {
@@ -443,4 +438,63 @@ app.post('/api/complete-setup', requireAuth, (req, res) => {
 const PORT = 3000;
 app.listen(PORT, () => {
   logger.info(`[Easysetup] Đang chạy tại http://localhost:${PORT}`);
+});
+
+// API cập nhật riêng cho Spotify Client ID/Secret (chỉ cho phép cập nhật spotify.clientId và spotify.clientSecret)
+app.post('/api/update-spotify', requireAuth, (req, res) => {
+  try {
+    const { clientId, clientSecret } = req.body;
+    if (typeof clientId !== 'string' || typeof clientSecret !== 'string') {
+      return res.status(400).json({ success: false, message: 'Thiếu thông tin.' });
+    }
+    const configPath = path.join(__dirname, '../config/config.js');
+    let configContent = fs.readFileSync(configPath, 'utf8');
+    let originalContent = configContent;
+    // Regex cập nhật clientId và clientSecret trong object spotify
+    configContent = configContent.replace(/(spotify:\s*{[^}]*clientId:\s*)['\"][^'\"]*['\"]/, `$1'${clientId}'`);
+    configContent = configContent.replace(/(spotify:\s*{[^}]*clientSecret:\s*)['\"][^'\"]*['\"]/, `$1'${clientSecret}'`);
+    if (originalContent !== configContent) {
+      fs.writeFileSync(configPath, configContent, 'utf8');
+      res.json({ success: true, message: 'Đã cập nhật Spotify Client ID/Secret' });
+    } else {
+      res.json({ success: true, message: 'Không tìm thấy key spotify trong config để cập nhật' });
+    }
+  } catch (err) {
+    logger.error('[Easysetup] Lỗi cập nhật Spotify:', err);
+    res.status(500).json({ success: false, message: 'Lỗi máy chủ.' });
+  }
+});
+
+// API cập nhật riêng cho Discord (masterAdmin, token, clientId, dashboard.clientSecret)
+app.post('/api/update-discord', requireAuth, (req, res) => {
+  try {
+    const { masterAdmin, token, clientId, clientSecret } = req.body;
+    const configPath = path.join(__dirname, '../config/config.js');
+    let configContent = fs.readFileSync(configPath, 'utf8');
+    let originalContent = configContent;
+    if (typeof masterAdmin === 'string') {
+      configContent = configContent.replace(/(masterAdmin:\s*)['\"][^'\"]*['\"]/, `$1'${masterAdmin}'`);
+    }
+    if (typeof token === 'string') {
+      configContent = configContent.replace(/(token:\s*)['\"][^'\"]*['\"]/, `$1'${token}'`);
+    }
+    if (typeof clientId === 'string') {
+      // Cập nhật clientId ở root
+      configContent = configContent.replace(/(clientId:\s*)['\"][^'\"]*['\"]/, `$1'${clientId}'`);
+      // Cập nhật clientId trong dashboard nếu có
+      configContent = configContent.replace(/(dashboard:\s*{[^}]*clientId:\s*)['\"][^'\"]*['\"]/, `$1'${clientId}'`);
+    }
+    if (typeof clientSecret === 'string') {
+      configContent = configContent.replace(/(dashboard:\s*{[^}]*clientSecret:\s*)['\"][^'\"]*['\"]/, `$1'${clientSecret}'`);
+    }
+    if (originalContent !== configContent) {
+      fs.writeFileSync(configPath, configContent, 'utf8');
+      res.json({ success: true, message: 'Đã cập nhật thông tin Discord' });
+    } else {
+      res.json({ success: true, message: 'Không có thay đổi để cập nhật' });
+    }
+  } catch (err) {
+    logger.error('[Easysetup] Lỗi cập nhật Discord:', err);
+    res.status(500).json({ success: false, message: 'Lỗi máy chủ.' });
+  }
 });
