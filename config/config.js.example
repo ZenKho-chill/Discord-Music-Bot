@@ -2,8 +2,8 @@ module.exports = {
   token: '',
   clientId: '',
   maxQueue: 30,
-  debug: true,
-  registerCommands: false,
+  debug: false,
+  registerCommands: true,
   maxVolume: 150,
   spotify: {
     clientId: '',
@@ -48,7 +48,7 @@ module.exports = {
     clientSecret: '', // Bạn cần thêm client secret từ Discord Developer Portal
     redirectUri: 'http://example.com/auth/callback',
     scopes: ['identify', 'guilds'], // Scope cơ bản, không thêm email để tránh prompt
-    sessionSecret: '', // Thay đổi thành secret phức tạp
+    sessionSecret: 'zenkho-music-bot', // Thay đổi thành secret phức tạp
     
     // Cookie Configuration
     cookies: {
@@ -63,7 +63,7 @@ module.exports = {
       // Remember Token Cookie Settings
       rememberToken: {
         name: 'remember_token',  // Cookie name
-        maxAge: 30 * 24 * 60 * 60 * 1000, // 30 ngày (30 days in milliseconds)
+        maxAge: 70 * 24 * 60 * 60 * 1000, // 7 ngày (7 days in milliseconds)
         httpOnly: true,          // Chỉ server mới đọc được, bảo mật cao
         secure: false,           // Set true nếu dùng HTTPS in production
         sameSite: 'lax',         // CSRF protection ('strict', 'lax', 'none')
@@ -75,7 +75,7 @@ module.exports = {
     // Auto-login Configuration
     autoLogin: {
       enabled: true,             // Enable/disable auto-login feature
-      tokenExpiryDays: 30        // Number of days before remember token expires
+      tokenExpiryDays: 7        // Number of days before remember token expires
     },
   },
   
@@ -84,14 +84,14 @@ module.exports = {
     // Thông tin kết nối cơ bản
     ip: '',      // IP hoặc hostname của MongoDB server
     port: 27017,                // Port của MongoDB (mặc định: 27017)
-    database: '', // Tên cơ sở dữ liệu
+    database: 'zk-music', // Tên cơ sở dữ liệu
     
     // Cài đặt xác thực
     auth: {
       enabled: false,            // Bật/tắt xác thực MongoDB
       username: '',       // Tên đăng nhập
       password: '',   // Mật khẩu
-      authSource: '' // Database để xác thực
+      authSource: 'zk-music' // Database để xác thực
     },
     
     // Cấu hình kết nối
