@@ -238,7 +238,6 @@
       <h3><i class="fas fa-cog"></i> Quản lý Server</h3>
 
       <div class="servers-grid">
-
         <!-- Volume Control -->
         <div class="server-card">
           <h4><i class="fas fa-volume-up"></i> Điều chỉnh âm lượng</h4>
@@ -250,6 +249,34 @@
               <button class="manage-btn" onclick="setVolume(100)">100%</button>
               <button class="manage-btn" onclick="setVolume(150)">150%</button>
             </div>
+          </div>
+        </div>
+
+        <!-- Bot Status -->
+        <div class="server-card">
+          <h4><i class="fas fa-robot"></i> Trạng thái Bot</h4>
+          <p>Thông tin về hoạt động của bot</p>
+          <div style="margin-top: 1rem;">
+            <div class="bot-status" style="margin-bottom: 0.5rem;">
+              <div class="status-indicator status-online"></div>
+              <span>Trực tuyến</span>
+            </div>
+            <div style="color: #666; font-size: 0.9rem;">
+              <p><i class="fas fa-clock"></i> Uptime: <span id="uptime">Đang tải...</span></p>
+              <p><i class="fas fa-memory"></i> RAM: <span id="memory">Đang tải...</span></p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Play -->
+        <div class="server-card">
+          <h4><i class="fas fa-play"></i> Phát nhạc nhanh</h4>
+          <p>Tìm kiếm và phát nhạc ngay lập tức</p>
+          <div style="margin-top: 1rem;">
+            <input type="text" id="searchInput" placeholder="Nhập tên bài hát hoặc URL..." style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 5px; margin-bottom: 1rem;">
+            <button class="manage-btn" onclick="playMusic()" style="width: 100%;">
+              <i class="fas fa-play"></i> Phát nhạc
+            </button>
           </div>
         </div>
 
@@ -273,7 +300,70 @@
           </div>
         </div>
 
+        <!-- Server Statistics -->
+        <div class="server-card">
         
+          <h4><i class="fas fa-chart-line"></i> Thống kê Server</h4>
+          <p>Thống kê hoạt động real-time của server</p>
+          <div style="margin-top: 1rem;">
+            <% if (serverStats) { %>
+            <div style="color: #666; font-size: 0.9rem; margin-bottom: 1rem;">
+              <p><i class="fas fa-users"></i> Người dùng hoạt động: <span style="color: #007bff; font-weight: bold;"><%= serverStats.overview.totalUsers %></span></p>
+              <p><i class="fas fa-terminal"></i> Tổng lệnh đã dùng: <span style="color: #28a745; font-weight: bold;"><%= serverStats.overview.totalCommands.toLocaleString() %></span></p>
+              <p><i class="fas fa-music"></i> Tổng bài đã phát: <span style="color: #dc3545; font-weight: bold;"><%= serverStats.overview.totalTracks.toLocaleString() %></span></p>
+            </div>
+            <% } else { %>
+            <div style="color: #666; font-size: 0.9rem; margin-bottom: 1rem;">
+              <p><i class="fas fa-users"></i> Hoạt động người dùng: <span style="color: #999;">Đang tải...</span></p>
+              <p><i class="fas fa-terminal"></i> Lịch sử sử dụng lệnh: <span style="color: #999;">Đang tải...</span></p>
+              <p><i class="fas fa-music"></i> Lịch sử phát nhạc: <span style="color: #999;">Đang tải...</span></p>
+            </div>
+            <% } %>
+            <a href="/server/<%= guild.id %>/stats" class="manage-btn" style="width: 100%; text-decoration: none; display: inline-block; text-align: center;">
+              <i class="fas fa-chart-bar"></i> Xem Chi Tiết
+            </a>
+          </div>
+        </div>
+
+        <!-- Additional Feature 1 -->
+        <div class="server-card">
+          <h4><i class="fas fa-shield-alt"></i> Bảo mật & Quyền</h4>
+          <p>Quản lý quyền truy cập và bảo mật</p>
+          <div style="margin-top: 1rem;">
+            <div style="color: #666; font-size: 0.9rem;">
+              <p><i class="fas fa-users"></i> Vai trò DJ: <span style="color: #007bff;">@DJ</span></p>
+              <p><i class="fas fa-lock"></i> Kênh chỉ định: <span style="color: #28a745;">Không giới hạn</span></p>
+              <p><i class="fas fa-volume-up"></i> Giới hạn âm lượng: <span style="color: #ffc107;">150%</span></p>
+            </div>
+            <button class="manage-btn" onclick="showNotification('Đang phát triển!', 'info')" style="width: 100%; margin-top: 0.5rem;">
+              <i class="fas fa-cog"></i> Cấu hình quyền
+            </button>
+          </div>
+        </div>
+
+        <!-- Additional Feature 2 -->
+        <div class="server-card">
+          <h4><i class="fas fa-history"></i> Lịch sử & Logs</h4>
+          <p>Xem hoạt động và lịch sử phát nhạc gần đây</p>
+          <div style="margin-top: 1rem;">
+            <div style="color: #666; font-size: 0.9rem;">
+              <% if (serverStats && serverStats.recentTracks && serverStats.recentTracks.length > 0) { %>
+              <p><i class="fas fa-play"></i> Bài gần nhất: <span style="color: #007bff; font-weight: bold;"><%= serverStats.recentTracks[0].title.substring(0, 25) %>...</span></p>
+              <% } else { %>
+              <p><i class="fas fa-play"></i> Bài gần nhất: <span style="color: #007bff;">Chưa có</span></p>
+              <% } %>
+              <p><i class="fas fa-clock"></i> Thời gian hoạt động: <span style="color: #28a745;">24/7</span></p>
+              <% if (serverStats) { %>
+              <p><i class="fas fa-chart-line"></i> Tổng thời gian nghe: <span style="color: #ffc107;"><%= Math.round((serverStats.overview.totalListeningTime || 0) / 3600) %>h</span></p>
+              <% } else { %>
+              <p><i class="fas fa-chart-line"></i> Tổng bài đã phát: <span style="color: #ffc107;"><%= musicStats ? musicStats.totalTracks || 0 : 0 %></span></p>
+              <% } %>
+            </div>
+            <button class="manage-btn" onclick="showNotification('Đang phát triển!', 'info')" style="width: 100%; margin-top: 0.5rem;">
+              <i class="fas fa-history"></i> Xem chi tiết
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
