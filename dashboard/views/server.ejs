@@ -238,6 +238,23 @@
       <h3><i class="fas fa-cog"></i> Quản lý Server</h3>
 
       <div class="servers-grid">
+        <!-- Music Controls -->
+        <div class="server-card">
+          <h4><i class="fas fa-music"></i> Điều khiển nhạc</h4>
+          <p>Quản lý phát nhạc hiện tại trong server</p>
+          <div style="margin-top: 1rem;">
+            <button class="manage-btn" onclick="sendCommand('nowplaying')">
+              <i class="fas fa-info-circle"></i> Nhạc hiện tại
+            </button>
+            <button class="manage-btn" onclick="sendCommand('queue')">
+              <i class="fas fa-list"></i> Hàng đợi
+            </button>
+            <button class="manage-btn" onclick="sendCommand('stop')" style="background: #ed4245;">
+              <i class="fas fa-stop"></i> Dừng nhạc
+            </button>
+          </div>
+        </div>
+
         <!-- Volume Control -->
         <div class="server-card">
           <h4><i class="fas fa-volume-up"></i> Điều chỉnh âm lượng</h4>
@@ -249,6 +266,23 @@
               <button class="manage-btn" onclick="setVolume(100)">100%</button>
               <button class="manage-btn" onclick="setVolume(150)">150%</button>
             </div>
+          </div>
+        </div>
+
+        <!-- Queue Management -->
+        <div class="server-card">
+          <h4><i class="fas fa-list-ol"></i> Quản lý hàng đợi</h4>
+          <p>Thao tác với danh sách nhạc chờ</p>
+          <div style="margin-top: 1rem;">
+            <button class="manage-btn" onclick="sendCommand('skip')">
+              <i class="fas fa-forward"></i> Bỏ qua
+            </button>
+            <button class="manage-btn" onclick="sendCommand('repeat')">
+              <i class="fas fa-repeat"></i> Lặp lại
+            </button>
+            <button class="manage-btn" onclick="clearQueue()" style="background: #FFA500;">
+              <i class="fas fa-trash"></i> Xóa hàng đợi
+            </button>
           </div>
         </div>
 
@@ -302,7 +336,6 @@
 
         <!-- Server Statistics -->
         <div class="server-card">
-        
           <h4><i class="fas fa-chart-line"></i> Thống kê Server</h4>
           <p>Thống kê hoạt động real-time của server</p>
           <div style="margin-top: 1rem;">
