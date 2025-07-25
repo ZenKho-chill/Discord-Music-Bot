@@ -78,7 +78,7 @@ document.addEventListener('DOMContentLoaded', function () {
         notification.className = 'notification fade-in';
         notification.style.cssText = `
             position: fixed;
-            top: 20px;
+            top: 90px;
             right: 20px;
             padding: 1rem 1.5rem;
             border-radius: 10px;

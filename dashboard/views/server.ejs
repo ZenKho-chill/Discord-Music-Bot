@@ -245,11 +245,14 @@
           <h4><i class="fas fa-volume-up"></i> Điều chỉnh âm lượng</h4>
           <p>Thay đổi âm lượng phát nhạc</p>
           <div style="margin-top: 1rem;">
-            <input type="range" id="volumeSlider" min="0" max="150" value="100" style="width: 100%; margin-bottom: 1rem;">
-            <div style="display: flex; gap: 0.5rem;">
-              <button class="manage-btn" onclick="setVolume(50)">50%</button>
-              <button class="manage-btn" onclick="setVolume(100)">100%</button>
-              <button class="manage-btn" onclick="setVolume(150)">150%</button>
+            <div style="position: relative; width: 100%;">
+              <input type="range" id="volumeSlider" min="0" max="150" value="100" style="width: 100%; margin-bottom: 1rem;">
+              <div id="volumeTooltip" style="position: absolute; left: 0; top: -32px; background: rgba(0,0,0,0.85); color: #fff; padding: 2px 10px; border-radius: 6px; font-size: 0.95rem; display: none; pointer-events: none; z-index: 10; white-space: nowrap; font-weight: 500; box-shadow: 0 2px 8px rgba(0,0,0,0.15);"></div>
+            </div>
+            <div style="display: flex; gap: 0.5rem; width: 100%;">
+              <button class="manage-btn" style="flex:1; min-width:0;" onclick="setVolume(50)">50%</button>
+              <button class="manage-btn" style="flex:1; min-width:0;" onclick="setVolume(100)">100%</button>
+              <button class="manage-btn" style="flex:1; min-width:0;" onclick="setVolume(150)">150%</button>
             </div>
           </div>
         </div>
@@ -337,10 +340,66 @@
 
     // Initialize
     document.addEventListener('DOMContentLoaded', function() {
-      // Volume slider event
-      document.getElementById('volumeSlider').addEventListener('input', function() {
+      // Sự kiện điều chỉnh âm lượng: tooltip hiển thị giá trị khi kéo, chỉ thông báo khi nhả chuột hoặc thay đổi
+      const volumeSlider = document.getElementById('volumeSlider');
+      const volumeTooltip = document.getElementById('volumeTooltip');
+      let volumeBefore = volumeSlider.value;
+
+      // Hàm cập nhật vị trí và giá trị tooltip
+      function updateVolumeTooltip() {
+        const value = volumeSlider.value;
+        // Tính toán vị trí tooltip dựa trên giá trị slider
+        const min = parseInt(volumeSlider.min);
+        const max = parseInt(volumeSlider.max);
+        const percent = (value - min) / (max - min);
+        const sliderRect = volumeSlider.getBoundingClientRect();
+        const tooltipRect = volumeTooltip.getBoundingClientRect();
+        // Đặt tooltip ở giữa thumb
+        const sliderWidth = sliderRect.width;
+        const left = percent * sliderWidth;
+        // Giới hạn vị trí để không bị tràn
+        let tooltipLeft = left - (tooltipRect.width / 2);
+        if (tooltipLeft < 0) tooltipLeft = 0;
+        if (tooltipLeft + tooltipRect.width > sliderWidth) tooltipLeft = sliderWidth - tooltipRect.width;
+        volumeTooltip.style.left = tooltipLeft + 'px';
+        volumeTooltip.textContent = value + '%';
+      }
+
+      // Hiện tooltip khi kéo hoặc focus
+      volumeSlider.addEventListener('input', function() {
+        volumeTooltip.style.display = 'block';
+        updateVolumeTooltip();
+      });
+      volumeSlider.addEventListener('focus', function() {
+        volumeTooltip.style.display = 'block';
+        updateVolumeTooltip();
+      });
+
+      // Ẩn tooltip khi nhả chuột hoặc blur
+      volumeSlider.addEventListener('mouseup', function() {
+        volumeTooltip.style.display = 'none';
         const volume = this.value;
-        showNotification(`Âm lượng: ${volume}%`, 'info');
+        if (volume !== volumeBefore) {
+          showNotification(`Âm lượng: ${volume}%`, 'info');
+        }
+      });
+      volumeSlider.addEventListener('mouseleave', function() {
+        volumeTooltip.style.display = 'none';
+      });
+      volumeSlider.addEventListener('blur', function() {
+        volumeTooltip.style.display = 'none';
+      });
+      // Đảm bảo tương thích với cả thao tác bằng phím (keyboard)
+      volumeSlider.addEventListener('change', function() {
+        volumeTooltip.style.display = 'none';
+        const volume = this.value;
+        if (volume !== volumeBefore) {
+          showNotification(`Âm lượng: ${volume}%`, 'info');
+        }
+      });
+      // Lưu giá trị trước khi kéo
+      volumeSlider.addEventListener('mousedown', function() {
+        volumeBefore = this.value;
       });
 
 
