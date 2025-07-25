@@ -242,8 +242,8 @@
 
         <!-- Volume Control -->
         <div class="server-card">
-          <h4><i class="fas fa-volume-up"></i> Điều chỉnh âm lượng</h4>
-          <p>Thay đổi âm lượng phát nhạc</p>
+          <h4><i class="fas fa-volume-up"></i> Điều chỉnh âm lượng cá nhân</h4>
+          <p>Thay đổi âm lượng phát nhạc cho riêng bạn</p>
           <div style="margin-top: 1rem;">
             <div style="position: relative; width: 100%;">
               <input type="range" id="volumeSlider" min="0" max="150" value="100" style="width: 100%; margin-bottom: 1rem;">
@@ -255,10 +255,24 @@
               <button class="manage-btn" style="flex:1; min-width:0;" onclick="setVolume(150)">150%</button>
             </div>
           </div>
+
+          <div id="adminVolumeSection" style="display:none">
+            <hr style="margin: 1.5rem 0 1rem 0; border: none; border-top: 1px solid #eee;">
+            <h4><i class="fas fa-sliders-h"></i> Điều chỉnh âm lượng mặc định server</h4>
+            <p>Chỉ admin mới có thể thay đổi âm lượng mặc định cho toàn server</p>
+            <div style="margin-top: 1rem;">
+              <div style="position: relative; width: 100%;">
+                <input type="range" id="volumeDefaultSlider" min="0" max="150" value="<%= typeof serverStats !== 'undefined' && serverStats.volumeDefault ? serverStats.volumeDefault : 100 %>" style="width: 100%; margin-bottom: 1rem;">
+                <div id="volumeDefaultTooltip" style="position: absolute; left: 0; top: -32px; background: rgba(0,0,0,0.85); color: #fff; padding: 2px 10px; border-radius: 6px; font-size: 0.95rem; display: none; pointer-events: none; z-index: 10; white-space: nowrap; font-weight: 500; box-shadow: 0 2px 8px rgba(0,0,0,0.15);"></div>
+              </div>
+              <div style="display: flex; gap: 0.5rem; width: 100%;">
+                <button class="manage-btn" style="flex:1; min-width:0;" onclick="setVolumeDefault(50)">50%</button>
+                <button class="manage-btn" style="flex:1; min-width:0;" onclick="setVolumeDefault(100)">100%</button>
+                <button class="manage-btn" style="flex:1; min-width:0;" onclick="setVolumeDefault(150)">150%</button>
+              </div>
+            </div>
+          </div>
         </div>
-
-
-
 
         <!-- Server Settings -->
         <div class="server-card">
@@ -279,8 +293,6 @@
             </button>
           </div>
         </div>
-
-
 
       </div>
     </div>
@@ -304,34 +316,64 @@
         console.log(...args);
       }
     }
-    
-    // Command functions
-    function sendCommand(command) {
-      // In a real implementation, this would send commands to the bot
-      // For now, we'll just show a notification
-      showNotification(`Đã gửi lệnh: ${command}`, 'success');
-    }
 
     function setVolume(volume) {
-      document.getElementById('volumeSlider').value = volume;
+      // Đặt giá trị slider và gọi API lưu âm lượng cá nhân
+      const slider = document.getElementById('volumeSlider');
+      slider.value = volume;
       showNotification(`Đã đặt âm lượng: ${volume}%`, 'success');
+      // Gửi request lưu âm lượng cá nhân
+      fetch('/api/server/volume-user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          guildId: '<%= guild.id %>',
+          userId: '<%= user.id %>',
+          volume: Number(volume)
+        })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          debugLog('Lưu âm lượng cá nhân thành công:', data);
+        } else {
+          console.error('Lỗi lưu âm lượng cá nhân:', data.message);
+        }
+      })
+      .catch(err => {
+        console.error('Lỗi kết nối API lưu âm lượng cá nhân:', err);
+      });
     }
 
-    function clearQueue() {
-      if (confirm('Bạn có chắc muốn xóa toàn bộ hàng đợi?')) {
-        showNotification('Đã xóa hàng đợi', 'success');
+    // Hàm đặt âm lượng mặc định cho server (chỉ admin)
+    function setVolumeDefault(volume) {
+      // Đặt giá trị slider và gọi API lưu âm lượng mặc định server
+      const slider = document.getElementById('volumeDefaultSlider');
+      if (slider) {
+        slider.value = volume;
+        showNotification(`Đã đặt âm lượng mặc định server: ${volume}%`, 'success');
+        // Gửi request lưu âm lượng mặc định server
+        fetch(`/api/server/volume-default/<%= guild.id %>`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            volumeDefault: Number(volume)
+          })
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            debugLog('Lưu âm lượng mặc định server thành công:', data);
+          } else {
+            console.error('Lỗi lưu âm lượng mặc định server:', data.message);
+          }
+        })
+        .catch(err => {
+          console.error('Lỗi kết nối API lưu âm lượng mặc định server:', err);
+        });
       }
     }
 
-    function playMusic() {
-      const search = document.getElementById('searchInput').value;
-      if (!search.trim()) {
-        showNotification('Vui lòng nhập tên bài hát hoặc URL', 'error');
-        return;
-      }
-      showNotification(`Đang tìm kiếm: ${search}`, 'info');
-      document.getElementById('searchInput').value = '';
-    }
 
     function saveSettings() {
       showNotification('Đã lưu cài đặt', 'success');
@@ -340,10 +382,46 @@
 
     // Initialize
     document.addEventListener('DOMContentLoaded', function() {
-      // Sự kiện điều chỉnh âm lượng: tooltip hiển thị giá trị khi kéo, chỉ thông báo khi nhả chuột hoặc thay đổi
+      // Kiểm tra quyền admin động qua API
+      const adminSection = document.getElementById('adminVolumeSection');
+      fetch(`/api/server/<%= guild.id %>`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.success && data.isAdmin) {
+            adminSection.style.display = '';
+          } else {
+            adminSection.style.display = 'none';
+          }
+        })
+        .catch(() => { adminSection.style.display = 'none'; });
+
+      // Lấy volume cá nhân user
       const volumeSlider = document.getElementById('volumeSlider');
       const volumeTooltip = document.getElementById('volumeTooltip');
       let volumeBefore = volumeSlider.value;
+      // Khai báo volumeDefaultSlider và volumeDefaultTooltip chỉ 1 lần ở đây
+      const volumeDefaultSlider = document.getElementById('volumeDefaultSlider');
+      const volumeDefaultTooltip = document.getElementById('volumeDefaultTooltip');
+
+      fetch(`/api/server/volume-user/<%= guild.id %>/<%= user.id %>`)
+        .then(res => res.json())
+        .then(data => {
+          if (typeof data.volume === 'number') {
+            volumeSlider.value = data.volume;
+            volumeBefore = data.volume;
+          }
+        });
+
+      // Lấy volume mặc định server
+      if (volumeDefaultSlider) {
+        fetch(`/api/server/volume-default/<%= guild.id %>`)
+          .then(res => res.json())
+          .then(data => {
+            if (typeof data.volumeDefault === 'number') {
+              volumeDefaultSlider.value = data.volumeDefault;
+            }
+          });
+      }
 
       // Hàm cập nhật vị trí và giá trị tooltip
       function updateVolumeTooltip() {
@@ -381,6 +459,27 @@
         const volume = this.value;
         if (volume !== volumeBefore) {
           showNotification(`Âm lượng: ${volume}%`, 'info');
+          // Gọi API lưu âm lượng cá nhân
+          fetch('/api/server/volume-user', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              guildId: '<%= guild.id %>',
+              userId: '<%= user.id %>',
+              volume: Number(volume)
+            })
+          })
+          .then(res => res.json())
+          .then(data => {
+            if (data.success) {
+              debugLog('Lưu âm lượng cá nhân thành công:', data);
+            } else {
+              console.error('Lỗi lưu âm lượng cá nhân:', data.message);
+            }
+          })
+          .catch(err => {
+            console.error('Lỗi kết nối API lưu âm lượng cá nhân:', err);
+          });
         }
       });
       volumeSlider.addEventListener('mouseleave', function() {
@@ -395,12 +494,122 @@
         const volume = this.value;
         if (volume !== volumeBefore) {
           showNotification(`Âm lượng: ${volume}%`, 'info');
+          // Gọi API lưu âm lượng cá nhân
+          fetch('/api/server/volume-user', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              guildId: '<%= guild.id %>',
+              userId: '<%= user.id %>',
+              volume: Number(volume)
+            })
+          })
+          .then(res => res.json())
+          .then(data => {
+            if (data.success) {
+              debugLog('Lưu âm lượng cá nhân thành công:', data);
+            } else {
+              console.error('Lỗi lưu âm lượng cá nhân:', data.message);
+            }
+          })
+          .catch(err => {
+            console.error('Lỗi kết nối API lưu âm lượng cá nhân:', err);
+          });
         }
       });
       // Lưu giá trị trước khi kéo
       volumeSlider.addEventListener('mousedown', function() {
         volumeBefore = this.value;
       });
+
+      // Logic cho volumeDefaultSlider (chỉ admin mới có)
+      if (volumeDefaultSlider && volumeDefaultTooltip) {
+        let volumeDefaultBefore = volumeDefaultSlider.value;
+        function updateVolumeDefaultTooltip() {
+          const value = volumeDefaultSlider.value;
+          const min = parseInt(volumeDefaultSlider.min);
+          const max = parseInt(volumeDefaultSlider.max);
+          const percent = (value - min) / (max - min);
+          const sliderRect = volumeDefaultSlider.getBoundingClientRect();
+          const tooltipRect = volumeDefaultTooltip.getBoundingClientRect();
+          const sliderWidth = sliderRect.width;
+          const left = percent * sliderWidth;
+          let tooltipLeft = left - (tooltipRect.width / 2);
+          if (tooltipLeft < 0) tooltipLeft = 0;
+          if (tooltipLeft + tooltipRect.width > sliderWidth) tooltipLeft = sliderWidth - tooltipRect.width;
+          volumeDefaultTooltip.style.left = tooltipLeft + 'px';
+          volumeDefaultTooltip.textContent = value + '%';
+        }
+        volumeDefaultSlider.addEventListener('input', function() {
+          volumeDefaultTooltip.style.display = 'block';
+          updateVolumeDefaultTooltip();
+        });
+        volumeDefaultSlider.addEventListener('focus', function() {
+          volumeDefaultTooltip.style.display = 'block';
+          updateVolumeDefaultTooltip();
+        });
+        volumeDefaultSlider.addEventListener('mouseup', function() {
+          volumeDefaultTooltip.style.display = 'none';
+          const volume = this.value;
+          if (volume !== volumeDefaultBefore) {
+            showNotification(`Âm lượng mặc định server: ${volume}%`, 'info');
+            // Gọi API lưu âm lượng mặc định server
+            fetch(`/api/server/volume-default/<%= guild.id %>`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                volumeDefault: Number(volume)
+              })
+            })
+            .then(res => res.json())
+            .then(data => {
+              if (data.success) {
+                debugLog('Lưu âm lượng mặc định server thành công:', data);
+              } else {
+                console.error('Lỗi lưu âm lượng mặc định server:', data.message);
+              }
+            })
+            .catch(err => {
+              console.error('Lỗi kết nối API lưu âm lượng mặc định server:', err);
+            });
+          }
+        });
+        volumeDefaultSlider.addEventListener('mouseleave', function() {
+          volumeDefaultTooltip.style.display = 'none';
+        });
+        volumeDefaultSlider.addEventListener('blur', function() {
+          volumeDefaultTooltip.style.display = 'none';
+        });
+        volumeDefaultSlider.addEventListener('change', function() {
+          volumeDefaultTooltip.style.display = 'none';
+          const volume = this.value;
+          if (volume !== volumeDefaultBefore) {
+            showNotification(`Âm lượng mặc định server: ${volume}%`, 'info');
+            // Gọi API lưu âm lượng mặc định server
+            fetch(`/api/server/volume-default/<%= guild.id %>`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                volumeDefault: Number(volume)
+              })
+            })
+            .then(res => res.json())
+            .then(data => {
+              if (data.success) {
+                debugLog('Lưu âm lượng mặc định server thành công:', data);
+              } else {
+                console.error('Lỗi lưu âm lượng mặc định server:', data.message);
+              }
+            })
+            .catch(err => {
+              console.error('Lỗi kết nối API lưu âm lượng mặc định server:', err);
+            });
+          }
+        });
+        volumeDefaultSlider.addEventListener('mousedown', function() {
+          volumeDefaultBefore = this.value;
+        });
+      }
 
 
       // Initialize Music Statistics Charts

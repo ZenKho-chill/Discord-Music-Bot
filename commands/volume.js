@@ -51,6 +51,17 @@ module.exports = {
       // Điều chỉnh âm lượng
       client.distube.setVolume(guildId, volumeValue);
 
+      // Lưu/cập nhật volume cá nhân vào database
+      try {
+        const ServerService = require('../database/services/ServerService');
+        // Ghi log debug
+        if (config.debug) console.log(`[volume.js] Đang lưu volume cá nhân cho userId: ${interaction.user.id}, guildId: ${guildId}, volume: ${volumeValue}`);
+        await ServerService.luuHoacCapNhatVolumeUser(guildId, interaction.user.id, volumeValue);
+        if (config.debug) console.log(`[volume.js] Đã lưu volume cá nhân thành công!`);
+      } catch (err) {
+        console.error('[volume.js] Lỗi khi lưu/cập nhật volume cá nhân:', err);
+      }
+
       // Tạo emoji tương ứng với âm lượng
       let volumeEmoji = '🔇';
       if (volumeValue === 0) volumeEmoji = '🔇';

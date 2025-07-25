@@ -130,15 +130,98 @@ module.exports = {
         return await interaction.followUp({ content: '🚫 Đang thêm playlist/mix vào hàng đợi, vui lòng chờ!', ephemeral: true });
       }
 
-      // Sử dụng hệ thống platform mới
+      // ==== Lấy volume ưu tiên: user -> server -> distube default ====
+      let volumeToPlay = null;
+      try {
+        const ServerService = require('../database/services/ServerService');
+        const serverObj = await ServerService.layServer(interaction.guildId);
+        let userVol = null;
+        let serverVol = null;
+        if (serverObj) {
+          if (config.debug) console.log(`[play.js] serverObj.volumePerUser:`, serverObj.volumePerUser);
+          // Tìm volume cá nhân user
+          const userEntry = Array.isArray(serverObj.volumePerUser) ? serverObj.volumePerUser.find(u => {
+            if (config.debug) console.log(`[play.js] So sánh userId:`, u.userId, '===', interaction.user.id, '->', u.userId === interaction.user.id);
+            return u.userId === interaction.user.id;
+          }) : null;
+          if (userEntry && typeof userEntry.volume === 'number') {
+            userVol = userEntry.volume;
+            if (config.debug) console.log(`[play.js] Tìm thấy volume cá nhân:`, userVol);
+          } else {
+            if (config.debug) console.log(`[play.js] Không tìm thấy volume cá nhân cho userId:`, interaction.user.id);
+          }
+          // Lấy volumeDefault server
+          if (typeof serverObj.volumeDefault === 'number') {
+            serverVol = serverObj.volumeDefault;
+            if (config.debug) console.log(`[play.js] volumeDefault của server:`, serverVol);
+          } else {
+            if (config.debug) console.log(`[play.js] Không có volumeDefault cho server`);
+          }
+        } else {
+          if (config.debug) console.log(`[play.js] Không tìm thấy serverObj cho guildId:`, interaction.guildId);
+        }
+        if (typeof userVol === 'number') {
+          volumeToPlay = userVol;
+          if (config.debug) console.log(`[play.js] Sử dụng volume cá nhân: ${userVol}`);
+        } else if (typeof serverVol === 'number') {
+          volumeToPlay = serverVol;
+          if (config.debug) console.log(`[play.js] Sử dụng volume mặc định server: ${serverVol}`);
+        } else {
+          if (config.debug) console.log(`[play.js] Không có volume cá nhân hoặc server, dùng mặc định distube`);
+        }
+      } catch (err) {
+        console.error('[play.js] Lỗi lấy volume ưu tiên:', err);
+      }
+
+      // Đăng ký event playSong để set volume đúng thời điểm queue đã sẵn sàng
+      const playSongHandler = async (queue, song) => {
+        try {
+          if (queue && queue.id === interaction.guildId) {
+            // Lấy lại volumeToPlay mới nhất từ database
+            const ServerService = require('../database/services/ServerService');
+            let volumeToPlayMoi = null;
+            let userVol = null;
+            let serverVol = null;
+            const serverObj = await ServerService.layServer(interaction.guildId);
+            if (serverObj) {
+              if (config.debug) console.log(`[play.js] [playSong event] serverObj.volumePerUser:`, serverObj.volumePerUser);
+              const userEntry = Array.isArray(serverObj.volumePerUser) ? serverObj.volumePerUser.find(u => u.userId === interaction.user.id) : null;
+              if (userEntry && typeof userEntry.volume === 'number') {
+                userVol = userEntry.volume;
+                if (config.debug) console.log(`[play.js] [playSong event] Tìm thấy volume cá nhân:`, userVol);
+              }
+              if (typeof serverObj.volumeDefault === 'number') {
+                serverVol = serverObj.volumeDefault;
+                if (config.debug) console.log(`[play.js] [playSong event] volumeDefault của server:`, serverVol);
+              }
+            }
+            if (typeof userVol === 'number') {
+              volumeToPlayMoi = userVol;
+              if (config.debug) console.log(`[play.js] [playSong event] Sử dụng volume cá nhân: ${userVol}`);
+            } else if (typeof serverVol === 'number') {
+              volumeToPlayMoi = serverVol;
+              if (config.debug) console.log(`[play.js] [playSong event] Sử dụng volume mặc định server: ${serverVol}`);
+            } else {
+              if (config.debug) console.log(`[play.js] [playSong event] Không có volume cá nhân hoặc server, dùng mặc định distube`);
+            }
+            if (typeof volumeToPlayMoi === 'number') {
+              queue.setVolume(volumeToPlayMoi);
+              if (config.debug) console.log(`[play.js] [playSong event] Đã set volume queue:`, volumeToPlayMoi);
+            }
+          }
+        } catch (err) {
+          console.error('[play.js] Lỗi khi set volume trong event playSong:', err);
+        }
+      };
+      client.distube.on('playSong', playSongHandler);
       try {
         if (config.debug) {
           console.log(`[play.js] Bắt đầu routeToPlatform với query:`, query);
           console.log(`[play.js] Lock key:`, lockKey);
           console.log(`[play.js] Voice channel:`, voiceChannel?.name, voiceChannel?.id);
+          console.log(`[play.js] Volume sẽ phát:`, volumeToPlay);
         }
-        
-        await routeToPlatform(client, interaction, query, voiceChannel, lockKey);
+        await routeToPlatform(client, interaction, query, voiceChannel, lockKey, volumeToPlay);
         if (config.debug) console.log(`[play.js] routeToPlatform hoàn thành thành công`);
       } catch (err) {
         console.error(`[play.js] Lỗi chi tiết trong routeToPlatform:`, {
@@ -153,18 +236,16 @@ module.exports = {
           guild: interaction.guild?.name,
           channel: interaction.channel?.name,
           user: interaction.user?.tag,
-          lockKey: lockKey
+          lockKey: lockKey,
+          volumeToPlay: volumeToPlay
         });
-        
         // Nếu là DisTubeError: Queue thì chỉ log message
         if (err && err.name === 'DisTubeError' && err.message && err.message.includes('Queue')) {
           console.error('[play.js] PlayError (Queue):', err.message);
         } else {
           console.error('[play.js] PlayError (General):', err);
         }
-        
         let userMsg = `❌ Không thể phát bài hát!\n\n${err.message || err}`;
-        
         // Xử lý thông báo lỗi thân thiện hơn
         if (err.message && (err.message.includes('private') || err.message.includes('unavailable') || err.message.includes('404'))) {
           userMsg = '❌ Nội dung này là riêng tư, không tồn tại hoặc không thể truy cập!';
@@ -175,7 +256,6 @@ module.exports = {
         } else if (err.message && err.message.includes('Queue')) {
           userMsg = '❌ Bot đang bận, vui lòng thử lại sau!';
         }
-        
         await interaction.followUp({
           content: userMsg,
           ephemeral: true
@@ -188,6 +268,8 @@ module.exports = {
             delete client._addInfo[lockKey];
           }
         }
+        // Xóa event listener sau khi hoàn thành để tránh leak bộ nhớ
+        client.distube.off('playSong', playSongHandler);
       }
     } catch (err) {
       console.error('[play.js] Lỗi ngoài cùng trong execute:', err, 'interaction:', interaction);

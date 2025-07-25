@@ -5,6 +5,7 @@ const router = express.Router();
 const authRoutes = require('./auth');
 const pageRoutes = require('./pages');
 const apiMusicRoutes = require('./api/music');
+const apiServerRoutes = require('./api/server');
 const debugRoutes = require('./debug');
 
 
@@ -22,6 +23,7 @@ router.get('/logout', (req, res) => {
 router.use('/auth', authRoutes);
 router.use('/', pageRoutes);
 router.use('/api', apiMusicRoutes);
+router.use('/api/server', apiServerRoutes);
 router.use('/debug', debugRoutes);
 
 module.exports = router;

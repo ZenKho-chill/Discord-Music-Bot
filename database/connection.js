@@ -228,7 +228,8 @@ class DatabaseConnection {
                     'musictracks',
                     'userstats', 
                     'commandstats',
-                    'usersessions'
+                    'usersessions',
+                    'server'
                 ];
                 
                 logger.database('📋 Đang kiểm tra các bộ sưu tập cần thiết...');

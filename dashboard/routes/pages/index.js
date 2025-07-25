@@ -136,23 +136,27 @@ router.get('/server/:serverId', isAuthenticated, async (req, res) => {
     
     // Kiểm tra user có quyền truy cập server này
     const userGuilds = await getUserGuilds(user.accessToken, user.id);
-    const hasAccess = userGuilds.some(guild => guild.id === serverId);
-    
+    const userGuild = userGuilds.find(guild => guild.id === serverId);
+    const hasAccess = !!userGuild;
     if (!hasAccess) {
       return res.status(403).render('error', {
         title: 'Không có quyền truy cập',
         error: 'Bạn không có quyền truy cập server này'
       });
     }
-    
     // Lấy thông tin server từ bot
     const guild = client.guilds.cache.get(serverId);
-    
     if (!guild) {
       return res.status(404).render('error', {
         title: 'Không tìm thấy server',
         error: 'Bot không có trong server này'
       });
+    }
+    // Kiểm tra quyền admin: ADMINISTRATOR (0x8) hoặc MANAGE_GUILD (0x20)
+    let isAdmin = false;
+    if (userGuild && userGuild.permissions) {
+      const perm = typeof userGuild.permissions === 'string' ? parseInt(userGuild.permissions) : userGuild.permissions;
+      isAdmin = (perm & 0x8) === 0x8 || (perm & 0x20) === 0x20;
     }
     
     // Lấy thống kê nhạc cho server này
@@ -242,7 +246,8 @@ router.get('/server/:serverId', isAuthenticated, async (req, res) => {
       serverStats,
       platformStats,
       contentTypeStats,
-      debugMode: config.debug
+      debugMode: config.debug,
+      isAdmin
     });
   } catch (error) {
     console.error('Lỗi quản lý server:', error);
@@ -404,6 +409,46 @@ router.get('/music-stats', isAuthenticated, async (req, res) => {
             error: error
         });
     }
+});
+
+// API: Lấy quyền admin và thông tin server cho frontend
+router.get('/api/server/:serverId', isAuthenticated, async (req, res) => {
+  try {
+    const client = req.app.locals.client;
+    const serverId = req.params.serverId;
+    const user = req.user;
+    // Kiểm tra user có quyền truy cập server này
+    const userGuilds = await getUserGuilds(user.accessToken, user.id);
+    const userGuild = userGuilds.find(guild => guild.id === serverId);
+    const hasAccess = !!userGuild;
+    if (!hasAccess) {
+      return res.status(403).json({ success: false, message: 'Bạn không có quyền truy cập server này' });
+    }
+    // Lấy thông tin server từ bot
+    const guild = client.guilds.cache.get(serverId);
+    if (!guild) {
+      return res.status(404).json({ success: false, message: 'Bot không có trong server này' });
+    }
+    // Kiểm tra quyền admin: ADMINISTRATOR (0x8) hoặc MANAGE_GUILD (0x20)
+    let isAdmin = false;
+    if (userGuild && userGuild.permissions) {
+      const perm = typeof userGuild.permissions === 'string' ? parseInt(userGuild.permissions) : userGuild.permissions;
+      isAdmin = (perm & 0x8) === 0x8 || (perm & 0x20) === 0x20;
+    }
+    return res.json({
+      success: true,
+      isAdmin,
+      guild: {
+        id: guild.id,
+        name: guild.name,
+        memberCount: guild.memberCount,
+        icon: guild.iconURL()
+      }
+    });
+  } catch (error) {
+    console.error('Lỗi API lấy quyền admin server:', error);
+    res.status(500).json({ success: false, message: 'Lỗi máy chủ khi lấy quyền admin server' });
+  }
 });
 
 module.exports = router;

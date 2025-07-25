@@ -12,7 +12,7 @@ const ServerSchema = new mongoose.Schema({
     trim: true,
     comment: 'ID server Discord',
   },
-  volume: {
+  volumeDefault: {
     type: Number,
     required: true,
     default: 50,
@@ -20,6 +20,22 @@ const ServerSchema = new mongoose.Schema({
     max: 150,
     comment: 'Âm lượng mặc định cho server',
   },
+  volumePerUser: [
+    {
+      userId: {
+        type: String,
+        required: true,
+        comment: 'ID người dùng Discord',
+      },
+      volume: {
+        type: Number,
+        required: true,
+        min: 0,
+        max: 150,
+        comment: 'Âm lượng cá nhân user',
+      }
+    }
+  ],
   // Có thể mở rộng thêm các trường khác như platform, embed, canvas...
 }, {
   timestamps: true,
