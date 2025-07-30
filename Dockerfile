@@ -4,9 +4,21 @@ WORKDIR /app
 
 COPY package*.json ./
 
-# Cài các gói build cho node-gyp và opus
-RUN apt update && apt install -y python3 make g++ && apt upgrade -y
-RUN apt update && apt install -y ffmpeg python3 make g++ && apt upgrade -y
+# Cài các gói build cho node-gyp và ffmpeg, opus
+RUN apt-get update && \
+    apt-get install -y --allow-unauthenticated ca-certificates && \
+    apt-get install -y --no-install-recommends \
+        python3 \
+        make \
+        g++ \
+        ffmpeg \
+        libcairo2-dev \
+        libpango1.0-dev \
+        libjpeg-dev \
+        libgif-dev \
+        librsvg2-dev \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 RUN npm install
 

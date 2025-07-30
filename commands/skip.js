@@ -349,7 +349,19 @@ module.exports = {
           ephemeral: true
         });
       }
-      
+
+      // Kiểm tra bài có STT mục tiêu còn tồn tại trong DisTube queue không
+      const distubeQueue = client.distube.getQueue(guildId);
+      const distubeSongExists = distubeQueue && distubeQueue.songs && distubeQueue.songs.some(song =>
+        (song.id && song.id === targetSong.id) || (song.url && song.url === targetSong.url)
+      );
+      if (!distubeSongExists) {
+        return interaction.reply({
+          content: `❌ Bài hát mục tiêu (STT ${targetSong.stt}) đã bị loại khỏi hàng đợi, không thể skip đến bài này!`,
+          ephemeral: true
+        });
+      }
+
       // Tìm chỉ số của bài hát trong allSongs
       const targetIndex = allSongs.findIndex(song => song.queueId === selectedQueueId);
       if (targetIndex === -1) {
@@ -450,38 +462,44 @@ module.exports = {
         await new Promise(resolve => setTimeout(resolve, 2000));
 
         if (successfulSkips > 0) {
-          // Lấy hàng đợi sau khi bỏ qua để kiểm tra bài hiện tại
-          const finalQueue = client.distube.getQueue(guildId);
-          
-          // Đồng bộ queueManager sau khi bỏ qua
-          queueManager.syncAfterSkip(guildId, finalQueue);
-          
-          if (finalQueue && finalQueue.songs && finalQueue.songs.length > 0) {
-            const currentSong = finalQueue.songs[0];
-            
-            // Sử dụng số thứ tự gốc từ originalTargetSong
-            const originalStt = originalTargetSong.stt;
-            
-            // Ghi log debug
+          let finalQueue = client.distube.getQueue(guildId);
+          let syncedSongs = queueManager.getQueue(guildId);
+          let songByStt = syncedSongs.find(song => song.stt === originalTargetSong.stt);
+          let maxExtraSkips = 10; // Giới hạn số lần skip thêm để tránh loop vô hạn
+          let extraSkips = 0;
+
+          // Lặp skip cho đến khi bài đầu tiên của DisTube queue trùng với bài có stt mục tiêu
+          while (
+            finalQueue && finalQueue.songs && finalQueue.songs.length > 0 &&
+            songByStt &&
+            (finalQueue.songs[0].id !== songByStt.id && finalQueue.songs[0].url !== songByStt.url)
+            && extraSkips < maxExtraSkips
+          ) {
+            client.distube.skip(guildId);
+            await new Promise(resolve => setTimeout(resolve, 800));
+            finalQueue = client.distube.getQueue(guildId);
+            queueManager.syncAfterSkip(guildId, finalQueue);
+            syncedSongs = queueManager.getQueue(guildId);
+            songByStt = syncedSongs.find(song => song.stt === originalTargetSong.stt);
+            extraSkips++;
+          }
+
+          if (finalQueue && finalQueue.songs && finalQueue.songs.length > 0 && songByStt &&
+            (finalQueue.songs[0].id === songByStt.id || finalQueue.songs[0].url === songByStt.url)) {
             if (config.debug) {
+              console.log(`[Bỏ qua] Đã skip thêm ${extraSkips} lần để đến đúng bài có stt ${originalTargetSong.stt}`);
               console.log(`[Bỏ qua] Bài hát mục tiêu gốc: ${originalTargetSong.name} - ${originalTargetSong.uploader?.name || originalTargetSong.artist}`);
-              console.log(`[Bỏ qua] Bài hát hiện đang phát: ${currentSong.name} - ${currentSong.uploader?.name || currentSong.artist}`);
-              console.log(`[Bỏ qua] STT gốc từ queueManager: ${originalStt}`);
-              console.log(`[Bỏ qua] Chỉ số mục tiêu: ${targetIndex}`);
-              console.log(`[Bỏ qua] Số lần bỏ qua thành công: ${successfulSkips}`);
+              console.log(`[Bỏ qua] Bài hát đang phát: ${songByStt.name} - ${songByStt.uploader?.name || songByStt.artist}`);
             }
-            
-            // Sử dụng bài hiện tại đang phát với số thứ tự gốc từ queueManager
-            await generateSkipResultImage(currentSong, originalStt, interaction.channel);
-            
+            await generateSkipResultImage(songByStt, songByStt.stt, interaction.channel);
             await interaction.followUp({
-              content: `⏭️ Đã bỏ qua ${successfulSkips} bài để đến: **${currentSong.name}**\n` +
-                       `👤 Tác giả: ${currentSong.uploader?.name || currentSong.artist || 'Không rõ'}`,
+              content: `⏭️ Đã bỏ qua ${successfulSkips + extraSkips} bài để đến: **${songByStt.name}**\n` +
+                       `👤 Tác giả: ${songByStt.uploader?.name || songByStt.artist || 'Không rõ'}`,
               ephemeral: true
             });
           } else {
             await interaction.followUp({
-              content: `⏭️ Đã bỏ qua ${successfulSkips} bài nhưng không còn bài nào để phát!`,
+              content: `⏭️ Đã bỏ qua ${successfulSkips + extraSkips} bài nhưng không thể phát đúng bài có STT ${originalTargetSong.stt}!`,
               ephemeral: true
             });
           }

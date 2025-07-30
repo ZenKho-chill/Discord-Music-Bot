@@ -204,7 +204,6 @@ async function routeToPlatform(client, interaction, query, voiceChannel, lockKey
   try {
     const detection = await detectPlatform(query);
     if (config.debug) logger.platform(`[PlatformDetector] Kết quả detection:`, JSON.stringify(detection, null, 2));
-    
     // Kiểm tra config để xem platform/type có được bật không
     if (!isPlatformFeatureEnabled(detection.platform, detection.type)) {
       const errorMessage = createFeatureDisabledMessage(detection.platform, detection.type);
@@ -213,57 +212,140 @@ async function routeToPlatform(client, interaction, query, voiceChannel, lockKey
         ephemeral: true
       });
     }
-    
+    let result = null;
     switch (detection.platform) {
-      case 'youtube':
-        if (config.debug) console.log(`[PlatformDetector] Chuyển đến YouTube handler với type:`, detection.type);
+      case 'youtube': {
+        if (config.debug) logger.platform(`[PlatformDetector] Chuyển đến YouTube handler với type:`, detection.type);
         const youtubeHandler = require('./youtube');
-        switch (detection.type) {
-          case 'playlist':
-            return await youtubeHandler.handleYouTubePlaylist(client, interaction, detection.query, voiceChannel, lockKey);
-          case 'mix':
-            await interaction.editReply({
-              content: '❌ Không hỗ trợ phát link YouTube Mix (list=RD...). Không có bài hát nào được thêm vào hàng đợi.',
-              ephemeral: true
-            });
-            return;
-          case 'single':
-            return await youtubeHandler.handleYouTubeSingle(client, interaction, detection.query, voiceChannel);
-          case 'search':
-            return await handleYouTubeSearch(client, interaction, detection.query, voiceChannel);
-          default:
-            return await youtubeHandler.handleYouTubeSingle(client, interaction, detection.query, voiceChannel);
+        try {
+          switch (detection.type) {
+            case 'playlist':
+              result = await youtubeHandler.handleYouTubePlaylist(client, interaction, detection.query, voiceChannel, lockKey);
+              break;
+            case 'mix':
+              await interaction.editReply({
+                content: '❌ Không hỗ trợ phát link YouTube Mix (list=RD...). Không có bài hát nào được thêm vào hàng đợi.',
+                ephemeral: true
+              });
+              return;
+            case 'single':
+              result = await youtubeHandler.handleYouTubeSingle(client, interaction, detection.query, voiceChannel);
+              break;
+            case 'search':
+              result = await handleYouTubeSearch(client, interaction, detection.query, voiceChannel);
+              break;
+            default:
+              result = await youtubeHandler.handleYouTubeSingle(client, interaction, detection.query, voiceChannel);
+          }
+        } catch (err) {
+          if (err && (err.stdout || err.stderr)) {
+            if (err.stdout) {
+              logger.platform('[PlatformDetector] YouTube handler stdout:', err.stdout);
+              console.error('[PlatformDetector] YouTube handler stdout:', err.stdout);
+            }
+            if (err.stderr) {
+              logger.platform('[PlatformDetector] YouTube handler stderr:', err.stderr);
+              console.error('[PlatformDetector] YouTube handler stderr:', err.stderr);
+            }
+          }
+          throw err;
         }
-        
-      case 'spotify':
-        if (config.debug) console.log(`[PlatformDetector] Chuyển đến Spotify handler với type:`, detection.type);
+        if (result && typeof result === 'object') {
+          if (result.stdout) {
+            logger.platform('[PlatformDetector] YouTube handler stdout:', result.stdout);
+            console.error('[PlatformDetector] YouTube handler stdout:', result.stdout);
+          }
+          if (result.stderr) {
+            logger.platform('[PlatformDetector] YouTube handler stderr:', result.stderr);
+            console.error('[PlatformDetector] YouTube handler stderr:', result.stderr);
+          }
+        }
+        return result;
+      }
+      case 'spotify': {
+        if (config.debug) logger.platform(`[PlatformDetector] Chuyển đến Spotify handler với type:`, detection.type);
         const spotifyHandler = require('./spotify');
-        switch (detection.type) {
-          case 'playlist':
-          case 'album':
-            return await spotifyHandler.handleSpotifyPlaylist(client, interaction, detection.query, voiceChannel, lockKey, detection.type === 'album' ? 'Album' : 'Playlist');
-          case 'single':
-            return await spotifyHandler.handleSpotifySingle(client, interaction, detection.query, voiceChannel);
-          default:
-            return await spotifyHandler.handleSpotifySingle(client, interaction, detection.query, voiceChannel);
+        try {
+          switch (detection.type) {
+            case 'playlist':
+            case 'album':
+              result = await spotifyHandler.handleSpotifyPlaylist(client, interaction, detection.query, voiceChannel, lockKey, detection.type === 'album' ? 'Album' : 'Playlist');
+              break;
+            case 'single':
+              result = await spotifyHandler.handleSpotifySingle(client, interaction, detection.query, voiceChannel);
+              break;
+            default:
+              result = await spotifyHandler.handleSpotifySingle(client, interaction, detection.query, voiceChannel);
+          }
+        } catch (err) {
+          if (err && (err.stdout || err.stderr)) {
+            if (err.stdout) {
+              logger.platform('[PlatformDetector] Spotify handler stdout:', err.stdout);
+              console.error('[PlatformDetector] Spotify handler stdout:', err.stdout);
+            }
+            if (err.stderr) {
+              logger.platform('[PlatformDetector] Spotify handler stderr:', err.stderr);
+              console.error('[PlatformDetector] Spotify handler stderr:', err.stderr);
+            }
+          }
+          throw err;
         }
-        
-      case 'soundcloud':
-        if (config.debug) console.log(`[PlatformDetector] Chuyển đến SoundCloud handler với type:`, detection.type);
+        if (result && typeof result === 'object') {
+          if (result.stdout) {
+            logger.platform('[PlatformDetector] Spotify handler stdout:', result.stdout);
+            console.error('[PlatformDetector] Spotify handler stdout:', result.stdout);
+          }
+          if (result.stderr) {
+            logger.platform('[PlatformDetector] Spotify handler stderr:', result.stderr);
+            console.error('[PlatformDetector] Spotify handler stderr:', result.stderr);
+          }
+        }
+        return result;
+      }
+      case 'soundcloud': {
+        if (config.debug) logger.platform(`[PlatformDetector] Chuyển đến SoundCloud handler với type:`, detection.type);
         const soundcloudHandler = require('./soundcloud');
-        switch (detection.type) {
-          case 'playlist':
-            return await soundcloudHandler.handleSoundCloudPlaylist(client, interaction, detection.query, voiceChannel, lockKey);
-          case 'single':
-            return await soundcloudHandler.handleSoundCloudSingle(client, interaction, detection.query, voiceChannel);
-          default:
-            return await soundcloudHandler.handleSoundCloudSingle(client, interaction, detection.query, voiceChannel);
+        try {
+          switch (detection.type) {
+            case 'playlist':
+              result = await soundcloudHandler.handleSoundCloudPlaylist(client, interaction, detection.query, voiceChannel, lockKey);
+              break;
+            case 'single':
+              result = await soundcloudHandler.handleSoundCloudSingle(client, interaction, detection.query, voiceChannel);
+              break;
+            default:
+              result = await soundcloudHandler.handleSoundCloudSingle(client, interaction, detection.query, voiceChannel);
+          }
+        } catch (err) {
+          if (err && (err.stdout || err.stderr)) {
+            if (err.stdout) {
+              logger.platform('[PlatformDetector] SoundCloud handler stdout:', err.stdout);
+              console.error('[PlatformDetector] SoundCloud handler stdout:', err.stdout);
+            }
+            if (err.stderr) {
+              logger.platform('[PlatformDetector] SoundCloud handler stderr:', err.stderr);
+              console.error('[PlatformDetector] SoundCloud handler stderr:', err.stderr);
+            }
+          }
+          throw err;
         }
-        
-      default:
-        if (config.debug) console.log(`[PlatformDetector] Fallback về YouTube search`);
-        // Fallback to YouTube search
-        return await handleYouTubeSearch(client, interaction, detection.query, voiceChannel);
+        if (result && typeof result === 'object') {
+          if (result.stdout) {
+            logger.platform('[PlatformDetector] SoundCloud handler stdout:', result.stdout);
+            console.error('[PlatformDetector] SoundCloud handler stdout:', result.stdout);
+          }
+          if (result.stderr) {
+            logger.platform('[PlatformDetector] SoundCloud handler stderr:', result.stderr);
+            console.error('[PlatformDetector] SoundCloud handler stderr:', result.stderr);
+          }
+        }
+        return result;
+      }
+      default: {
+        if (config.debug) logger.platform(`[PlatformDetector] Fallback về YouTube search`);
+        result = await handleYouTubeSearch(client, interaction, detection.query, voiceChannel);
+        return result;
+      }
     }
   } catch (error) {
     if(config.debug) console.error(`[PlatformDetector] Lỗi trong routeToPlatform:`, {

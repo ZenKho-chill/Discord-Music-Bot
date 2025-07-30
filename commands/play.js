@@ -8,6 +8,7 @@ const https = require('https');
 const ytpl = require('@distube/ytpl');
 const puppeteer = require('puppeteer');
 const { routeToPlatform } = require('./platforms/platformDetector');
+const PlaylistAddController = require('../services/PlaylistAddController');
 const config = require('../config/config');
 const autoLeaveManager = require('../utils/autoLeaveManager');
 
@@ -106,6 +107,12 @@ module.exports = {
       await interaction.deferReply({ ephemeral: true });
 
       const lockKey = `${interaction.guildId}`;
+
+      // Khởi tạo controller theo dõi thêm playlist (nếu là playlist YouTube)
+      let playlistAddController = null;
+      if ((query.includes('youtube.com/playlist') || query.includes('youtu.be/playlist')) && !/[?&]list=RD[\w-]+/i.test(query)) {
+        playlistAddController = new PlaylistAddController(client);
+      }
 
       // Kiểm tra playlist YouTube có tồn tại không trước khi phát
       if ((query.includes('youtube.com/playlist') || query.includes('youtu.be/playlist')) && !/[?&]list=RD[\w-]+/i.test(query)) {
@@ -214,6 +221,9 @@ module.exports = {
         }
       };
       client.distube.on('playSong', playSongHandler);
+      let routeResult = null;
+      let routeStdout = '';
+      let routeStderr = '';
       try {
         if (config.debug) {
           console.log(`[play.js] Bắt đầu routeToPlatform với query:`, query);
@@ -221,9 +231,82 @@ module.exports = {
           console.log(`[play.js] Voice channel:`, voiceChannel?.name, voiceChannel?.id);
           console.log(`[play.js] Volume sẽ phát:`, volumeToPlay);
         }
-        await routeToPlatform(client, interaction, query, voiceChannel, lockKey, volumeToPlay);
+
+        // Nếu là playlist, truyền callback dừng/tiếp tục cho controller
+        let isAdding = true;
+        let stopAdd = () => { isAdding = false; if (config.debug) console.log('[play.js] Đã tạm dừng thêm playlist'); };
+        let continueAdd = () => { isAdding = true; if (config.debug) console.log('[play.js] Tiếp tục thêm playlist'); };
+
+        if (playlistAddController) {
+          // Lấy queue hiện tại để theo dõi
+          const distubeQueue = client.distube.getQueue(interaction.guildId);
+          playlistAddController.startTracking(interaction.guildId, distubeQueue, continueAdd, stopAdd);
+        }
+
+        // Gọi routeToPlatform và log stdout/stderr nếu có
+        try {
+          // Nếu là playlist, truyền vào biến kiểm soát isAdding để các hàm thêm bài kiểm tra trước khi thêm
+          routeResult = await routeToPlatform(client, interaction, query, voiceChannel, lockKey, volumeToPlay, { isAddingRef: () => isAdding });
+          if (routeResult && typeof routeResult === 'object') {
+            if (routeResult.stdout) {
+              routeStdout = routeResult.stdout;
+              if (config.debug) console.log('[play.js] [routeToPlatform] stdout:', routeStdout);
+            }
+            if (routeResult.stderr) {
+              routeStderr = routeResult.stderr;
+              if (config.debug) console.log('[play.js] [routeToPlatform] stderr:', routeStderr);
+            }
+          }
+        } catch (subErr) {
+          if (subErr && subErr.stdout) {
+            routeStdout = subErr.stdout;
+            console.error('[play.js] [routeToPlatform] stdout (error):', routeStdout);
+          }
+          if (subErr && subErr.stderr) {
+            routeStderr = subErr.stderr;
+            console.error('[play.js] [routeToPlatform] stderr (error):', routeStderr);
+          }
+          throw subErr;
+        }
         if (config.debug) console.log(`[play.js] routeToPlatform hoàn thành thành công`);
       } catch (err) {
+        // Bắt lỗi JSON parse từ yt-dlp
+        let userMsg = `❌ Không thể phát bài hát!\n\n${err.message || err}`;
+        let isYtdlpJsonError = err && err.message && err.message.includes('is not valid JSON');
+        let isRateLimit = false;
+        let rawLog = '';
+        if (isYtdlpJsonError) {
+          console.error('[play.js] Lỗi JSON từ yt-dlp:', err.message);
+          if (err.stdout) {
+            console.error('[play.js] yt-dlp stdout:', err.stdout);
+            rawLog += err.stdout;
+          }
+          if (err.stderr) {
+            console.error('[play.js] yt-dlp stderr:', err.stderr);
+            rawLog += err.stderr;
+          }
+          // Log thêm stdout/stderr đã thu được từ routeToPlatform nếu có
+          if (routeStdout) {
+            console.error('[play.js] yt-dlp stdout (routeToPlatform):', routeStdout);
+            rawLog += routeStdout;
+          }
+          if (routeStderr) {
+            console.error('[play.js] yt-dlp stderr (routeToPlatform):', routeStderr);
+            rawLog += routeStderr;
+          }
+          // Kiểm tra các từ khóa liên quan rate limit/quota
+          const rateKeywords = ['rate limit', 'quota', '429', 'exceeded', 'too many requests', 'temporarily unavailable', 'blocked', 'try again later'];
+          if (rawLog && rateKeywords.some(k => rawLog.toLowerCase().includes(k))) {
+            isRateLimit = true;
+          }
+        }
+        // Log stdout/stderr kể cả khi không phải lỗi JSON
+        if (routeStdout) {
+          console.log('[play.js] [routeToPlatform] stdout (always):', routeStdout);
+        }
+        if (routeStderr) {
+          console.log('[play.js] [routeToPlatform] stderr (always):', routeStderr);
+        }
         console.error(`[play.js] Lỗi chi tiết trong routeToPlatform:`, {
           message: err.message,
           name: err.name,
@@ -245,9 +328,10 @@ module.exports = {
         } else {
           console.error('[play.js] PlayError (General):', err);
         }
-        let userMsg = `❌ Không thể phát bài hát!\n\n${err.message || err}`;
         // Xử lý thông báo lỗi thân thiện hơn
-        if (err.message && (err.message.includes('private') || err.message.includes('unavailable') || err.message.includes('404'))) {
+        if (isRateLimit) {
+          userMsg = '❌ Có thể bạn đã thêm quá nhiều bài liên tục, YouTube đang giới hạn truy cập (rate limit/quota). Vui lòng thử lại sau hoặc giảm tần suất thêm bài.';
+        } else if (err.message && (err.message.includes('private') || err.message.includes('unavailable') || err.message.includes('404'))) {
           userMsg = '❌ Nội dung này là riêng tư, không tồn tại hoặc không thể truy cập!';
         } else if (err.message && err.message.includes('SPOTIFY_API_ERROR')) {
           userMsg = '❌ Lỗi Spotify API - có thể do cấu hình hoặc giới hạn vùng!';
@@ -270,6 +354,8 @@ module.exports = {
         }
         // Xóa event listener sau khi hoàn thành để tránh leak bộ nhớ
         client.distube.off('playSong', playSongHandler);
+        // Dừng controller khi xong
+        if (playlistAddController) playlistAddController.stopTracking(interaction.guildId);
       }
     } catch (err) {
       console.error('[play.js] Lỗi ngoài cùng trong execute:', err, 'interaction:', interaction);

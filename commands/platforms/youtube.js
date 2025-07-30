@@ -1,6 +1,7 @@
 const { EmbedBuilder, AttachmentBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { createCanvas, loadImage } = require('canvas');
 const StackBlur = require('stackblur-canvas');
+// Thư viện lấy thông tin playlist YouTube
 const ytpl = require('@distube/ytpl');
 const puppeteer = require('puppeteer');
 const { Playlist } = require('distube');
@@ -213,13 +214,33 @@ async function handleYouTubePlaylist(client, interaction, query, voiceChannel, l
   try {
     let resolvedPlaylist;
     try {
+      if (config.debug) {
+        console.log(`[YouTube] resolve gọi với query:`, query);
+      }
       resolvedPlaylist = await client.distube.handler.resolve(query, { member: interaction.member });
+      if (config.debug) {
+        // Log lại kết quả trả về (chỉ log các trường chính)
+        if (resolvedPlaylist && resolvedPlaylist.songs) {
+          console.log(`[YouTube] resolve trả về ${resolvedPlaylist.songs.length} bài, tên playlist: ${resolvedPlaylist.name}`);
+        } else {
+          console.log(`[YouTube] resolve trả về:`, resolvedPlaylist);
+        }
+      }
     } catch (e) {
-      throw new Error('Không thể resolve playlist: ' + e.message);
+      // Log lại lỗi và dữ liệu đầu vào
+      console.error(`[YouTube] Lỗi khi resolve playlist với query: ${query}`);
+      if (e && e.message) console.error(`[YouTube] Lỗi chi tiết:`, e.message);
+      if (e && e.stack) console.error(`[YouTube] Stack:`, e.stack);
+      // Đính kèm stdout/stderr nếu có
+      const err = new Error('Không thể resolve playlist: ' + e.message);
+      if (e && e.stdout) err.stdout = e.stdout;
+      if (e && e.stderr) err.stderr = e.stderr;
+      throw err;
     }
 
     if (!(resolvedPlaylist instanceof Playlist) || !resolvedPlaylist.songs.length) {
-        throw new Error('Không thể tìm thấy playlist hoặc playlist không có bài hát.');
+      const err = new Error('Không thể tìm thấy playlist hoặc playlist không có bài hát.');
+      throw err;
     }
 
     const slotsAvailable = MAX_QUEUE_SIZE - currentQueueSize;
@@ -280,6 +301,13 @@ async function handleYouTubePlaylist(client, interaction, query, voiceChannel, l
         addedSongs.push(song);
       } catch (e) {
         failedCount++;
+        // Đính kèm stdout/stderr nếu có vào lỗi để propagate lên trên nếu cần
+        if (e && (e.stdout || e.stderr)) {
+          const err = new Error(e.message || 'Lỗi khi thêm bài hát vào playlist');
+          if (e.stdout) err.stdout = e.stdout;
+          if (e.stderr) err.stderr = e.stderr;
+          throw err;
+        }
         continue;
       }
       // Cập nhật progress bar sau mỗi lần thêm bài
@@ -341,7 +369,7 @@ async function handleYouTubePlaylist(client, interaction, query, voiceChannel, l
 async function handleYouTubeSingle(client, interaction, query, voiceChannel) {
   const config = getConfig();
   const MAX_QUEUE_SIZE = config.maxQueue;
-  
+
   // Validation: Kiểm tra xem single YouTube có được bật không
   if (!isPlatformFeatureEnabled('youtube', 'single')) {
     const errorMessage = createFeatureDisabledMessage('youtube', 'single');
@@ -350,7 +378,7 @@ async function handleYouTubeSingle(client, interaction, query, voiceChannel) {
       ephemeral: true
     });
   }
-  
+
   // Kiểm tra queue trước khi thêm bài mới
   const queue = client.distube.getQueue(voiceChannel);
   if (queue && Array.isArray(queue.songs) && queue.songs.length >= MAX_QUEUE_SIZE) {
@@ -367,23 +395,42 @@ async function handleYouTubeSingle(client, interaction, query, voiceChannel) {
     });
   } catch (e) {
     playError = e;
+    // Nếu lỗi liên quan đến JSON parse từ yt-dlp, log chi tiết stdout/stderr nếu có
+    if (e && e.message && e.message.includes('is not valid JSON')) {
+      console.error('[YouTube Single] Lỗi JSON từ yt-dlp:', e.message);
+      if (e.stdout) console.error('[YouTube Single] yt-dlp stdout:', e.stdout);
+      if (e.stderr) console.error('[YouTube Single] yt-dlp stderr:', e.stderr);
+      await interaction.followUp({ content: '❌ Lỗi lấy thông tin từ YouTube (yt-dlp trả về dữ liệu không hợp lệ). Vui lòng thử lại hoặc kiểm tra link!' });
+      // Đính kèm stdout/stderr vào lỗi để propagate lên trên nếu cần
+      const err = new Error(e.message);
+      if (e.stdout) err.stdout = e.stdout;
+      if (e.stderr) err.stderr = e.stderr;
+      throw err;
+    }
+    // Đính kèm stdout/stderr vào lỗi nếu có
+    if (e && (e.stdout || e.stderr)) {
+      const err = new Error(e.message);
+      if (e.stdout) err.stdout = e.stdout;
+      if (e.stderr) err.stderr = e.stderr;
+      throw err;
+    }
   }
-  
+
   if (playError) {
     let msg = `❌ Có lỗi khi thêm bài hát: ${playError.message}`;
     await interaction.followUp({ content: msg });
     return;
   }
-  
+
   const replyMsg = await interaction.followUp('🎵 Đã nhận yêu cầu phát nhạc!');
   await new Promise(r => setTimeout(r, 1000));
-  
+
   const updatedQueue = client.distube.getQueue(voiceChannel);
   if (!updatedQueue || !updatedQueue.songs || updatedQueue.songs.length === 0) {
     await interaction.followUp({ content: '❌ Không thể lấy thông tin bài hát vừa thêm!' });
     return;
   }
-  
+
   let song, currentIndex;
   if (updatedQueue.songs.length === 1) {
     song = updatedQueue.songs[0];
@@ -392,21 +439,21 @@ async function handleYouTubeSingle(client, interaction, query, voiceChannel) {
     song = updatedQueue.songs[updatedQueue.songs.length - 1];
     currentIndex = getSttFromQueueManager(interaction.guildId, song, true);
   }
-  
+
   if (!song || !interaction || !interaction.channel) {
     await interaction.followUp({ content: '❌ Không thể lấy thông tin bài hát hoặc kênh!' });
     return;
   }
-  
+
   // Tạo ảnh bài hát đang phát
   try {
     const width = 750, height = 200;
     const canvas = createCanvas(width, height);
     const ctx = canvas.getContext('2d');
-    
+
     let img;
     let thumbUrl = song.thumbnail;
-    
+
     if (song.url && song.url.includes('youtube.com')) {
       const match = song.url.match(/v=([\w-]+)/);
       if (match && match[1]) {
@@ -426,16 +473,16 @@ async function handleYouTubeSingle(client, interaction, query, voiceChannel) {
         }
       }
     }
-    
+
     if (!img) {
       try {
-        if (!thumbUrl || !/^https?:\/\//.test(thumbUrl)) throw new Error('Invalid thumbnail');
+        if (!thumbUrl || !/^https?:\//.test(thumbUrl)) throw new Error('Invalid thumbnail');
         img = await loadImage(thumbUrl);
       } catch (e) {
         img = await loadImage('https://cdn.discordapp.com/embed/avatars/0.png');
       }
     }
-    
+
     const bgRatio = width / height;
     const imgRatio = img.width / img.height;
     let sx = 0, sy = 0, sWidth = img.width, sHeight = img.height;
@@ -450,7 +497,7 @@ async function handleYouTubeSingle(client, interaction, query, voiceChannel) {
     StackBlur.canvasRGBA(ctx.canvas, 0, 0, width, height, 10);
     ctx.fillStyle = 'rgba(0,0,0,0.55)';
     ctx.fillRect(0, 0, width, height);
-    
+
     const thumbSize = 160;
     const thumbX = 20;
     const thumbY = 20;
@@ -470,7 +517,7 @@ async function handleYouTubeSingle(client, interaction, query, voiceChannel) {
     else { thumbSHeight = img.width; thumbSy = (img.height - thumbSHeight) / 2; }
     ctx.drawImage(img, thumbSx, thumbSy, thumbSWidth, thumbSHeight, thumbX, thumbY, thumbSize, thumbSize);
     ctx.restore();
-    
+
     const textX = thumbX + thumbSize + 30;
     ctx.font = 'bold 32px Arial';
     ctx.fillStyle = '#fff';
@@ -479,7 +526,7 @@ async function handleYouTubeSingle(client, interaction, query, voiceChannel) {
     ctx.font = '24px Arial';
     ctx.fillStyle = '#ccc';
     ctx.fillText('Tác giả: ' + (song.uploader?.name || song.artist || ''), textX, 120, width - textX - 100);
-    
+
     const circleRadius = 26;
     const circleX = width - 60;
     const circleY = height / 2;
@@ -498,13 +545,13 @@ async function handleYouTubeSingle(client, interaction, query, voiceChannel) {
     }
     ctx.restore();
     ctx.textAlign = 'left';
-    
+
     ctx.font = '18px Arial';
     ctx.fillStyle = '#fff';
     ctx.fillText('Thời lượng: ' + (song.formattedDuration || song.duration || ''), textX, 170);
     const attachment = new AttachmentBuilder(canvas.toBuffer(), { name: 'nowplaying.png' });
     await interaction.channel.send({ files: [attachment] });
-    
+
     if (replyMsg && replyMsg.deletable) {
       await replyMsg.delete().catch(() => {});
     }
@@ -513,7 +560,7 @@ async function handleYouTubeSingle(client, interaction, query, voiceChannel) {
     await interaction.followUp({ content: '❌ Có lỗi khi tạo ảnh bài hát!' });
     await interaction.followUp({ content: '❌ Có lỗi khi tạo ảnh bài hát!' });
   }
-  
+
   // Đồng bộ queueManager sau khi thêm bài mới
   const finalQueue = client.distube.getQueue(voiceChannel);
   if (finalQueue) {

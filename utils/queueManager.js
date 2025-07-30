@@ -21,13 +21,36 @@ class QueueManager {
   }
 
   setQueue(guildId, songs) {
-    this.queues[guildId] = songs.map((song, idx) => ({ 
-      ...song, 
-      stt: idx + 1,
-      queueId: this.generateUniqueId() // Thêm ID duy nhất
-    }));
-    // Cập nhật bộ đếm để theo dõi số thứ tự tiếp theo
-    this.sttCounters[guildId] = songs.length;
+    // Giữ nguyên stt cho bài cũ, chỉ gán stt cho bài mới
+    const currentQueue = this.queues[guildId] || [];
+    const oldMap = {};
+    for (const s of currentQueue) {
+      const key = s.id || s.url;
+      if (key) oldMap[key] = s;
+    }
+    let nextStt = currentQueue.length > 0 ? currentQueue[currentQueue.length - 1].stt || currentQueue.length : 0;
+    const debugQueue = [];
+    this.queues[guildId] = songs.map((song, idx) => {
+      const key = song.id || song.url;
+      if (key && oldMap[key]) {
+        // Nếu là bài cũ, giữ nguyên stt và queueId
+        debugQueue.push(`[CŨ] idx:${idx} stt:${oldMap[key].stt} queueId:${oldMap[key].queueId} name:${song.name}`);
+        return { ...song, stt: oldMap[key].stt, queueId: oldMap[key].queueId };
+      } else {
+        // Bài mới, gán stt tiếp theo
+        debugQueue.push(`[MỚI] idx:${idx} stt:${nextStt+1} queueId:${song.queueId || 'new'} name:${song.name}`);
+        return { ...song, stt: ++nextStt, queueId: song.queueId || this.generateUniqueId() };
+      }
+    });
+    this.sttCounters[guildId] = nextStt;
+    // Log chi tiết trạng thái queue sau khi set
+    const config = this.getConfig();
+    if (config.debug) {
+      logger.queue(`[QueueManager] setQueue - guildId: ${guildId}`);
+      logger.queue(`[QueueManager] Tổng số bài: ${this.queues[guildId].length}, sttCounters: ${this.sttCounters[guildId]}`);
+      debugQueue.forEach(log => logger.queue(log));
+      logger.queue(`[QueueManager] Queue sau khi set: ` + this.queues[guildId].map(s => `stt:${s.stt} name:${s.name}`).join(' | '));
+    }
   }
 
   getQueue(guildId) {
@@ -91,32 +114,30 @@ class QueueManager {
   // Đồng bộ hàng đợi từ DisTube - đảm bảo đồng bộ chính xác kể cả bài trùng
   syncFromDisTube(guildId, distubeQueue) {
     if (!distubeQueue || !distubeQueue.songs) return;
-    
     const currentQueue = this.queues[guildId] || [];
-    
     // Nếu hàng đợi hiện tại rỗng, thiết lập lại từ đầu
     if (currentQueue.length === 0) {
-      this.setQueue(guildId, distubeQueue.songs);
+      this.queues[guildId] = distubeQueue.songs.map((song, idx) => ({
+        ...song,
+        stt: idx + 1,
+        queueId: song.queueId || this.generateUniqueId()
+      }));
+      this.sttCounters[guildId] = distubeQueue.songs.length;
       const config = this.getConfig();
       if (config.debug) console.log(`[QueueManager] Khởi tạo hàng đợi cho guild ${guildId} với ${distubeQueue.songs.length} bài`);
       return;
     }
-    
-    // So sánh độ dài để phát hiện bài mới
+    // Nếu có bài cũ, chỉ thêm bài mới và gán stt tiếp theo
     if (distubeQueue.songs.length > currentQueue.length) {
-      const newSongsCount = distubeQueue.songs.length - currentQueue.length;
-      
-      // Thêm các bài mới từ cuối DisTube queue
+      let nextStt = currentQueue[currentQueue.length - 1].stt || currentQueue.length;
       for (let i = currentQueue.length; i < distubeQueue.songs.length; i++) {
         const newSong = distubeQueue.songs[i];
-        if (!this.sttCounters[guildId]) this.sttCounters[guildId] = currentQueue.length;
-        this.sttCounters[guildId]++;
-        const queueId = this.generateUniqueId(); // Tạo ID duy nhất cho bài mới
-        this.queues[guildId].push({ ...newSong, stt: this.sttCounters[guildId], queueId });
+        const queueId = newSong.queueId || this.generateUniqueId();
+        this.queues[guildId].push({ ...newSong, stt: ++nextStt, queueId });
       }
-      
+      this.sttCounters[guildId] = nextStt;
       const config = this.getConfig();
-      if (config.debug) console.log(`[QueueManager] Đã thêm ${newSongsCount} bài mới vào guild ${guildId}. Tổng hàng đợi: ${this.queues[guildId].length}`);
+      if (config.debug) console.log(`[QueueManager] Đã thêm ${distubeQueue.songs.length - currentQueue.length} bài mới vào guild ${guildId}. Tổng hàng đợi: ${this.queues[guildId].length}`);
     }
   }
 
