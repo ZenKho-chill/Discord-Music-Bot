@@ -51,13 +51,13 @@ module.exports = async function (client) {
     if (req.path.startsWith('/auth/') || req.path.startsWith('/css/') || req.path.startsWith('/js/') || req.path.startsWith('/images/')) {
       return next();
     }
-    
+
     // Nếu user chưa login và có remember_token cookie
     if (!req.user && req.cookies[config.dashboard.cookies.rememberToken.name]) {
       try {
         // Tìm user session từ remember token
         const userSession = await UserSessionService.getSessionByRememberToken(req.cookies[config.dashboard.cookies.rememberToken.name]);
-        
+
         if (userSession && userSession.isTokenValid()) {
           // Tự động login user
           return new Promise(async (resolve) => {
@@ -79,7 +79,7 @@ module.exports = async function (client) {
                 if (config.debug) {
                   console.log('✅ Tự động đăng nhập thành công cho:', userSession.username);
                 }
-                
+
                 // Đặt cờ để hiển thị thông báo tự động đăng nhập
                 try {
                   userSession.lastAutoLogin = true;
@@ -87,7 +87,7 @@ module.exports = async function (client) {
                 } catch (saveError) {
                   console.error('❌ Lỗi lưu cờ tự động đăng nhập:', saveError);
                 }
-                
+
                 // Chuyển hướng tới dashboard nếu đang ở trang chủ
                 if (req.path === '/' || req.path === '/login') {
                   res.redirect('/dashboard');
@@ -125,19 +125,19 @@ module.exports = async function (client) {
         console.log('🔑 Đã nhận access token:', accessToken ? 'Có' : 'Không');
         console.log('🔄 Đã nhận refresh token:', refreshToken ? 'Có' : 'Không');
       }
-      
+
       // Tạo hoặc cập nhật session trong database
       const userSession = await UserSessionService.createOrUpdateSession(
-        profile, 
-        accessToken, 
+        profile,
+        accessToken,
         refreshToken
       );
-      
+
       // Trả về profile với session ID
       profile.sessionId = userSession._id;
       profile.accessToken = accessToken;
       profile.refreshToken = refreshToken;
-      
+
       return done(null, profile);
     } catch (error) {
       console.error('❌ Lỗi lưu phiên người dùng:', error);
@@ -154,7 +154,7 @@ module.exports = async function (client) {
     try {
       // Lấy user session từ database
       const userSession = await UserSessionService.getSessionByDiscordId(discordId);
-      
+
       if (!userSession) {
         if (config.debug) {
           console.log('⚠️ Không tìm thấy phiên hợp lệ cho Discord ID:', discordId);
@@ -195,7 +195,7 @@ module.exports = async function (client) {
 
   app.listen(PORT, () => {
     console.log(`🌐 Dashboard đang chạy tại: http://localhost:${PORT}`);
-    
+
     // Dọn dẹp session hết hạn mỗi 1 giờ
     setInterval(async () => {
       try {

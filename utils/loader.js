@@ -28,14 +28,14 @@ module.exports = async (client) => {
       // Xóa bộ nhớ đệm cho tải động
       delete require.cache[require.resolve(filePath)];
       const command = require(filePath);
-      
+
       if (command.data && command.data.name) {
         client.commands.set(command.data.name, command);
         commands.push(command.data.toJSON());
         if (config.debug) {
-        if (config.debug) {
-          logger.debug(`[Trình tải] ✅ Đã tải lệnh: ${command.data.name}`);
-        }
+          if (config.debug) {
+            logger.debug(`[Trình tải] ✅ Đã tải lệnh: ${command.data.name}`);
+          }
         }
       }
     } catch (error) {
@@ -48,24 +48,24 @@ module.exports = async (client) => {
   try {
     if (config.registerCommands) {
       logger.core("[⏳] Đang đăng ký lệnh slash...");
-      
+
       // Xóa tất cả lệnh cũ trước nếu registerCommands là true
       logger.debug("[🗑️] Xóa tất cả lệnh cũ...");
       await rest.put(
         Routes.applicationCommands(config.clientId),
         { body: [] }
       );
-      
+
       if (config.debug) {
         logger.debug(`[Trình tải] 📋 Tìm thấy ${commands.length} lệnh để đăng ký`);
       }
-      
+
       // Đăng ký lệnh mới
       await rest.put(
         Routes.applicationCommands(config.clientId),
         { body: commands }
       );
-      
+
       logger.core(`[✔] Đã đăng ký ${commands.length} lệnh slash! Có thể mất vài phút để hiển thị.`);
       logger.core("Nếu không thấy, hãy thử Ctrl + R trong Discord.");
     } else {
@@ -83,7 +83,7 @@ module.exports = async (client) => {
 
   for (const file of eventFiles) {
     const filePath = path.join(eventsPath, file);
-    
+
     // Special handling for DisTube events
     if (file === 'distubeEvents.js') {
       const distubeEvents = require(filePath);
@@ -93,7 +93,7 @@ module.exports = async (client) => {
       }
       continue;
     }
-    
+
     // Regular Discord events
     const event = require(filePath);
     const eventName = file.split('.')[0];

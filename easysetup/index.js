@@ -588,6 +588,6 @@ app.post('/api/check-mongo', requireAuth, async (req, res) => {
       message = err.message || 'Kết nối thất bại';
     }
   }
-  try { await client.close(); } catch(e) {}
+  try { await client.close(); } catch (e) { }
   res.json({ success, needAuth, message });
 });

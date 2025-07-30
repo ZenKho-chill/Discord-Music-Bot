@@ -9,19 +9,19 @@ class HotReloader {
     this.currentConfig = { ...config };
     this.watchers = new Map();
     this.isWatching = false;
-    
+
     // Danh sách các tệp CORE không thể tải động (cần khởi động lại bot)
     this.coreFiles = [
       'index.js',
-      'package.json', 
+      'package.json',
       'events/ready.js',
-      'events/interactionCreate.js', 
+      'events/interactionCreate.js',
       'events/messageCreate.js',
       'events/guildCreate.js',
       'events/voiceStateUpdate.js',
       'utils/loader.js'
     ];
-    
+
     // Danh sách các thư mục cần theo dõi để tải động
     this.watchDirectories = [
       'commands',
@@ -29,7 +29,7 @@ class HotReloader {
       'utils/queueManager.js',
       'dashboard'
     ];
-    
+
     // Bộ nhớ đệm tệp cho các tệp đã tải
     this.fileCache = new Map();
   }
@@ -37,16 +37,16 @@ class HotReloader {
   // Bắt đầu theo dõi tất cả các tệp
   startWatching() {
     if (this.isWatching) return;
-    
+
     this.isWatching = true;
-    
+
     try {
       // Theo dõi config.js đặc biệt
       this.watchFile(this.configPath, 'config');
-      
+
       // Theo dõi thư mục gốc để phát hiện thay đổi tệp cốt lõi
       this.watchDirectory(path.join(__dirname, '..'), '', true);
-      
+
       // Theo dõi các thư mục
       this.watchDirectories.forEach(dir => {
         const fullPath = path.join(__dirname, '..', dir);
@@ -60,7 +60,7 @@ class HotReloader {
         logger.debug(`[HotReload] 📂 Đang theo dõi: ${this.watchers.size} tệp/thư mục`);
         logger.debug(`[HotReload] 🚫 Tệp cốt lõi (cần khởi động lại): ${this.coreFiles.length}`);
       }
-      
+
     } catch (error) {
       logger.error(`[HotReload] ❌ Lỗi khi bắt đầu theo dõi:`, error.message);
     }
@@ -69,16 +69,16 @@ class HotReloader {
   // Theo dõi một tệp cụ thể
   watchFile(filePath, type = 'general') {
     if (this.watchers.has(filePath)) return;
-    
+
     try {
       const watcher = fs.watch(filePath, { persistent: true }, (eventType, filename) => {
         if (eventType === 'change') {
           this.handleFileChange(filePath, type);
         }
       });
-      
+
       this.watchers.set(filePath, { watcher, type });
-      
+
     } catch (error) {
       logger.error(`[HotReload] ❌ Không thể theo dõi tệp ${filePath}:`, error.message);
     }
@@ -93,7 +93,7 @@ class HotReloader {
         if (eventType === 'change' && filename) {
           const fullPath = path.join(dirPath, filename);
           const relativeFilePath = relativePath ? path.join(relativePath, filename).replace(/\\/g, '/') : filename;
-          
+
           // Nếu theo dõi thư mục gốc, chỉ quan tâm đến tệp cốt lõi
           if (isRootWatch) {
             if (this.isCoreFile(relativeFilePath)) {
@@ -103,20 +103,20 @@ class HotReloader {
             }
             return; // Không xử lý tải động cho theo dõi thư mục gốc
           }
-          
+
           // Kiểm tra xem có phải tệp cốt lõi không
           if (this.isCoreFile(relativeFilePath)) {
             logger.core(`[HotReload] ⚠️ Tệp cốt lõi đã thay đổi: ${relativeFilePath}`);
             logger.core(`[HotReload] 🔄 Vui lòng khởi động lại bot để áp dụng thay đổi!`);
             return;
           }
-          
+
           this.handleFileChange(fullPath, 'directory', relativeFilePath);
         }
       });
-      
+
       this.watchers.set(dirPath, { watcher, type: 'directory' });
-      
+
     } catch (error) {
       logger.error(`[HotReload] ❌ Không thể theo dõi thư mục ${dirPath}:`, error.message);
     }
@@ -124,7 +124,7 @@ class HotReloader {
 
   // Kiểm tra xem tệp có phải là tệp cốt lõi không
   isCoreFile(filePath) {
-    return this.coreFiles.some(coreFile => 
+    return this.coreFiles.some(coreFile =>
       filePath.includes(coreFile) || filePath.endsWith(coreFile)
     );
   }
@@ -134,15 +134,15 @@ class HotReloader {
     try {
       // Đợi một chút để tệp được ghi hoàn toàn
       await new Promise(resolve => setTimeout(resolve, 100));
-      
+
       const displayPath = relativePath || path.relative(path.join(__dirname, '..'), filePath);
-      
+
       if (type === 'config') {
         await this.handleConfigChange(filePath);
       } else {
         await this.handleGeneralFileChange(filePath, displayPath);
       }
-      
+
     } catch (error) {
       logger.error(`[HotReload] ❌ Lỗi khi xử lý tệp ${filePath}:`, error.message);
       logger.debug(`[HotReload] ⚠️ Vui lòng kiểm tra cú pháp trong tệp và thử lại`);
@@ -154,28 +154,28 @@ class HotReloader {
     try {
       // Xóa bộ nhớ đệm module config
       delete require.cache[require.resolve('../config/config.js')];
-      
+
       // Tải config mới
       const newConfig = require('../config/config.js');
-      
+
       // So sánh config cũ và mới
       const changes = this.compareConfigs(this.currentConfig, newConfig);
-      
+
       if (changes.length > 0) {
         if (this.currentConfig.debug) {
           logger.debug(`[HotReload] 🔄 Config.js đã thay đổi:`, changes);
         }
-        
+
         // Cập nhật config hiện tại
         this.currentConfig = { ...newConfig };
-        
+
         // Cập nhật debug mode trong logger
         logger.updateDebugMode();
-        
+
         // Thông báo về các thay đổi
         this.notifyConfigChanges(changes);
       }
-      
+
     } catch (error) {
       logger.error(`[HotReload] ❌ Lỗi khi tải lại cấu hình:`, error.message);
       logger.debug(`[HotReload] ⚠️ Vui lòng kiểm tra cú pháp trong config.js`);
@@ -195,13 +195,13 @@ class HotReloader {
 
       // Đọc nội dung tệp để kiểm tra cú pháp
       const fileContent = fs.readFileSync(filePath, 'utf8');
-      
+
       // Nếu là tệp .js, kiểm tra cú pháp
       if (path.extname(filePath) === '.js') {
         // Xóa bộ nhớ đệm module cho tệp này
         const fullPath = path.resolve(filePath);
         delete require.cache[fullPath];
-        
+
         // Try require to check syntax
         try {
           require(fullPath);
@@ -217,10 +217,10 @@ class HotReloader {
           logger.debug(`[HotReload] 📄 Tệp đã thay đổi: ${displayPath}`);
         }
       }
-      
+
       // Notify change
       this.notifyFileChange(displayPath);
-      
+
     } catch (error) {
       logger.error(`[HotReload] ❌ Lỗi khi xử lý ${displayPath}:`, error.message);
     }
@@ -229,7 +229,7 @@ class HotReloader {
   // Compare 2 configs to find changes
   compareConfigs(oldConfig, newConfig) {
     const changes = [];
-    
+
     // Check platform changes
     if (oldConfig.platform && newConfig.platform) {
       for (const platform in newConfig.platform) {
@@ -237,7 +237,7 @@ class HotReloader {
           for (const feature in newConfig.platform[platform]) {
             const oldValue = oldConfig.platform[platform][feature];
             const newValue = newConfig.platform[platform][feature];
-            
+
             if (oldValue !== newValue) {
               changes.push({
                 type: 'platform',
@@ -251,7 +251,7 @@ class HotReloader {
         }
       }
     }
-    
+
     // Check other configs
     const otherKeys = ['maxQueue', 'debug', 'leaveOnEmpty'];
     for (const key of otherKeys) {
@@ -264,7 +264,7 @@ class HotReloader {
         });
       }
     }
-    
+
     return changes;
   }
 
@@ -276,10 +276,10 @@ class HotReloader {
       logger.updateDebugMode();
       console.log('[HotReload] 🔄 Đã cập nhật chế độ debug cho logger');
     }
-    
+
     if (this.currentConfig.debug) {
       logger.debug(`[HotReload] 📝 Chi tiết thay đổi cấu hình:`);
-      
+
       changes.forEach(change => {
         if (change.type === 'platform') {
           const status = change.newValue ? '✅ BẬT' : '❌ TẮT';
@@ -288,7 +288,7 @@ class HotReloader {
           logger.debug(`   • ${change.key}: ${JSON.stringify(change.oldValue)} → ${JSON.stringify(change.newValue)}`);
         }
       });
-      
+
       logger.debug(`[HotReload] ✨ Các thay đổi cấu hình đã được áp dụng ngay lập tức!`);
     }
   }
@@ -309,7 +309,7 @@ class HotReloader {
         logger.error(`[HotReload] Lỗi khi dừng theo dõi ${path}:`, error.message);
       }
     });
-    
+
     this.watchers.clear();
     this.isWatching = false;
     if (this.currentConfig.debug) {
@@ -332,7 +332,7 @@ class HotReloader {
       coreFiles: this.coreFiles.length,
       watchDirectories: this.watchDirectories.length
     };
-    
+
     return stats;
   }
 

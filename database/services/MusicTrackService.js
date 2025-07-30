@@ -55,7 +55,7 @@ class MusicTrackService {
       const track = new MusicTrack(trackDocument);
 
       logger.debug('🔍 [MusicTrackService] Đang lưu track vào cơ sở dữ liệu...');
-      
+
       try {
         const savedTrack = await track.save();
         logger.success('✅ [MusicTrackService] Lưu track thành công:', savedTrack._id);
@@ -75,14 +75,14 @@ class MusicTrackService {
     } catch (error) {
       logger.error('❌ [MusicTrackService] Lỗi ghi log track:', error);
       logger.error('❌ [MusicTrackService] Error stack:', error.stack);
-      
+
       // Xử lý các lỗi cơ sở dữ liệu cụ thể
       if (error.code === 13 || error.message.includes('authentication')) {
         logger.error('❌ [MusicTrackService] Lỗi xác thực cơ sở dữ liệu:', error.message);
         logger.info('💡 Hãy xem xét kiểm tra cài đặt xác thực MongoDB trong config');
         dbConnection.isAvailable = false; // Đánh dấu là không khả dụng
       }
-      
+
       return null;
     }
   }

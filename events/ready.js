@@ -10,9 +10,9 @@ let progressInterval = null;
 let currentlyPlaying = {}; // { guildId: songId }
 let processingPlaylist = {}; // { guildId: boolean } - Tạm dừng removeFirst khi đang xử lý playlist
 
-module.exports = async(client) => {
+module.exports = async (client) => {
   logger.core(`[✔] Bot đang chạy với tên ${client.user.tag} - HỆ THỐNG TẢI ĐỘNG!`);
-  
+
   // Khởi động trình tải động để theo dõi tất cả tệp
   hotReloader.startWatching();
 
@@ -23,7 +23,7 @@ module.exports = async(client) => {
       // Ghi log liên kết thực tế và nguồn
       const config = hotReloader.getCurrentConfig();
       logger.music('[DisTube] Đang phát:', song.name, '| Liên kết:', song.url, '| Thời lượng:', song.duration, '| Nguồn:', song.source || song.streamURL || 'không xác định');
-      
+
       // Chỉ xóa bài trước đó nếu KHÔNG đang xử lý danh sách phát và KHÔNG ở chế độ lặp lại
       if (currentlyPlaying[queue.id] && !processingPlaylist[queue.id] && queue.repeatMode !== 1 && queue.repeatMode !== 2) {
         queueManager.removeFirst(queue.id);
@@ -39,10 +39,10 @@ module.exports = async(client) => {
         const config = hotReloader.getCurrentConfig();
         logger.queue(`[DisTube] Bỏ qua removeFirst - đang ở chế độ lặp lại hàng đợi cho máy chủ ${queue.id}`);
       }
-      
+
       // Cập nhật bài đang phát hiện tại
       currentlyPlaying[queue.id] = song.id || song.url;
-      
+
       // Expose currentlyPlaying qua client để các lệnh khác có thể truy cập
       if (!client.distube.currentlyPlaying) client.distube.currentlyPlaying = {};
       client.distube.currentlyPlaying[queue.id] = song.id || song.url;
@@ -68,7 +68,7 @@ module.exports = async(client) => {
         .setThumbnail('https://cdn-icons-png.flaticon.com/512/727/727245.png')
         .setFooter({ text: botName, iconURL: botAvatar });
       queue.textChannel.send({ embeds: [embed] });
-      
+
       // Logic tự rời khi hết nhạc
       const config = hotReloader.getCurrentConfig();
       if (config.leaveOnEmpty?.finish?.enabled) {
@@ -79,11 +79,11 @@ module.exports = async(client) => {
             try {
               // Hết nhạc và thời gian chờ đã qua, rời luôn (không cần kiểm tra người dùng)
               const guild = queue.textChannel.guild;
-              
+
               try {
                 await queue.distube.voices.leave(queue.id);
                 logger.autoLeave(`[Tự Rời-Hết Nhạc] Bot đã rời kênh thoại sau khi hết nhạc - ${guild.name}`);
-                
+
                 // Dọn dẹp bổ sung để ngăn tự động tham gia lại
                 const connection = guild.client.voice?.connections?.get(guild.id);
                 if (connection) {
@@ -96,7 +96,7 @@ module.exports = async(client) => {
                 try {
                   await guild.members.me.voice.disconnect();
                   if (config.debug) console.log(`[Tự Rời-Hết Nhạc] Ngắt kết nối thủ công thành công - ${guild.name}`);
-                  
+
                   // Ép buộc hủy kết nối
                   const connection = guild.client.voice?.connections?.get(guild.id);
                   if (connection) {
@@ -123,14 +123,14 @@ module.exports = async(client) => {
     .on('empty', async queue => {
       if (progressInterval) clearInterval(progressInterval);
       nowPlayingMsg = null;
-      
+
       // Sự kiện 'empty' của DisTube kích hoạt ngay lập tức khi kênh thoại trống
       // Chúng ta sẽ để voiceStateUpdate xử lý logic thời gian chờ thay thế
       const config = hotReloader.getCurrentConfig();
       if (config.debug) {
         console.log(`[Sự Kiện DisTube Empty] Phát hiện kênh thoại trống cho máy chủ ${queue.textChannel.guild.name} - để voiceStateUpdate xử lý`);
       }
-      
+
       // Xóa theo dõi khi hàng đợi trống
       delete currentlyPlaying[queue.id];
       if (client.distube.currentlyPlaying) {
@@ -140,7 +140,7 @@ module.exports = async(client) => {
     .on('error', (channel, error) => {
       if (progressInterval) clearInterval(progressInterval);
       nowPlayingMsg = null;
-      
+
       console.error('[Sự Kiện Lỗi DisTube]', error);
 
       let errorMessage = 'Đã xảy ra lỗi không xác định';
@@ -155,9 +155,9 @@ module.exports = async(client) => {
       if (channel && typeof channel.send === 'function') {
         // Tránh gửi tin nhắn trùng lặp nếu lỗi đã được xử lý ở lệnh
         if (errorMessage.includes("No result found")) {
-            const config = hotReloader.getCurrentConfig();
-            if (config.debug) console.log("[Lỗi DisTube] Bỏ qua gửi tin nhắn 'No result found' để tránh trùng lặp.");
-            return;
+          const config = hotReloader.getCurrentConfig();
+          if (config.debug) console.log("[Lỗi DisTube] Bỏ qua gửi tin nhắn 'No result found' để tránh trùng lặp.");
+          return;
         }
         channel.send(`❌ Có lỗi từ DisTube: ${errorMessage}`);
       }

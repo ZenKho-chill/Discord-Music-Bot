@@ -325,8 +325,13 @@
           try {
             await fetch('/api/update-spotify', {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ clientId, clientSecret })
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                clientId,
+                clientSecret
+              })
             });
           } catch (err) {
             console.error('Lỗi khi cập nhật Spotify:', err);

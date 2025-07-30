@@ -134,8 +134,15 @@
         try {
           await fetch('/api/update-discord', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ masterAdmin, token, clientId, clientSecret })
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              masterAdmin,
+              token,
+              clientId,
+              clientSecret
+            })
           });
         } catch (err) {
           console.error('Lỗi khi cập nhật Discord:', err);

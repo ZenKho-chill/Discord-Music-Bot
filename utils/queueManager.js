@@ -38,7 +38,7 @@ class QueueManager {
         return { ...song, stt: oldMap[key].stt, queueId: oldMap[key].queueId };
       } else {
         // Bài mới, gán stt tiếp theo
-        debugQueue.push(`[MỚI] idx:${idx} stt:${nextStt+1} queueId:${song.queueId || 'new'} name:${song.name}`);
+        debugQueue.push(`[MỚI] idx:${idx} stt:${nextStt + 1} queueId:${song.queueId || 'new'} name:${song.name}`);
         return { ...song, stt: ++nextStt, queueId: song.queueId || this.generateUniqueId() };
       }
     });
@@ -60,7 +60,7 @@ class QueueManager {
   addSong(guildId, song) {
     if (!this.queues[guildId]) this.queues[guildId] = [];
     if (!this.sttCounters[guildId]) this.sttCounters[guildId] = 0;
-    
+
     this.sttCounters[guildId]++;
     const stt = this.sttCounters[guildId];
     const queueId = this.generateUniqueId(); // Tạo ID duy nhất
@@ -98,7 +98,7 @@ class QueueManager {
 
     const distubeIds = currentDistubeQueue.songs.map(song => song.id || song.url);
     const currentQueue = this.queues[guildId] || [];
-    
+
     // Lọc ra những bài còn lại trong DisTube
     this.queues[guildId] = currentQueue.filter(song => {
       const songId = song.id || song.url;
@@ -160,7 +160,7 @@ class QueueManager {
   removeBeforeCurrentlyPlaying(guildId, currentlyPlayingId) {
     const config = this.getConfig();
     if (config.debug) console.log(`[QueueManager] removeBeforeCurrentlyPlaying - guildId: ${guildId}, currentlyPlayingId: ${currentlyPlayingId}`);
-    
+
     if (!this.queues[guildId] || this.queues[guildId].length <= 1) {
       if (config.debug) console.log(`[QueueManager] Không có gì để xóa - queue trống hoặc chỉ có 1 bài`);
       return { removedCount: 0, removedSongs: [] };
@@ -168,17 +168,17 @@ class QueueManager {
 
     const currentQueue = this.queues[guildId];
     let currentSongIndex = -1;
-    
+
     // Tìm bài đang phát trong queue
     for (let i = 0; i < currentQueue.length; i++) {
       const song = currentQueue[i];
-      const isMatch = song.id === currentlyPlayingId || 
-                     song.url === currentlyPlayingId ||
-                     (song.url && song.url.includes(currentlyPlayingId)) ||
-                     (currentlyPlayingId && currentlyPlayingId.includes && currentlyPlayingId.includes(song.id));
-      
+      const isMatch = song.id === currentlyPlayingId ||
+        song.url === currentlyPlayingId ||
+        (song.url && song.url.includes(currentlyPlayingId)) ||
+        (currentlyPlayingId && currentlyPlayingId.includes && currentlyPlayingId.includes(song.id));
+
       if (config.debug) console.log(`[QueueManager] Checking song ${i}: ${song.name} (stt: ${song.stt}), isMatch: ${isMatch}`);
-      
+
       if (isMatch) {
         currentSongIndex = i;
         break;
@@ -193,7 +193,7 @@ class QueueManager {
     // Xóa các bài trước bài đang phát
     const removedSongs = this.queues[guildId].splice(0, currentSongIndex);
     const removedCount = removedSongs.length;
-    
+
     if (config.debug) {
       console.log(`[QueueManager] Đã xóa ${removedCount} bài trước bài đang phát:`);
       removedSongs.forEach((song, i) => {

@@ -2,7 +2,7 @@ const { StringSelectMenuBuilder, ActionRowBuilder } = require('discord.js');
 const { routeToPlatform } = require('../commands/platforms/platformDetector');
 const ServerStatsService = require('../database/services/ServerStatsService');
 
-module.exports = async(client, interaction) => {
+module.exports = async (client, interaction) => {
   if (interaction.isAutocomplete()) {
     const command = client.commands.get(interaction.commandName);
     if (command && typeof command.autocomplete === 'function') {
@@ -25,10 +25,10 @@ module.exports = async(client, interaction) => {
       const url = interaction.values[0];
       try {
         await interaction.deferUpdate();
-        
+
         // Sử dụng hệ thống platform mới
         await routeToPlatform(client, interaction, url, voiceChannel, lockKey);
-        
+
         // Disable select menu sau khi chọn
         const oldMsg = await interaction.fetchReply();
         if (oldMsg && oldMsg.components && oldMsg.components.length > 0) {
@@ -55,7 +55,7 @@ module.exports = async(client, interaction) => {
   }
 
   if (interaction.isButton()) {
-      if (interaction.customId === 'stop_add') {
+    if (interaction.customId === 'stop_add') {
       const lockKey = `${interaction.guildId}`;
       if (interaction.client._addInfo && interaction.client._addInfo[lockKey]) {
         const addInfo = interaction.client._addInfo[lockKey];
@@ -65,7 +65,7 @@ module.exports = async(client, interaction) => {
         try {
           const ephemeralMsg = await interaction.reply({ content: addInfo.type === 'mix' ? '⏸️ Đang dừng quá trình thêm bài...' : '⏸️ Đang dừng quá trình thêm danh sách phát...', ephemeral: true });
           if (ephemeralMsg && ephemeralMsg.id) addInfo.ephemeralMsgId = ephemeralMsg.id;
-        } catch {}
+        } catch { }
         // KHÔNG xóa progressMsg ở đây nữa, để vòng lặp trong play.js xử lý
       }
       return;
@@ -87,7 +87,7 @@ module.exports = async(client, interaction) => {
         interaction.commandName
       );
     }
-    
+
     await command.execute(client, interaction);
   } catch (err) {
     console.error('[interactionCreate.js] Lỗi khi thực thi lệnh:', err);

@@ -20,7 +20,7 @@ class PlaylistAddController {
       continueAdd: continueAddCallback,
       stopAdd: stopAddCallback,
       lastSongId: distubeQueue.songs[0]?.id || null,
-      interval: setInterval(async function() {
+      interval: setInterval(async function () {
         try {
           const queue = self.client.distube.getQueue(guildId);
           if (!queue || !queue.songs || queue.songs.length === 0) return;

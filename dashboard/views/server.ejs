@@ -69,7 +69,7 @@
         <div style="display: flex; flex-direction: column; width: 100%; max-width: 600px; position: relative; gap: 1rem; overflow: visible;">
           <!-- Platform Tooltip -->
           <div id="platformTooltip" style="position: absolute; top: -35px; background: rgba(0,0,0,0.9); color: white; padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.9rem; display: none; z-index: 9999; white-space: nowrap; pointer-events: none; min-width: 100px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.3); font-weight: 500;"></div>
-          
+
           <!-- Platform Statistics Chart -->
           <div style="border-radius: 8px; overflow: visible;">
             <!-- Custom Platform Legend -->
@@ -304,12 +304,12 @@
       debug: <%- JSON.stringify(debugMode || false) %>
     };
   </script>
-  
+
   <script src="/js/dashboard.js"></script>
   <script>
     // Debug Mode Control - get from server config
     const DEBUG_MODE = window.config.debug;
-    
+
     // Debug logging function
     function debugLog(...args) {
       if (DEBUG_MODE) {
@@ -324,25 +324,27 @@
       showNotification(`Đã đặt âm lượng: ${volume}%`, 'success');
       // Gửi request lưu âm lượng cá nhân
       fetch('/api/server/volume-user', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          guildId: '<%= guild.id %>',
-          userId: '<%= user.id %>',
-          volume: Number(volume)
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            guildId: '<%= guild.id %>',
+            userId: '<%= user.id %>',
+            volume: Number(volume)
+          })
         })
-      })
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) {
-          debugLog('Lưu âm lượng cá nhân thành công:', data);
-        } else {
-          console.error('Lỗi lưu âm lượng cá nhân:', data.message);
-        }
-      })
-      .catch(err => {
-        console.error('Lỗi kết nối API lưu âm lượng cá nhân:', err);
-      });
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            debugLog('Lưu âm lượng cá nhân thành công:', data);
+          } else {
+            console.error('Lỗi lưu âm lượng cá nhân:', data.message);
+          }
+        })
+        .catch(err => {
+          console.error('Lỗi kết nối API lưu âm lượng cá nhân:', err);
+        });
     }
 
     // Hàm đặt âm lượng mặc định cho server (chỉ admin)
@@ -354,23 +356,25 @@
         showNotification(`Đã đặt âm lượng mặc định server: ${volume}%`, 'success');
         // Gửi request lưu âm lượng mặc định server
         fetch(`/api/server/volume-default/<%= guild.id %>`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            volumeDefault: Number(volume)
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              volumeDefault: Number(volume)
+            })
           })
-        })
-        .then(res => res.json())
-        .then(data => {
-          if (data.success) {
-            debugLog('Lưu âm lượng mặc định server thành công:', data);
-          } else {
-            console.error('Lỗi lưu âm lượng mặc định server:', data.message);
-          }
-        })
-        .catch(err => {
-          console.error('Lỗi kết nối API lưu âm lượng mặc định server:', err);
-        });
+          .then(res => res.json())
+          .then(data => {
+            if (data.success) {
+              debugLog('Lưu âm lượng mặc định server thành công:', data);
+            } else {
+              console.error('Lỗi lưu âm lượng mặc định server:', data.message);
+            }
+          })
+          .catch(err => {
+            console.error('Lỗi kết nối API lưu âm lượng mặc định server:', err);
+          });
       }
     }
 
@@ -393,7 +397,9 @@
             adminSection.style.display = 'none';
           }
         })
-        .catch(() => { adminSection.style.display = 'none'; });
+        .catch(() => {
+          adminSection.style.display = 'none';
+        });
 
       // Lấy volume cá nhân user
       const volumeSlider = document.getElementById('volumeSlider');
@@ -461,25 +467,27 @@
           showNotification(`Âm lượng: ${volume}%`, 'info');
           // Gọi API lưu âm lượng cá nhân
           fetch('/api/server/volume-user', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              guildId: '<%= guild.id %>',
-              userId: '<%= user.id %>',
-              volume: Number(volume)
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                guildId: '<%= guild.id %>',
+                userId: '<%= user.id %>',
+                volume: Number(volume)
+              })
             })
-          })
-          .then(res => res.json())
-          .then(data => {
-            if (data.success) {
-              debugLog('Lưu âm lượng cá nhân thành công:', data);
-            } else {
-              console.error('Lỗi lưu âm lượng cá nhân:', data.message);
-            }
-          })
-          .catch(err => {
-            console.error('Lỗi kết nối API lưu âm lượng cá nhân:', err);
-          });
+            .then(res => res.json())
+            .then(data => {
+              if (data.success) {
+                debugLog('Lưu âm lượng cá nhân thành công:', data);
+              } else {
+                console.error('Lỗi lưu âm lượng cá nhân:', data.message);
+              }
+            })
+            .catch(err => {
+              console.error('Lỗi kết nối API lưu âm lượng cá nhân:', err);
+            });
         }
       });
       volumeSlider.addEventListener('mouseleave', function() {
@@ -496,25 +504,27 @@
           showNotification(`Âm lượng: ${volume}%`, 'info');
           // Gọi API lưu âm lượng cá nhân
           fetch('/api/server/volume-user', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              guildId: '<%= guild.id %>',
-              userId: '<%= user.id %>',
-              volume: Number(volume)
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                guildId: '<%= guild.id %>',
+                userId: '<%= user.id %>',
+                volume: Number(volume)
+              })
             })
-          })
-          .then(res => res.json())
-          .then(data => {
-            if (data.success) {
-              debugLog('Lưu âm lượng cá nhân thành công:', data);
-            } else {
-              console.error('Lỗi lưu âm lượng cá nhân:', data.message);
-            }
-          })
-          .catch(err => {
-            console.error('Lỗi kết nối API lưu âm lượng cá nhân:', err);
-          });
+            .then(res => res.json())
+            .then(data => {
+              if (data.success) {
+                debugLog('Lưu âm lượng cá nhân thành công:', data);
+              } else {
+                console.error('Lỗi lưu âm lượng cá nhân:', data.message);
+              }
+            })
+            .catch(err => {
+              console.error('Lỗi kết nối API lưu âm lượng cá nhân:', err);
+            });
         }
       });
       // Lưu giá trị trước khi kéo
@@ -525,6 +535,7 @@
       // Logic cho volumeDefaultSlider (chỉ admin mới có)
       if (volumeDefaultSlider && volumeDefaultTooltip) {
         let volumeDefaultBefore = volumeDefaultSlider.value;
+
         function updateVolumeDefaultTooltip() {
           const value = volumeDefaultSlider.value;
           const min = parseInt(volumeDefaultSlider.min);
@@ -555,23 +566,25 @@
             showNotification(`Âm lượng mặc định server: ${volume}%`, 'info');
             // Gọi API lưu âm lượng mặc định server
             fetch(`/api/server/volume-default/<%= guild.id %>`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                volumeDefault: Number(volume)
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                  volumeDefault: Number(volume)
+                })
               })
-            })
-            .then(res => res.json())
-            .then(data => {
-              if (data.success) {
-                debugLog('Lưu âm lượng mặc định server thành công:', data);
-              } else {
-                console.error('Lỗi lưu âm lượng mặc định server:', data.message);
-              }
-            })
-            .catch(err => {
-              console.error('Lỗi kết nối API lưu âm lượng mặc định server:', err);
-            });
+              .then(res => res.json())
+              .then(data => {
+                if (data.success) {
+                  debugLog('Lưu âm lượng mặc định server thành công:', data);
+                } else {
+                  console.error('Lỗi lưu âm lượng mặc định server:', data.message);
+                }
+              })
+              .catch(err => {
+                console.error('Lỗi kết nối API lưu âm lượng mặc định server:', err);
+              });
           }
         });
         volumeDefaultSlider.addEventListener('mouseleave', function() {
@@ -587,23 +600,25 @@
             showNotification(`Âm lượng mặc định server: ${volume}%`, 'info');
             // Gọi API lưu âm lượng mặc định server
             fetch(`/api/server/volume-default/<%= guild.id %>`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                volumeDefault: Number(volume)
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                  volumeDefault: Number(volume)
+                })
               })
-            })
-            .then(res => res.json())
-            .then(data => {
-              if (data.success) {
-                debugLog('Lưu âm lượng mặc định server thành công:', data);
-              } else {
-                console.error('Lỗi lưu âm lượng mặc định server:', data.message);
-              }
-            })
-            .catch(err => {
-              console.error('Lỗi kết nối API lưu âm lượng mặc định server:', err);
-            });
+              .then(res => res.json())
+              .then(data => {
+                if (data.success) {
+                  debugLog('Lưu âm lượng mặc định server thành công:', data);
+                } else {
+                  console.error('Lỗi lưu âm lượng mặc định server:', data.message);
+                }
+              })
+              .catch(err => {
+                console.error('Lỗi kết nối API lưu âm lượng mặc định server:', err);
+              });
           }
         });
         volumeDefaultSlider.addEventListener('mousedown', function() {
@@ -633,9 +648,9 @@
         // Create datasets for 100% stacked bar
         const platformDatasets = platformLabels.map((label, index) => {
           let backgroundColor, borderColor;
-          
+
           // Set colors based on platform
-          switch(label) {
+          switch (label) {
             case 'YOUTUBE':
               backgroundColor = 'rgba(255, 0, 0, 0.8)';
               borderColor = '#CC0000';
@@ -652,25 +667,35 @@
               backgroundColor = 'rgba(108, 117, 125, 0.8)';
               borderColor = '#5A6268';
           }
-          
+
           // Only round corners for first and last segments
           let borderRadius = 0;
           let borderSkipped = false;
-          
+
           if (index === 0) {
             // First segment - round left corners only
-            borderRadius = { topLeft: 4, bottomLeft: 4, topRight: 0, bottomRight: 0 };
+            borderRadius = {
+              topLeft: 4,
+              bottomLeft: 4,
+              topRight: 0,
+              bottomRight: 0
+            };
             borderSkipped = false;
           } else if (index === platformLabels.length - 1) {
             // Last segment - round right corners only
-            borderRadius = { topLeft: 0, bottomLeft: 0, topRight: 4, bottomRight: 4 };
+            borderRadius = {
+              topLeft: 0,
+              bottomLeft: 0,
+              topRight: 4,
+              bottomRight: 4
+            };
             borderSkipped = false;
           } else {
             // Middle segments - no rounded corners
             borderRadius = 0;
             borderSkipped = false;
           }
-          
+
           return {
             label: label,
             data: [platformPercentages[index]],
@@ -722,34 +747,34 @@
               },
               onHover: function(event, activeElements) {
                 const tooltip = document.getElementById('platformTooltip');
-                
+
                 // Use manual detection exclusively for better accuracy
                 const rect = this.canvas.getBoundingClientRect();
                 const mouseX = event.native.clientX - rect.left;
                 const chartArea = this.chartArea;
-                
+
                 if (mouseX >= chartArea.left && mouseX <= chartArea.right) {
                   const relativeX = mouseX - chartArea.left;
                   const totalWidth = chartArea.right - chartArea.left;
                   const mousePercentage = (relativeX / totalWidth) * 100;
-                  
+
                   // Find which segment the mouse is over - iterate in same order as datasets
                   let accumulatedPercentage = 0;
                   let foundSegment = false;
-                  
+
                   for (let i = 0; i < platformDatasets.length; i++) {
                     const segmentPercentage = parseFloat(platformPercentages[i]);
                     const segmentStart = accumulatedPercentage;
                     const segmentEnd = accumulatedPercentage + segmentPercentage;
-                    
+
                     if (mousePercentage >= segmentStart && mousePercentage <= segmentEnd) {
                       const value = platformCounts[i];
                       const label = platformLabels[i];
                       const percentage = platformPercentages[i];
-                      
+
                       const segmentCenter = segmentStart + (segmentPercentage / 2);
                       const tooltipX = chartArea.left + (segmentCenter * totalWidth / 100);
-                      
+
                       tooltip.innerHTML = `${label}: ${value} lượt (${percentage}%)`;
                       tooltip.style.display = 'block';
                       tooltip.style.left = Math.max(10, Math.min(tooltipX - tooltip.offsetWidth / 2, chartArea.right - tooltip.offsetWidth)) + 'px';
@@ -758,7 +783,7 @@
                     }
                     accumulatedPercentage += segmentPercentage;
                   }
-                  
+
                   if (!foundSegment) {
                     tooltip.style.display = 'none';
                   }
@@ -772,7 +797,7 @@
               }
             }
           });
-          
+
           // Create custom platform legend
           const platformLegendContainer = document.getElementById('platformLegend');
           if (platformLegendContainer) {
@@ -787,7 +812,7 @@
               platformLegendContainer.appendChild(legendItem);
             });
           }
-          
+
           // Add comprehensive mouse leave events to hide tooltip
           const platformChartContainer = platformCtx.closest('div[style*="position: relative"]');
           if (platformChartContainer) {
@@ -796,13 +821,13 @@
               tooltip.style.display = 'none';
             });
           }
-          
+
           // Also hide tooltip when mouse leaves chart canvas specifically
           platformCtx.addEventListener('mouseleave', function() {
             const tooltip = document.getElementById('platformTooltip');
             tooltip.style.display = 'none';
           });
-          
+
           // Global mouse move event to hide tooltip when mouse is outside chart area
           document.addEventListener('mousemove', function(e) {
             const tooltip = document.getElementById('platformTooltip');
@@ -813,10 +838,10 @@
               const absoluteRight = rect.left + chartArea.right;
               const absoluteTop = rect.top + chartArea.top;
               const absoluteBottom = rect.top + chartArea.bottom;
-              
+
               // Hide tooltip if mouse is outside chart area
-              if (e.clientX < absoluteLeft || e.clientX > absoluteRight || 
-                  e.clientY < absoluteTop || e.clientY > absoluteBottom) {
+              if (e.clientX < absoluteLeft || e.clientX > absoluteRight ||
+                e.clientY < absoluteTop || e.clientY > absoluteBottom) {
                 tooltip.style.display = 'none';
               }
             }
@@ -836,9 +861,9 @@
         // Create datasets for 100% stacked bar
         const contentTypeDatasets = contentTypeLabels.map((label, index) => {
           let backgroundColor, borderColor;
-          
+
           // Set colors based on content type
-          switch(label) {
+          switch (label) {
             case 'Đơn lẻ':
               backgroundColor = 'rgba(40, 167, 69, 0.8)';
               borderColor = '#1e7e34';
@@ -855,7 +880,7 @@
               backgroundColor = 'rgba(108, 117, 125, 0.8)';
               borderColor = '#5A6268';
           }
-          
+
           return {
             label: label,
             data: [contentTypePercentages[index]],
@@ -907,34 +932,34 @@
               },
               onHover: function(event, activeElements) {
                 const tooltip = document.getElementById('contentTypeTooltip');
-                
+
                 // Use manual detection exclusively for better accuracy
                 const rect = this.canvas.getBoundingClientRect();
                 const mouseX = event.native.clientX - rect.left;
                 const chartArea = this.chartArea;
-                
+
                 if (mouseX >= chartArea.left && mouseX <= chartArea.right) {
                   const relativeX = mouseX - chartArea.left;
                   const totalWidth = chartArea.right - chartArea.left;
                   const mousePercentage = (relativeX / totalWidth) * 100;
-                  
+
                   // Find which segment the mouse is over - iterate in same order as datasets
                   let accumulatedPercentage = 0;
                   let foundSegment = false;
-                  
+
                   for (let i = 0; i < contentTypeDatasets.length; i++) {
                     const segmentPercentage = parseFloat(contentTypePercentages[i]);
                     const segmentStart = accumulatedPercentage;
                     const segmentEnd = accumulatedPercentage + segmentPercentage;
-                    
+
                     if (mousePercentage >= segmentStart && mousePercentage <= segmentEnd) {
                       const value = contentTypeCounts[i];
                       const label = contentTypeLabels[i];
                       const percentage = contentTypePercentages[i];
-                      
+
                       const segmentCenter = segmentStart + (segmentPercentage / 2);
                       const tooltipX = chartArea.left + (segmentCenter * totalWidth / 100);
-                      
+
                       tooltip.innerHTML = `${label}: ${value} lượt (${percentage}%)`;
                       tooltip.style.display = 'block';
                       tooltip.style.left = Math.max(10, Math.min(tooltipX - tooltip.offsetWidth / 2, window.innerWidth - tooltip.offsetWidth - 10)) + 'px';
@@ -943,7 +968,7 @@
                     }
                     accumulatedPercentage += segmentPercentage;
                   }
-                  
+
                   if (!foundSegment) {
                     tooltip.style.display = 'none';
                   }
@@ -957,7 +982,7 @@
               }
             }
           });
-          
+
           // Create custom content type legend
           const contentTypeLegendContainer = document.getElementById('contentTypeLegend');
           if (contentTypeLegendContainer) {
@@ -972,7 +997,7 @@
               contentTypeLegendContainer.appendChild(legendItem);
             });
           }
-          
+
           // Add comprehensive mouse leave events to hide tooltip
           const contentTypeChartContainer = contentTypeCtx.closest('div[style*="position: relative"]');
           if (contentTypeChartContainer) {
@@ -981,13 +1006,13 @@
               tooltip.style.display = 'none';
             });
           }
-          
+
           // Also hide tooltip when mouse leaves chart canvas specifically
           contentTypeCtx.addEventListener('mouseleave', function() {
             const tooltip = document.getElementById('contentTypeTooltip');
             tooltip.style.display = 'none';
           });
-          
+
           // Global mouse move event to hide tooltip when mouse is outside chart area
           document.addEventListener('mousemove', function(e) {
             const tooltip = document.getElementById('contentTypeTooltip');
@@ -998,10 +1023,10 @@
               const absoluteRight = rect.left + chartArea.right;
               const absoluteTop = rect.top + chartArea.top;
               const absoluteBottom = rect.top + chartArea.bottom;
-              
+
               // Hide tooltip if mouse is outside chart area
-              if (e.clientX < absoluteLeft || e.clientX > absoluteRight || 
-                  e.clientY < absoluteTop || e.clientY > absoluteBottom) {
+              if (e.clientX < absoluteLeft || e.clientX > absoluteRight ||
+                e.clientY < absoluteTop || e.clientY > absoluteBottom) {
                 tooltip.style.display = 'none';
               }
             }

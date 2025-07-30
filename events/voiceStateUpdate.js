@@ -8,19 +8,19 @@ const leaveTimeouts = new Map();
 module.exports = (client) => {
   client.on('voiceStateUpdate', (oldState, newState) => {
     const config = hotReloader.getCurrentConfig();
-    
+
     // Bỏ qua nếu tự rời khi phòng trống bị tắt
     if (!config.leaveOnEmpty?.empty?.enabled) {
       if (config.debug) {
-      if (config.debug) {
-        logger.autoLeave(`[AutoLeave] Tự rời bị tắt trong cấu hình`);
-      }
+        if (config.debug) {
+          logger.autoLeave(`[AutoLeave] Tự rời bị tắt trong cấu hình`);
+        }
       }
       return;
     }
 
     const guild = oldState.guild || newState.guild;
-    
+
     // Nếu bot được đánh dấu đã rời cố ý, ngăn mọi nỗ lực kết nối lại
     if (autoLeaveManager.isGuildBlocked(guild.id)) {
       // Chỉ xóa cờ nếu người dùng thật tham gia kênh thoại
@@ -32,15 +32,15 @@ module.exports = (client) => {
       }
       return; // Bỏ qua xử lý khi việc kết nối lại bị ngăn
     }
-    
+
     // Bỏ qua nếu đây là bot chính nó thay đổi trạng thái thoại (để ngăn vòng lặp)
     if (oldState.member?.id === client.user.id || newState.member?.id === client.user.id) {
       // Không ghi log để giảm spam, chỉ bỏ qua
       return;
     }
-    
+
     const botVoiceChannel = guild.members.cache.get(client.user.id)?.voice?.channel;
-    
+
     // Nếu bot không ở trong kênh thoại nào, bỏ qua
     if (!botVoiceChannel) {
       if (config.debug && (oldState.member?.user.bot === false || newState.member?.user.bot === false)) {
@@ -50,22 +50,22 @@ module.exports = (client) => {
     }
 
     // Chỉ tiến hành nếu cập nhật trạng thái thoại ảnh hưởng đến kênh thoại của bot
-    const isRelevantUpdate = oldState.channelId === botVoiceChannel.id || 
-                            newState.channelId === botVoiceChannel.id;
-    
+    const isRelevantUpdate = oldState.channelId === botVoiceChannel.id ||
+      newState.channelId === botVoiceChannel.id;
+
     if (!isRelevantUpdate) {
       return;
     }
 
     // Đếm người dùng thật (không phải bot) trong kênh thoại
     const realUsers = botVoiceChannel.members.filter(member => !member.user.bot);
-    
+
     if (config.debug) {
       const userName = oldState.member?.displayName || newState.member?.displayName || 'Không xác định';
       const userIsBot = oldState.member?.user.bot || newState.member?.user.bot;
       const action = oldState.channelId && !newState.channelId ? 'rời' :
-                    !oldState.channelId && newState.channelId ? 'tham gia' : 'di chuyển';
-      
+        !oldState.channelId && newState.channelId ? 'tham gia' : 'di chuyển';
+
       if (config.debug) {
         console.log(`[AutoLeave] Người dùng ${userName} (bot: ${userIsBot}) ${action} kênh thoại: ${botVoiceChannel.name}`);
         console.log(`[AutoLeave] Thành viên kênh:`, botVoiceChannel.members.map(m => `${m.displayName} (bot: ${m.user.bot})`).join(', '));
@@ -82,7 +82,7 @@ module.exports = (client) => {
           console.log(`[Tự Rời] Đã hủy hẹn giờ rời phòng cho máy chủ ${guild.name} - có người dùng trở lại`);
         }
       }
-      
+
       // Tự động tiếp tục nếu nhạc bị tạm dừng do kênh trống
       if (config.leaveOnEmpty.empty.pauseOnEmpty) {
         const queue = client.distube.getQueue(guild.id);
@@ -103,19 +103,19 @@ module.exports = (client) => {
     // Nếu không có người dùng thật và chưa đặt timeout, bắt đầu đếm ngược
     if (!leaveTimeouts.has(guild.id)) {
       const timeout = config.leaveOnEmpty.empty.timeout || 30; // Mặc định 30 giây
-      
+
       if (config.debug) console.log(`[Tự Rời] 🔄 Phòng thoại trống, bot sẽ rời sau ${timeout} giây...`);
-      
+
       const timeoutId = setTimeout(async () => {
         try {
           // Kiểm tra lại kênh có vẫn trống không
           const currentBotChannel = guild.members.cache.get(client.user.id)?.voice?.channel;
           if (currentBotChannel) {
             const currentRealUsers = currentBotChannel.members.filter(member => !member.user.bot);
-            
+
             if (currentRealUsers.size === 0) {
               const queue = client.distube.getQueue(guild.id);
-              
+
               if (queue) {
                 if (config.leaveOnEmpty.empty.pauseOnEmpty) {
                   // Tạm dừng nhạc thay vì dừng
@@ -132,11 +132,11 @@ module.exports = (client) => {
                   try {
                     // Đặt cờ để ngăn kết nối lại TRƯỚC khi dừng
                     autoLeaveManager.blockGuild(guild.id);
-                    
+
                     // Trước tiên dừng nhạc hoàn toàn
                     await client.distube.stop(guild.id);
                     if (config.debug) console.log(`[Tự Rời] 🎵 Bot đã dừng nhạc trong ${guild.name}`);
-                    
+
                     // Xóa mọi thao tác DisTube đang chờ
                     const queue = client.distube.getQueue(guild.id);
                     if (queue) {
@@ -147,7 +147,7 @@ module.exports = (client) => {
                         if (config.debug) console.log(`[Tự Rời] Hàng đợi đã được hủy hoặc lỗi:`, destroyError.message);
                       }
                     }
-                    
+
                     // Ép buộc ngắt kết nối và hủy kết nối thoại
                     const voiceConnection = guild.members.me.voice;
                     if (voiceConnection && voiceConnection.channel) {
@@ -155,7 +155,7 @@ module.exports = (client) => {
                         // Hủy kết nối thoại hoàn toàn
                         await voiceConnection.disconnect();
                         if (config.debug) console.log(`[Tự Rời] 🚪 Bot đã ngắt kết nối khỏi kênh thoại trong ${guild.name}`);
-                        
+
                         // Dọn dẹp bổ sung - hủy mọi kết nối thoại còn lại
                         const connection = guild.client.voice?.connections?.get(guild.id);
                         if (connection) {
@@ -166,7 +166,7 @@ module.exports = (client) => {
                         console.error(`[Tự Rời] ❌ Lỗi khi ngắt kết nối:`, disconnectError.message);
                       }
                     }
-                    
+
                     // An toàn bổ sung: Thử rời bằng DisTube voices
                     try {
                       await client.distube.voices.leave(guild.id);
@@ -174,7 +174,7 @@ module.exports = (client) => {
                     } catch (disTubeLeaveError) {
                       if (config.debug) console.log(`[Tự Rời] DisTube voices rời thất bại:`, disTubeLeaveError.message);
                     }
-                    
+
                   } catch (e) {
                     console.error(`[Tự Rời] ❌ Lỗi khi dừng nhạc:`, e.message);
                     // Ngay cả khi dừng thất bại, vẫn cố ngắt kết nối ép buộc

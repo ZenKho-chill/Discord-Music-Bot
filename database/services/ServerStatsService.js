@@ -27,19 +27,19 @@ class ServerStatsService {
         },
         { upsert: true, new: true }
       );
-      
+
       logger.debug('[ServerStats] Bắt đầu phiên nghe cho người dùng:', username);
       return userStats;
     } catch (error) {
       logger.error('[ServerStats] Lỗi bắt đầu phiên nghe:', error);
-      
+
       // Xử lý các lỗi cơ sở dữ liệu cụ thể
       if (error.code === 13 || error.message.includes('authentication')) {
         logger.error('❌ [ServerStatsService] Lỗi xác thực cơ sở dữ liệu:', error.message);
         logger.info('💡 Hãy xem xét kiểm tra cài đặt xác thực MongoDB trong config');
         dbConnection.isAvailable = false; // Đánh dấu là không khả dụng
       }
-      
+
       return null;
     }
   }
@@ -54,14 +54,14 @@ class ServerStatsService {
       }
 
       const userStats = await UserStats.findOne({ userId, guildId });
-      
+
       if (userStats && userStats.currentSession && userStats.currentSession.isListening) {
         const sessionDuration = Math.floor((new Date() - userStats.currentSession.startTime) / 1000);
-        
+
         await UserStats.findOneAndUpdate(
           { userId, guildId },
           {
-            $inc: { 
+            $inc: {
               totalListeningTime: sessionDuration,
               tracksPlayed: 1
             },
@@ -71,20 +71,20 @@ class ServerStatsService {
             }
           }
         );
-        
+
         logger.debug(`[ServerStats] Kết thúc phiên nghe cho người dùng ${userId}, thời gian: ${sessionDuration}s`);
         return sessionDuration;
       }
     } catch (error) {
       logger.error('[ServerStats] Lỗi kết thúc phiên nghe:', error);
-      
+
       // Xử lý các lỗi cơ sở dữ liệu cụ thể
       if (error.code === 13 || error.message.includes('authentication')) {
         logger.error('❌ [ServerStatsService] Lỗi xác thực cơ sở dữ liệu:', error.message);
         logger.info('💡 Hãy xem xét kiểm tra cài đặt xác thực MongoDB trong config');
         dbConnection.isAvailable = false; // Đánh dấu là không khả dụng
       }
-      
+
       return null;
     }
   }
@@ -102,7 +102,7 @@ class ServerStatsService {
         { userId, guildId, commandName },
         {
           $inc: { usageCount: 1 },
-          $set: { 
+          $set: {
             username,
             lastUsed: new Date()
           },
@@ -110,11 +110,11 @@ class ServerStatsService {
         },
         { upsert: true }
       );
-      
+
       logger.debug(`[ServerStats] Đã ghi log sử dụng lệnh: ${commandName} bởi ${username}`);
     } catch (error) {
       logger.error('[ServerStats] Lỗi ghi log sử dụng lệnh:', error);
-      
+
       // Xử lý các lỗi cơ sở dữ liệu cụ thể
       if (error.code === 13 || error.message.includes('authentication')) {
         logger.error('❌ [ServerStatsService] Lỗi xác thực cơ sở dữ liệu:', error.message);
@@ -138,48 +138,52 @@ class ServerStatsService {
       ] = await Promise.all([
         // Tổng số người dùng đã tương tác
         UserStats.countDocuments({ guildId }),
-        
+
         // Tổng số lệnh đã sử dụng
         CommandStats.aggregate([
           { $match: { guildId } },
           { $group: { _id: null, total: { $sum: '$usageCount' } } }
         ]),
-        
+
         // Tổng số bài đã phát
         MusicTrack.countDocuments({ guildId }),
-        
+
         // Top 5 người nghe nhiều nhất
         UserStats.find({ guildId })
           .sort({ totalListeningTime: -1 })
           .limit(5)
           .select('userId username totalListeningTime tracksPlayed lastActivity'),
-        
+
         // Top 5 người sử dụng lệnh nhiều nhất
         CommandStats.aggregate([
           { $match: { guildId } },
-          { $group: { 
-            _id: { userId: '$userId', username: '$username' },
-            totalCommands: { $sum: '$usageCount' },
-            lastUsed: { $max: '$lastUsed' }
-          }},
+          {
+            $group: {
+              _id: { userId: '$userId', username: '$username' },
+              totalCommands: { $sum: '$usageCount' },
+              lastUsed: { $max: '$lastUsed' }
+            }
+          },
           { $sort: { totalCommands: -1 } },
           { $limit: 5 }
         ]),
-        
+
         // 10 bài gần nhất
         MusicTrack.find({ guildId })
           .sort({ playedAt: -1 })
           .limit(10)
           .select('title platform contentType username playedAt duration'),
-        
+
         // Thống kê sử dụng lệnh theo loại
         CommandStats.aggregate([
           { $match: { guildId } },
-          { $group: { 
-            _id: '$commandName',
-            totalUsage: { $sum: '$usageCount' },
-            uniqueUsers: { $addToSet: '$userId' }
-          }},
+          {
+            $group: {
+              _id: '$commandName',
+              totalUsage: { $sum: '$usageCount' },
+              uniqueUsers: { $addToSet: '$userId' }
+            }
+          },
           { $addFields: { uniqueUserCount: { $size: '$uniqueUsers' } } },
           { $project: { uniqueUsers: 0 } },
           { $sort: { totalUsage: -1 } }

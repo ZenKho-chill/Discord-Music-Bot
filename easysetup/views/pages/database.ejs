@@ -84,12 +84,27 @@
     dbPasswordInput = document.getElementById('dbPassword');
 
     // Danh sách các trường input và key tương ứng
-    const inputs = [
-      { id: 'dbHost', key: 'mongodb.ip' },
-      { id: 'dbName', key: 'mongodb.database' },
-      { id: 'useAuth', key: 'mongodb.auth.enabled', type: 'checkbox' },
-      { id: 'dbUsername', key: 'mongodb.auth.username' },
-      { id: 'dbPassword', key: 'mongodb.auth.password' },
+    const inputs = [{
+        id: 'dbHost',
+        key: 'mongodb.ip'
+      },
+      {
+        id: 'dbName',
+        key: 'mongodb.database'
+      },
+      {
+        id: 'useAuth',
+        key: 'mongodb.auth.enabled',
+        type: 'checkbox'
+      },
+      {
+        id: 'dbUsername',
+        key: 'mongodb.auth.username'
+      },
+      {
+        id: 'dbPassword',
+        key: 'mongodb.auth.password'
+      },
     ];
 
     // Lấy config và điền vào form
@@ -114,7 +129,11 @@
       });
 
     // Thêm event listener cho các trường input
-    inputs.forEach(({ id, key, type }) => {
+    inputs.forEach(({
+      id,
+      key,
+      type
+    }) => {
       const element = document.getElementById(id);
       const event = type === 'checkbox' ? 'change' : 'input';
       const getValue = () => type === 'checkbox' ? element.checked : element.value;

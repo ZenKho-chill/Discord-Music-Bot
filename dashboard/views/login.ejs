@@ -1,97 +1,100 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= title %></title>
-    <link rel="stylesheet" href="/css/style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="shortcut icon" href="../images/zk-logo.png" type="image/x-icon">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link rel="shortcut icon" href="../images/zk-logo.png" type="image/x-icon">
 </head>
+
 <body>
-    <header class="header">
-        <nav class="nav">
-            <a href="/" class="logo">
-                <i class="fas fa-music"></i>
-                Music Bot
-            </a>
-            <ul class="nav-links">
-                <li><a href="/auth/discord" class="discord-btn">Đăng nhập</a></li>
-            </ul>
-        </nav>
-    </header>
+  <header class="header">
+    <nav class="nav">
+      <a href="/" class="logo">
+        <i class="fas fa-music"></i>
+        Music Bot
+      </a>
+      <ul class="nav-links">
+        <li><a href="/auth/discord" class="discord-btn">Đăng nhập</a></li>
+      </ul>
+    </nav>
+  </header>
 
-    <div class="login-container">
-        <% if (typeof error !== 'undefined' && error) { %>
-            <div style="background: #ff6b6b; color: white; padding: 1rem; border-radius: 8px; margin-bottom: 2rem; text-align: center;" class="error-message">
-                <i class="fas fa-exclamation-triangle"></i>
-                <%= error %>
-            </div>
-        <% } %>
-        
-        <div class="login-box fade-in">
-            <i class="fab fa-discord" style="font-size: 4rem; color: #5865F2; margin-bottom: 1rem;"></i>
-            <h1>Chào mừng!</h1>
-            <p>Đăng nhập bằng tài khoản Discord của bạn để quản lý Music Bot trên các server của bạn.</p>
-            
-            <a href="/auth/discord" class="discord-btn login-btn">
-                <i class="fab fa-discord"></i>
-                Đăng nhập với Discord
-            </a>
-            
-            <div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid #eee;">
-                <h3 style="color: #333; margin-bottom: 1rem;">Tính năng nổi bật:</h3>
-                <div style="text-align: left; color: #666;">
-                    <p><i class="fas fa-check" style="color: #57F287; margin-right: 0.5rem;"></i>Phát nhạc từ YouTube, Spotify, SoundCloud</p>
-                    <p><i class="fas fa-check" style="color: #57F287; margin-right: 0.5rem;"></i>Hàng đợi nhạc không giới hạn</p>
-                    <p><i class="fas fa-check" style="color: #57F287; margin-right: 0.5rem;"></i>Điều khiển âm lượng và phát lặp</p>
-                    <p><i class="fas fa-check" style="color: #57F287; margin-right: 0.5rem;"></i>Dashboard quản lý trực quan</p>
-                </div>
-            </div>
-        </div>
+  <div class="login-container">
+    <% if (typeof error !== 'undefined' && error) { %>
+    <div style="background: #ff6b6b; color: white; padding: 1rem; border-radius: 8px; margin-bottom: 2rem; text-align: center;" class="error-message">
+      <i class="fas fa-exclamation-triangle"></i>
+      <%= error %>
     </div>
+    <% } %>
 
-    <!-- Config for JavaScript -->
-    <script>
-        window.config = {
-            debug: <%- JSON.stringify(typeof debugMode !== 'undefined' ? debugMode : false) %>
-        };
-    </script>
-    
-    <script src="/js/dashboard.js"></script>
-    <script>
-        // Add some interactive effects
-        document.addEventListener('DOMContentLoaded', function() {
-            const loginBox = document.querySelector('.login-box');
-            
-            loginBox.addEventListener('mouseenter', function() {
-                this.style.transform = 'scale(1.02)';
-                this.style.transition = 'transform 0.3s ease';
-            });
-            
-            loginBox.addEventListener('mouseleave', function() {
-                this.style.transform = 'scale(1)';
-            });
-        });
-        
-        // Show loading when clicking login button (Dyno-style)
-        function showLoading() {
-          const btn = document.querySelector('.login-btn');
-          if (btn) {
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang kết nối với Discord...';
-            btn.style.pointerEvents = 'none';
-          }
-        }
-        
-        // Auto-hide error messages after 5 seconds
-        setTimeout(() => {
-          const errorMsg = document.querySelector('.error-message');
-          if (errorMsg) {
-            errorMsg.style.transition = 'opacity 0.5s ease';
-            errorMsg.style.opacity = '0';
-            setTimeout(() => errorMsg.remove(), 500);
-          }
-        }, 5000);
-    </script>
+    <div class="login-box fade-in">
+      <i class="fab fa-discord" style="font-size: 4rem; color: #5865F2; margin-bottom: 1rem;"></i>
+      <h1>Chào mừng!</h1>
+      <p>Đăng nhập bằng tài khoản Discord của bạn để quản lý Music Bot trên các server của bạn.</p>
+
+      <a href="/auth/discord" class="discord-btn login-btn">
+        <i class="fab fa-discord"></i>
+        Đăng nhập với Discord
+      </a>
+
+      <div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid #eee;">
+        <h3 style="color: #333; margin-bottom: 1rem;">Tính năng nổi bật:</h3>
+        <div style="text-align: left; color: #666;">
+          <p><i class="fas fa-check" style="color: #57F287; margin-right: 0.5rem;"></i>Phát nhạc từ YouTube, Spotify, SoundCloud</p>
+          <p><i class="fas fa-check" style="color: #57F287; margin-right: 0.5rem;"></i>Hàng đợi nhạc không giới hạn</p>
+          <p><i class="fas fa-check" style="color: #57F287; margin-right: 0.5rem;"></i>Điều khiển âm lượng và phát lặp</p>
+          <p><i class="fas fa-check" style="color: #57F287; margin-right: 0.5rem;"></i>Dashboard quản lý trực quan</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Config for JavaScript -->
+  <script>
+    window.config = {
+      debug: <%- JSON.stringify(typeof debugMode !== 'undefined' ? debugMode : false) %>
+    };
+  </script>
+
+  <script src="/js/dashboard.js"></script>
+  <script>
+    // Add some interactive effects
+    document.addEventListener('DOMContentLoaded', function() {
+      const loginBox = document.querySelector('.login-box');
+
+      loginBox.addEventListener('mouseenter', function() {
+        this.style.transform = 'scale(1.02)';
+        this.style.transition = 'transform 0.3s ease';
+      });
+
+      loginBox.addEventListener('mouseleave', function() {
+        this.style.transform = 'scale(1)';
+      });
+    });
+
+    // Show loading when clicking login button (Dyno-style)
+    function showLoading() {
+      const btn = document.querySelector('.login-btn');
+      if (btn) {
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang kết nối với Discord...';
+        btn.style.pointerEvents = 'none';
+      }
+    }
+
+    // Auto-hide error messages after 5 seconds
+    setTimeout(() => {
+      const errorMsg = document.querySelector('.error-message');
+      if (errorMsg) {
+        errorMsg.style.transition = 'opacity 0.5s ease';
+        errorMsg.style.opacity = '0';
+        setTimeout(() => errorMsg.remove(), 500);
+      }
+    }, 5000);
+  </script>
 </body>
+
 </html>
